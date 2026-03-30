@@ -19,8 +19,8 @@ button.primary{background:#7F77DD;border-color:#7F77DD;color:#fff;font-weight:50
 button.green{background:#1D9E75;border-color:#1D9E75;color:#fff;}
 button.blue{background:#378ADD;border-color:#378ADD;color:#fff;}
 button.red-btn{background:#D85A30;border-color:#D85A30;color:#fff;}
-button.danger{background:none;border:none;color:#c00;font-size:11px;padding:2px 4px;opacity:0.6;}
-button.danger:hover{opacity:1;background:#fff0f0;}
+button.danger{background:none;border:none;color:#c00;font-size:11px;padding:2px 4px;opacity:0.7;}
+button.danger:hover{opacity:1;}
 .card{background:#fff;border:0.5px solid #e5e5e2;border-radius:12px;padding:16px 20px;}
 .tag{font-size:10px;background:#f3f3f0;border:0.5px solid #ddd;border-radius:20px;padding:2px 8px;color:#666;white-space:nowrap;display:inline-block;}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:200;}
@@ -32,47 +32,63 @@ button.danger:hover{opacity:1;background:#fff0f0;}
 <div id="root"></div>
 <script type="text/babel">
 const {useState,useMemo,useRef,useCallback,useEffect}=React;
+
 const initials=n=>(n||"").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
 const avatarColor=n=>{const h=[...(n||"")].reduce((a,c)=>a+c.charCodeAt(0),0);return["#7F77DD","#1D9E75","#D85A30","#378ADD","#D4537E","#639922","#BA7517"][h%7];};
 const fmtDate=d=>{if(!d)return"";const dt=new Date(d+"T00:00:00");return isNaN(dt)?d:dt.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});};
 const daysAgo=d=>{if(!d)return"";const n=Math.floor((Date.now()-new Date(d+"T00:00:00"))/86400000);return n===0?"Today":n===1?"Yesterday":`${n}d ago`;};
-const toIso=d=>{if(!d)return"";const t=new Date(d);if(!isNaN(t))return t.toISOString().slice(0,10);const clean=d.replace(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+/i,"");const t2=new Date(clean);if(!isNaN(t2))return t2.toISOString().slice(0,10);return"";};
+const toIso=d=>{
+  if(!d)return"";
+  const t=new Date(d);
+  if(!isNaN(t))return t.toISOString().slice(0,10);
+  const clean=d.replace(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+/i,"");
+  const t2=new Date(clean);
+  if(!isNaN(t2))return t2.toISOString().slice(0,10);
+  return"";
+};
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DAYS=["Mo","Tu","We","Th","Fr","Sa","Su"];
 
 const GROUP_ICONS={
-  "Beirut":{type:"flag",code:"lb"},"Boston":{type:"emoji",e:"⚾"},
-  "Bridgespan":{type:"emoji",e:"🌉"},"California":{type:"emoji",e:"🌴"},
-  "Climate":{type:"emoji",e:"☀️"},"Colombia":{type:"flag",code:"co"},
-  "CrossBoundary":{type:"emoji",e:"🌐"},"Dubai":{type:"flag",code:"ae"},
-  "Duke":{type:"emoji",e:"🔵"},"Egypt":{type:"flag",code:"eg"},
-  "Gems":{type:"emoji",e:"💎"},"Goldman Sachs":{type:"emoji",e:"♠️"},
-  "HBS":{type:"emoji",e:"📕"},"India":{type:"flag",code:"in"},
-  "Infrastructure":{type:"emoji",e:"🏗️"},"Investment Banking":{type:"emoji",e:"🤝"},
-  "Investors":{type:"emoji",e:"📉"},"Jusoor":{type:"emoji",e:"❤️"},
-  "London":{type:"flag",code:"gb"},"Morgan Stanley":{type:"emoji",e:"💙"},
-  "New York":{type:"emoji",e:"🏙️"},"Paris":{type:"flag",code:"fr"},
-  "Philanthropy and Nonprofits":{type:"emoji",e:"🤍"},"Private Equity":{type:"emoji",e:"⚒️"},
-  "Sacred Heart":{type:"emoji",e:"🌹"},"Saudi Arabia":{type:"flag",code:"sa"},
-  "Singapore":{type:"flag",code:"sg"},"Syria":{type:"flag",code:"sy"},
-  "Venture":{type:"emoji",e:"🚀"},"Washington DC":{type:"emoji",e:"🏛️"}
+  "Beirut":{t:"f",c:"lb"},"Boston":{t:"e",e:"⚾"},"Bridgespan":{t:"e",e:"🌉"},
+  "California":{t:"e",e:"🌴"},"Climate":{t:"e",e:"☀️"},"Colombia":{t:"f",c:"co"},
+  "CrossBoundary":{t:"e",e:"🌐"},"Dubai":{t:"f",c:"ae"},"Duke":{t:"e",e:"🔵"},
+  "Egypt":{t:"f",c:"eg"},"Gems":{t:"e",e:"💎"},"Goldman Sachs":{t:"e",e:"♠️"},
+  "HBS":{t:"e",e:"📕"},"India":{t:"f",c:"in"},"Infrastructure":{t:"e",e:"🏗️"},
+  "Investment Banking":{t:"e",e:"🤝"},"Investors":{t:"e",e:"📉"},"Jusoor":{t:"e",e:"❤️"},
+  "London":{t:"f",c:"gb"},"Morgan Stanley":{t:"e",e:"💙"},"New York":{t:"e",e:"🏙️"},
+  "Paris":{t:"f",c:"fr"},"Philanthropy and Nonprofits":{t:"e",e:"🤍"},
+  "Private Equity":{t:"e",e:"⚒️"},"Sacred Heart":{t:"e",e:"🌹"},
+  "Saudi Arabia":{t:"f",c:"sa"},"Singapore":{t:"f",c:"sg"},
+  "Syria":{t:"f",c:"sy"},"Venture":{t:"e",e:"🚀"},"Washington DC":{t:"e",e:"🏛️"}
 };
-const groupIcon=name=>{
-  const g=GROUP_ICONS[name];
-  if(!g)return{type:"emoji",e:"🏷️"};
-  return g;
-};
-const GroupIcon=({name,size=22})=>{
-  const g=groupIcon(name);
-  if(g.type==="flag")return<img src={`https://flagcdn.com/${size}x${Math.round(size*0.75)}/${g.code}.png`} style={{width:size,height:Math.round(size*0.75),objectFit:"cover",borderRadius:2,flexShrink:0}} alt={name}/>;
-  return<span style={{fontSize:size,lineHeight:1}}>{g.e}</span>;
-};
+
+function GIcon({name,size=20}){
+  const g=GROUP_ICONS[name]||{t:"e",e:"🏷️"};
+  if(g.t==="f")return<img src={`https://flagcdn.com/${size*2}x${size*2}/${g.c}.png`} style={{width:size,height:size,objectFit:"cover",borderRadius:3}} alt={name}/>;
+  return<span style={{fontSize:size}}>{g.e}</span>;
+}
 
 function parseCSV(text){
   const lines=text.split(/\r?\n/);if(!lines.length)return[];
-  const parseRow=line=>{const cols=[];let cur="",inQ=false;for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'&&line[i+1]==='"'){cur+='"';i++;}else if(c==='"')inQ=!inQ;else if(c===','&&!inQ){cols.push(cur);cur="";}else cur+=c;}cols.push(cur);return cols.map(s=>s.trim());};
+  const parseRow=line=>{
+    const cols=[];let cur="",inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'&&line[i+1]==='"'){cur+='"';i++;}
+      else if(c==='"')inQ=!inQ;
+      else if(c===','&&!inQ){cols.push(cur);cur="";}
+      else cur+=c;
+    }
+    cols.push(cur);
+    return cols.map(s=>s.trim());
+  };
   const headers=parseRow(lines[0]);
-  return lines.slice(1).filter(l=>l.trim()).map(l=>{const vals=parseRow(l);const obj={};headers.forEach((h,i)=>{obj[h]=vals[i]??"";});return obj;});
+  return lines.slice(1).filter(l=>l.trim()).map(l=>{
+    const vals=parseRow(l);const obj={};
+    headers.forEach((h,i)=>{obj[h]=vals[i]??"";});
+    return obj;
+  });
 }
 
 function MiniCalendar({value,onChange}){
@@ -111,25 +127,22 @@ function DatePicker({value,onChange,placeholder="Pick a date"}){
   );
 }
 
-function InteractionCard({i,contacts,contactName,deleteInteraction,setSelected,setTab}){
-  const [expanded,setExpanded]=useState(false);
+function IntCard({i,contacts,contactName,deleteInteraction,setSelected,setTab}){
+  const [showDel,setShowDel]=useState(false);
   return(
     <div className="card" style={{padding:"12px 16px"}}>
       <div style={{fontSize:11,color:"#999",marginBottom:3}}>
         {fmtDate(i.date)}
         {i.type&&i.type!=="Manual"&&<span className="tag" style={{marginLeft:6}}>{i.type}</span>}
       </div>
-      <div style={{fontWeight:500,fontSize:14,cursor:"pointer",color:"#1a1a1a",marginBottom:i.note?5:0}} onClick={()=>{const c=contacts.find(c=>c.id===(i.personId||i.person_id));if(c){setSelected(c);setTab("contacts");}}}>
+      <div style={{fontWeight:500,fontSize:14,cursor:"pointer",marginBottom:i.note?5:0,color:"#1a1a1a"}}
+        onClick={()=>{const c=contacts.find(c=>c.id===(i.personId||i.person_id));if(c){setSelected(c);setTab("contacts");}}}>
         {contactName(i.personId||i.person_id)}
       </div>
       {i.note&&<div style={{fontSize:13,color:"#444",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{i.note}</div>}
-      {expanded&&(
-        <div style={{marginTop:10,paddingTop:10,borderTop:"0.5px solid #f0f0ee",display:"flex",justifyContent:"flex-end"}}>
-          <button className="danger" onClick={()=>{deleteInteraction(i);setExpanded(false);}}>🗑 Delete this interaction</button>
-        </div>
-      )}
-      <div style={{marginTop:4,textAlign:"right"}}>
-        <button onClick={()=>setExpanded(e=>!e)} style={{fontSize:11,color:"#bbb",border:"none",background:"none",padding:"2px 0",cursor:"pointer"}}>{expanded?"▲ hide":"▼ options"}</button>
+      <div style={{marginTop:6,display:"flex",justifyContent:"flex-end",alignItems:"center",gap:8}}>
+        {showDel&&<button className="danger" onClick={()=>deleteInteraction(i)}>🗑 Confirm delete</button>}
+        <button onClick={()=>setShowDel(s=>!s)} style={{fontSize:11,color:"#ccc",border:"none",background:"none",padding:0,cursor:"pointer"}}>{showDel?"cancel":"⋯"}</button>
       </div>
     </div>
   );
@@ -140,7 +153,6 @@ function App(){
   const [interactions,setInteractions]=useState([]);
   const [groups,setGroups]=useState([]);
   const [imported,setImported]=useState(false);
-  const [importing,setImporting]=useState(false);
   const [tab,setTab]=useState("dashboard");
   const [selected,setSelected]=useState(null);
   const [search,setSearch]=useState("");
@@ -150,7 +162,7 @@ function App(){
   const [calDate,setCalDate]=useState(new Date());
   const [calMode,setCalMode]=useState("month");
   const [dashCalDate,setDashCalDate]=useState(new Date());
-  const [dashPopup,setDashPopup]=useState(null); // {date, hits}
+  const [dashPopup,setDashPopup]=useState(null);
   const [showAddContact,setShowAddContact]=useState(false);
   const [showAddInteraction,setShowAddInteraction]=useState(false);
   const [showAddGroup,setShowAddGroup]=useState(false);
@@ -169,7 +181,6 @@ function App(){
   const [contactSearch,setContactSearch]=useState("");
   const [loadingDB,setLoadingDB]=useState(false);
   const fileRef=useRef();
-  const importRef=useRef();
   const [cf,setCf]=useState({name:"",company:"",role:"",location:"",email:"",phone:"",groups:[],notes:""});
   const [inf,setInf]=useState({contactIds:[],date:"",note:""});
 
@@ -186,12 +197,12 @@ function App(){
   },[]);
 
   const loadFromSupabase=async(url,key)=>{
-    setLoadingDB(true);setSyncStatus("Loading from Supabase…");
+    setLoadingDB(true);setSyncStatus("Loading…");
     try{
       const [c,i,g]=await Promise.all([
-        sbFetch(url,key,"contacts?select=*&order=name"),
+        sbFetch(url,key,"contacts?select=*&order=name&limit=2000"),
         sbFetch(url,key,"interactions?select=*&order=date.desc&limit=2000"),
-        sbFetch(url,key,"groups?select=*&order=name")
+        sbFetch(url,key,"groups?select=*&order=name&limit=200")
       ]);
       setContacts(c.map(r=>({...r,groupIds:(r.group_ids||"").split(",").filter(Boolean)})));
       setInteractions(i.map(r=>({...r,personId:r.person_id,note:r.note||r.notes||""})));
@@ -212,12 +223,12 @@ function App(){
   };
 
   const syncToSupabase=async()=>{
-    if(!sbUrl||!sbKey){setSyncStatus("Connect Supabase first via ⚙️");return;}
+    if(!sbUrl||!sbKey){setSyncStatus("Connect Supabase first.");return;}
     setSyncing(true);setSyncStatus("Syncing…");
     try{
       const BATCH=50;
-      const dedupe=rows=>{const seen=new Set();return rows.filter(r=>{if(seen.has(r.id))return false;seen.add(r.id);return true;});};
-      const upsert=async(table,rows)=>{const uniq=dedupe(rows);for(let i=0;i<uniq.length;i+=BATCH){await sbFetch(sbUrl,sbKey,table,"POST",uniq.slice(i,i+BATCH));}};
+      const dedupe=rows=>{const seen=new Set();return rows.filter(r=>{if(!r.id||seen.has(r.id))return false;seen.add(r.id);return true;});};
+      const upsert=async(table,rows)=>{const u=dedupe(rows);for(let i=0;i<u.length;i+=BATCH)await sbFetch(sbUrl,sbKey,table,"POST",u.slice(i,i+BATCH));};
       await upsert("groups",groups.map(g=>({id:g.id,name:g.name,description:g.description||"",icon:g.icon||"",people_ids:(g.peopleIds||[]).join(",")})));
       await upsert("contacts",contacts.map(c=>({id:c.id,name:c.name,email:c.email||"",phone:c.phone||"",notes:c.notes||"",date_met:c.dateMet||"",company:c.company||"",role:c.role||"",location:c.location||"",group_ids:(c.groupIds||c.groups||[]).join(",")})));
       await upsert("interactions",interactions.map(i=>({id:i.id,person_id:i.personId||i.person_id||"",type:i.type||"",date:i.date||"",note:i.note||""})));
@@ -227,17 +238,28 @@ function App(){
   };
 
   const handleImportFiles=async e=>{
-    const files=Array.from(e.target.files);setImporting(true);
+    const files=Array.from(e.target.files);
     try{
       const read=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsText(f);});
       let pf=null,intf=null,gf=null;
       files.forEach(f=>{const n=f.name.toLowerCase();if(n.includes("people"))pf=f;else if(n.includes("interaction"))intf=f;else if(n.includes("group"))gf=f;});
-      if(gf){const rows=parseCSV(await read(gf));const gl=rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name,description:r.Description||"",icon:r.Icon||"",peopleIds:(r.People||"").split(",").map(s=>s.trim()).filter(Boolean)})).filter(g=>g.name);setGroups(gl);if(gl.length){setOverlapA(gl[0]?.name||"");setOverlapB(gl[1]?.name||"");}}
-      if(pf){const rows=parseCSV(await read(pf));setContacts(rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name||"",email:r.Email||r.email||"",phone:r.Phone||r.phone||"",notes:r.Notes||r.notes||"",dateMet:toIso(r["Date Met"]||""),groupIds:(r.Groups||r.groups||"").split(",").map(s=>s.trim()).filter(Boolean),company:"",role:"",location:""})).filter(c=>c.name));}
-      if(intf){const rows=parseCSV(await read(intf));setInteractions(rows.map(r=>({id:r["Id"]||r["id"],personId:r["Person Id"]||r["person_id"]||"",type:r["Type"]||r["type"]||"",date:toIso(r["Date"]||r["date"]||""),note:r["Notes"]||r["notes"]||""})).filter(i=>i.personId&&i.id));}
-      setImported(true);
+      if(gf){
+        const rows=parseCSV(await read(gf));
+        const gl=rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name,description:r.Description||"",icon:r.Icon||"",peopleIds:(r.People||"").split(",").map(s=>s.trim()).filter(Boolean)})).filter(g=>g.name);
+        setGroups(gl);
+        if(gl.length){setOverlapA(gl[0]?.name||"");setOverlapB(gl[1]?.name||"");}
+      }
+      if(pf){
+        const rows=parseCSV(await read(pf));
+        setContacts(rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name||"",email:r.Email||r.email||"",phone:r.Phone||r.phone||"",notes:r.Notes||r.notes||"",dateMet:toIso(r["Date Met"]||""),groupIds:(r.Groups||r.groups||"").split(",").map(s=>s.trim()).filter(Boolean),company:"",role:"",location:""})).filter(c=>c.name));
+      }
+      if(intf){
+        const rows=parseCSV(await read(intf));
+        setInteractions(rows.map(r=>({id:r["Id"]||r["id"],personId:r["Person Id"]||r["person_id"]||"",type:r["Type"]||r["type"]||"",date:toIso(r["Date"]||r["date"]||""),note:r["Notes"]||r["notes"]||""})).filter(i=>i.personId&&i.id));
+      }
+      setImported(true);setSyncStatus("CSVs imported ✓ — hit Sync to save to Supabase");
     }catch(e){alert("Import failed: "+e.message);}
-    setImporting(false);e.target.value="";
+    e.target.value="";
   };
 
   const contactGroups=useCallback(c=>{
@@ -249,8 +271,7 @@ function App(){
   const filteredContacts=useMemo(()=>contacts.filter(c=>{
     const q=search.toLowerCase();
     const cg=contactGroups(c);
-    const mq=!q||c.name.toLowerCase().includes(q)||(c.email||"").toLowerCase().includes(q)||(c.company||"").toLowerCase().includes(q);
-    return mq&&(filterGroup==="All"||cg.includes(filterGroup));
+    return(!q||c.name.toLowerCase().includes(q)||(c.email||"").toLowerCase().includes(q)||(c.company||"").toLowerCase().includes(q))&&(filterGroup==="All"||cg.includes(filterGroup));
   }),[contacts,search,filterGroup,contactGroups]);
 
   const overlapContacts=useMemo(()=>{
@@ -263,16 +284,20 @@ function App(){
   const contactName=useCallback(id=>contacts.find(c=>c.id===id)?.name||"Unknown",[contacts]);
   const intsOnDate=useCallback(d=>interactions.filter(i=>i.date===d),[interactions]);
   const groupMemberCount=useCallback(name=>contacts.filter(c=>contactGroups(c).includes(name)).length,[contacts,contactGroups]);
-
   const sortedGroups=useMemo(()=>[...groups].sort((a,b)=>groupMemberCount(b.name)-groupMemberCount(a.name)),[groups,groupMemberCount]);
 
+  const mostRecentInt=useMemo(()=>{
+    if(!interactions.length)return null;
+    const i=[...interactions].sort((a,b)=>b.date.localeCompare(a.date))[0];
+    return{...i,cName:contacts.find(c=>c.id===(i.personId||i.person_id))?.name||"Unknown"};
+  },[interactions,contacts]);
+
   const deleteContact=c=>{
-    if(!window.confirm(`Delete ${c.name}? This cannot be undone.`))return;
+    if(!window.confirm(`Delete ${c.name}?`))return;
     setContacts(cs=>cs.filter(x=>x.id!==c.id));setSelected(null);
     if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+c.id,"DELETE").catch(()=>{});
   };
   const deleteInteraction=i=>{
-    if(!window.confirm("Delete this interaction?"))return;
     setInteractions(is=>is.filter(x=>x.id!==i.id));
     if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+i.id,"DELETE").catch(()=>{});
   };
@@ -298,10 +323,10 @@ function App(){
   const saveDetailNote=()=>{
     if(!detailNote.trim()||!selected)return;
     const date=new Date().toISOString().slice(0,10);
-    const newNotes=(selected.notes?selected.notes+"\n\n":"")+date+": "+detailNote;
-    setContacts(cs=>cs.map(c=>c.id===selected.id?{...c,notes:newNotes}:c));
-    setSelected(s=>({...s,notes:newNotes}));
-    if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+selected.id,"PATCH",{notes:newNotes}).catch(()=>{});
+    const nn=(selected.notes?selected.notes+"\n\n":"")+date+": "+detailNote;
+    setContacts(cs=>cs.map(c=>c.id===selected.id?{...c,notes:nn}:c));
+    setSelected(s=>({...s,notes:nn}));
+    if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+selected.id,"PATCH",{notes:nn}).catch(()=>{});
     setDetailNote("");
   };
 
@@ -322,11 +347,10 @@ function App(){
       const stream=await navigator.mediaDevices.getUserMedia({audio:true});
       const mr=new MediaRecorder(stream);const chunks=[];
       mr.ondataavailable=e=>chunks.push(e.data);
-      mr.onstop=()=>{stream.getTracks().forEach(t=>t.stop());setRecording(false);setDetailNote(n=>n?n+"\n[Voice note recorded]":"[Voice note recorded]");};
+      mr.onstop=()=>{stream.getTracks().forEach(t=>t.stop());setRecording(false);setDetailNote(n=>n?n+"\n[Voice note]":"[Voice note]");};
       mr.start();setMediaRec(mr);setRecording(true);
     }catch{alert("Microphone access denied.");}
   };
-  const stopRecording=()=>{if(mediaRec)mediaRec.stop();};
 
   const prevMonth=()=>setCalDate(d=>new Date(d.getFullYear(),d.getMonth()-1,1));
   const nextMonth=()=>setCalDate(d=>new Date(d.getFullYear(),d.getMonth()+1,1));
@@ -339,13 +363,6 @@ function App(){
   const dcoff=(new Date(dcy,dcm,1).getDay()+6)%7,dcdim=new Date(dcy,dcm+1,0).getDate();
   const dashCells=Array(dcoff).fill(null).concat(Array.from({length:dcdim},(_,i)=>i+1));
   while(dashCells.length%7!==0)dashCells.push(null);
-
-  const mostRecentInt=useMemo(()=>{
-    if(!interactions.length)return null;
-    const sorted=[...interactions].sort((a,b)=>b.date.localeCompare(a.date));
-    const i=sorted[0];
-    return{...i,cName:contacts.find(c=>c.id===(i.personId||i.person_id))?.name||"Unknown"};
-  },[interactions,contacts]);
 
   if(showSettings)return(
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#f5f5f3"}}>
@@ -372,17 +389,20 @@ function App(){
         <div style={{fontSize:17,fontWeight:500,marginBottom:8}}>My CRM</div>
         <p style={{fontSize:13,color:"#666",marginBottom:20,lineHeight:1.6}}>Import your Mogul CSVs, or connect Supabase if you've synced before.</p>
         <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
-          <label style={{padding:"8px 20px",borderRadius:8,border:"0.5px solid #7F77DD",background:"#7F77DD",cursor:"pointer",fontSize:14,color:"#fff",fontWeight:500}}>📂 Select CSV files<input type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/></label>
+          <label style={{padding:"8px 20px",borderRadius:8,background:"#7F77DD",cursor:"pointer",fontSize:14,color:"#fff",fontWeight:500}}>
+            📂 Select CSV files<input type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/>
+          </label>
           <button onClick={()=>{setSbUrlInput(sbUrl);setSbKeyInput(sbKey);setShowSettings(true);}}>Connect Supabase</button>
         </div>
-        {loadingDB&&<p style={{fontSize:12,color:"#666",marginTop:12}}>Loading from Supabase…</p>}
+        {loadingDB&&<p style={{fontSize:12,color:"#666",marginTop:12}}>Loading…</p>}
+        {syncStatus&&<p style={{fontSize:12,color:"#1D9E75",marginTop:12}}>{syncStatus}</p>}
       </div>
     </div>
   );
 
   return(
     <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",background:"#f5f5f3"}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"11px 20px",borderBottom:"0.5px solid #e5e5e2",background:"#fff",flexWrap:"wrap",gap:8}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 20px",borderBottom:"0.5px solid #e5e5e2",background:"#fff",flexWrap:"wrap",gap:8}}>
         <div style={{display:"flex",alignItems:"baseline",gap:10}}>
           <span style={{fontSize:17,fontWeight:600}}>My CRM</span>
           <span style={{fontSize:12,color:"#999"}}>{contacts.length} contacts · {groups.length} groups</span>
@@ -406,26 +426,29 @@ function App(){
         {tab==="dashboard"&&(
           <div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:24}}>
-              {[
-                {num:contacts.length,label:"Total contacts",color:"#7F77DD"},
-                {num:groups.length,label:"Total groups",color:"#1D9E75"},
-              ].map((s,i)=>(
-                <div key={i} className="card" style={{textAlign:"center",padding:"20px 16px"}}>
-                  <div style={{fontSize:36,fontWeight:700,color:s.color,lineHeight:1}}>{s.num}</div>
-                  <div style={{fontSize:11,color:"#999",marginTop:6}}>{s.label}</div>
-                </div>
-              ))}
-              {mostRecentInt&&(
+              <div className="card" style={{textAlign:"center",padding:"20px 16px"}}>
+                <div style={{fontSize:36,fontWeight:700,color:"#7F77DD",lineHeight:1}}>{contacts.length}</div>
+                <div style={{fontSize:11,color:"#999",marginTop:6}}>Total contacts</div>
+              </div>
+              <div className="card" style={{textAlign:"center",padding:"20px 16px"}}>
+                <div style={{fontSize:36,fontWeight:700,color:"#1D9E75",lineHeight:1}}>{groups.length}</div>
+                <div style={{fontSize:11,color:"#999",marginTop:6}}>Total groups</div>
+              </div>
+              {mostRecentInt?(
                 <div className="card" style={{padding:"14px 16px",cursor:"pointer"}} onClick={()=>{const c=contacts.find(c=>c.id===(mostRecentInt.personId||mostRecentInt.person_id));if(c){setSelected(c);setTab("contacts");}}}>
                   <div style={{fontSize:11,color:"#999",marginBottom:4}}>Most recent interaction</div>
                   <div style={{fontWeight:600,fontSize:14,marginBottom:2}}>{mostRecentInt.cName}</div>
                   <div style={{fontSize:11,color:"#999",marginBottom:mostRecentInt.note?4:0}}>{fmtDate(mostRecentInt.date)}</div>
                   {mostRecentInt.note&&<div style={{fontSize:12,color:"#555",lineHeight:1.5,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:3,WebkitBoxOrient:"vertical"}}>{mostRecentInt.note}</div>}
                 </div>
+              ):(
+                <div className="card" style={{textAlign:"center",padding:"20px 16px"}}>
+                  <div style={{fontSize:11,color:"#999"}}>No interactions yet</div>
+                </div>
               )}
             </div>
+
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,alignItems:"start"}}>
-              {/* Dashboard heatmap calendar */}
               <div className="card">
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
                   <span style={{fontWeight:500,fontSize:14}}>{MONTHS[dcm]} {dcy}</span>
@@ -441,14 +464,14 @@ function App(){
                   {dashCells.map((d,i)=>{
                     if(!d)return<div key={i}/>;
                     const ds=`${dcy}-${String(dcm+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-                    const hits=intsOnDate(ds);
-                    const cnt=hits.length;
+                    const hits=intsOnDate(ds);const cnt=hits.length;
                     const isToday=new Date().toDateString()===new Date(ds+"T00:00:00").toDateString();
-                    const intensity=cnt===0?0:cnt===1?0.25:cnt<=3?0.55:0.9;
+                    const op=cnt===0?0:cnt===1?0.25:cnt<=3?0.55:0.9;
                     return(
-                      <div key={i} onClick={()=>cnt>0&&setDashPopup({date:ds,hits})} style={{aspectRatio:"1",borderRadius:4,display:"flex",alignItems:"center",justifyContent:"center",background:cnt>0?`rgba(127,119,221,${intensity})`:"#f5f5f3",border:isToday?"1.5px solid #7F77DD":"none",cursor:cnt>0?"pointer":"default",position:"relative",flexDirection:"column"}}>
-                        <span style={{fontSize:10,color:cnt>0&&intensity>0.4?"#fff":isToday?"#7F77DD":"#999",fontWeight:isToday?600:400,lineHeight:1}}>{d}</span>
-                        {cnt>0&&<span style={{fontSize:8,color:intensity>0.4?"rgba(255,255,255,0.85)":"#7F77DD",lineHeight:1,marginTop:1}}>{cnt}</span>}
+                      <div key={i} onClick={()=>cnt>0&&setDashPopup({date:ds,hits})}
+                        style={{aspectRatio:"1",borderRadius:4,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:cnt>0?`rgba(127,119,221,${op})`:"#f5f5f3",border:isToday?"1.5px solid #7F77DD":"none",cursor:cnt>0?"pointer":"default"}}>
+                        <span style={{fontSize:10,color:cnt>0&&op>0.4?"#fff":isToday?"#7F77DD":"#999",fontWeight:isToday?600:400}}>{d}</span>
+                        {cnt>0&&<span style={{fontSize:8,color:op>0.4?"rgba(255,255,255,0.8)":"#7F77DD"}}>{cnt}</span>}
                       </div>
                     );
                   })}
@@ -460,7 +483,6 @@ function App(){
                 </div>
               </div>
 
-              {/* Groups on dashboard — sorted by count, emoji + name + number only */}
               <div className="card">
                 <div style={{fontWeight:500,fontSize:14,marginBottom:12}}>Groups</div>
                 <div style={{display:"flex",flexDirection:"column",gap:0,maxHeight:340,overflowY:"auto"}}>
@@ -468,7 +490,7 @@ function App(){
                     const cnt=groupMemberCount(g.name);
                     return(
                       <div key={g.id} onClick={()=>{setFilterGroup(g.name);setTab("contacts");}} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:"0.5px solid #f0f0ee",cursor:"pointer"}}>
-                        <span style={{fontSize:18,width:26,textAlign:"center",flexShrink:0}}>{groupIcon(g.name)}</span>
+                        <span style={{width:24,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><GIcon name={g.name} size={18}/></span>
                         <span style={{flex:1,fontSize:13}}>{g.name}</span>
                         <span style={{fontSize:12,color:"#999",fontWeight:500}}>{cnt}</span>
                       </div>
@@ -478,20 +500,19 @@ function App(){
               </div>
             </div>
 
-            {/* Date popup */}
             {dashPopup&&(
               <div className="overlay" onClick={()=>setDashPopup(null)}>
-                <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:360}}>
+                <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:380}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
                     <span style={{fontWeight:500,fontSize:15}}>{fmtDate(dashPopup.date)}</span>
-                    <button onClick={()=>setDashPopup(null)} style={{border:"none",background:"none",fontSize:18,color:"#999"}}>×</button>
+                    <button onClick={()=>setDashPopup(null)} style={{border:"none",background:"none",fontSize:20,color:"#999",lineHeight:1}}>×</button>
                   </div>
                   {dashPopup.hits.map(h=>(
                     <div key={h.id} style={{borderBottom:"0.5px solid #f0f0ee",paddingBottom:10,marginBottom:10}}>
-                      <div style={{fontWeight:500,fontSize:13,cursor:"pointer",color:"#7F77DD"}} onClick={()=>{const c=contacts.find(c=>c.id===(h.personId||h.person_id));if(c){setSelected(c);setTab("contacts");setDashPopup(null);}}}>
+                      <div style={{fontWeight:500,fontSize:13,color:"#7F77DD",cursor:"pointer",marginBottom:2}} onClick={()=>{const c=contacts.find(c=>c.id===(h.personId||h.person_id));if(c){setSelected(c);setTab("contacts");setDashPopup(null);}}}>
                         {contactName(h.personId||h.person_id)}
                       </div>
-                      {h.type&&h.type!=="Manual"&&<span className="tag" style={{marginTop:3,display:"inline-block"}}>{h.type}</span>}
+                      {h.type&&h.type!=="Manual"&&<span className="tag">{h.type}</span>}
                       {h.note&&<div style={{fontSize:12,color:"#555",marginTop:4,lineHeight:1.5}}>{h.note}</div>}
                     </div>
                   ))}
@@ -501,7 +522,7 @@ function App(){
           </div>
         )}
 
-        {/* CONTACTS */}
+        {/* CONTACTS LIST */}
         {tab==="contacts"&&!selected&&(
           <div>
             <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
@@ -556,24 +577,21 @@ function App(){
               {selected.notes&&<div style={{borderTop:"0.5px solid #e5e5e2",paddingTop:12,marginBottom:14}}><div style={{fontSize:12,fontWeight:500,color:"#666",marginBottom:4}}>Notes</div><div style={{fontSize:13,whiteSpace:"pre-wrap",lineHeight:1.6}}>{selected.notes}</div></div>}
               <div style={{borderTop:"0.5px solid #e5e5e2",paddingTop:12,marginBottom:14}}>
                 <div style={{fontSize:12,fontWeight:500,color:"#666",marginBottom:6}}>Add note</div>
-                <textarea value={detailNote} onChange={e=>setDetailNote(e.target.value)} placeholder="Type, upload image, or record voice…" rows={3} style={{resize:"vertical",marginBottom:8}}/>
+                <textarea value={detailNote} onChange={e=>setDetailNote(e.target.value)} placeholder="Type, upload image, or record…" rows={3} style={{resize:"vertical",marginBottom:8}}/>
                 <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
                   <button className="primary" onClick={saveDetailNote} disabled={!detailNote.trim()}>Save</button>
                   <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={handleImageNote}/>
                   <button onClick={()=>fileRef.current.click()} disabled={aiLoading}>📎 Image</button>
-                  <button onClick={recording?stopRecording:startRecording} className={recording?"red-btn":""}>{recording?"⏹ Stop":"🎙 Record"}</button>
+                  <button onClick={recording?()=>{if(mediaRec)mediaRec.stop();}:startRecording} className={recording?"red-btn":""}>{recording?"⏹ Stop":"🎙 Record"}</button>
                   {aiLoading&&<span style={{fontSize:12,color:"#999"}}>Processing…</span>}
                 </div>
               </div>
               <div style={{borderTop:"0.5px solid #e5e5e2",paddingTop:12}}>
                 <div style={{fontSize:12,fontWeight:500,color:"#666",marginBottom:8}}>Interactions ({contactInts(selected.id).length})</div>
                 {contactInts(selected.id).slice(0,30).map(i=>(
-                  <div key={i.id} style={{marginBottom:10,paddingBottom:10,borderBottom:"0.5px solid #f0f0ee",display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:11,color:"#999",marginBottom:2}}>{fmtDate(i.date)}{i.type&&i.type!=="Manual"&&` · ${i.type}`}</div>
-                      {i.note&&<div style={{fontSize:13,lineHeight:1.5}}>{i.note}</div>}
-                    </div>
-                    <button className="danger" onClick={()=>deleteInteraction(i)}>🗑</button>
+                  <div key={i.id} style={{marginBottom:10,paddingBottom:10,borderBottom:"0.5px solid #f0f0ee"}}>
+                    <div style={{fontSize:11,color:"#999",marginBottom:2}}>{fmtDate(i.date)}{i.type&&i.type!=="Manual"&&` · ${i.type}`}</div>
+                    {i.note&&<div style={{fontSize:13,lineHeight:1.5}}>{i.note}</div>}
                   </div>
                 ))}
                 {contactInts(selected.id).length===0&&<p style={{fontSize:13,color:"#999"}}>No interactions yet.</p>}
@@ -582,28 +600,29 @@ function App(){
           </div>
         )}
 
+        {/* INTERACTIONS */}
         {tab==="interactions"&&(
           <div>
             <div style={{fontSize:12,color:"#999",marginBottom:12}}>{interactions.length} total interactions</div>
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {interactions.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,200).map(i=>(
-                <InteractionCard key={i.id} i={i} contacts={contacts} contactName={contactName} deleteInteraction={deleteInteraction} setSelected={setSelected} setTab={setTab}/>
+                <IntCard key={i.id} i={i} contacts={contacts} contactName={contactName} deleteInteraction={deleteInteraction} setSelected={setSelected} setTab={setTab}/>
               ))}
               {interactions.length>200&&<p style={{fontSize:12,color:"#999",textAlign:"center"}}>Showing 200 most recent.</p>}
             </div>
           </div>
         )}
 
-        {/* GROUPS — sorted by count, emoji + name + number */}
+        {/* GROUPS */}
         {tab==="groups"&&(
           <div>
             <div style={{fontSize:12,color:"#999",marginBottom:12}}>{groups.length} groups</div>
-            <div style={{display:"flex",flexDirection:"column",gap:0}}>
-              {sortedGroups.map(g=>{
+            <div style={{background:"#fff",borderRadius:12,border:"0.5px solid #e5e5e2",overflow:"hidden"}}>
+              {sortedGroups.map((g,idx)=>{
                 const cnt=groupMemberCount(g.name);
                 return(
-                  <div key={g.id} onClick={()=>{setFilterGroup(g.name);setTab("contacts");}} style={{display:"flex",alignItems:"center",gap:14,padding:"12px 16px",background:"#fff",borderBottom:"0.5px solid #f0f0ee",cursor:"pointer",borderRadius:0}}>
-                    <span style={{width:30,textAlign:"center",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}><GroupIcon name={g.name} size={22}/></span>
+                  <div key={g.id} onClick={()=>{setFilterGroup(g.name);setTab("contacts");}} style={{display:"flex",alignItems:"center",gap:14,padding:"13px 18px",borderBottom:idx<sortedGroups.length-1?"0.5px solid #f0f0ee":"none",cursor:"pointer",background:"#fff"}}>
+                    <span style={{width:28,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><GIcon name={g.name} size={22}/></span>
                     <span style={{flex:1,fontSize:14,fontWeight:500}}>{g.name}</span>
                     <span style={{fontSize:13,color:"#999"}}>{cnt} people</span>
                     <span style={{color:"#ccc",fontSize:16}}>›</span>
@@ -692,7 +711,7 @@ function App(){
                           {hits.length===0&&<span style={{fontSize:12,color:"#999"}}>No interactions</span>}
                           {hits.map(h=>(
                             <div key={h.id} style={{marginBottom:6}}>
-                              <span style={{fontWeight:500,fontSize:13,cursor:"pointer",color:"#1a1a1a"}} onClick={()=>{const c=contacts.find(c=>c.id===(h.personId||h.person_id));if(c){setSelected(c);setTab("contacts");}}}>{contactName(h.personId||h.person_id)}</span>
+                              <span style={{fontWeight:500,fontSize:13,cursor:"pointer"}} onClick={()=>{const c=contacts.find(c=>c.id===(h.personId||h.person_id));if(c){setSelected(c);setTab("contacts");}}}>{contactName(h.personId||h.person_id)}</span>
                               {h.note&&<div style={{fontSize:12,color:"#666",lineHeight:1.5}}>{h.note}</div>}
                             </div>
                           ))}
@@ -758,6 +777,7 @@ function App(){
     </div>
   );
 }
+
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
