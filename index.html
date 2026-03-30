@@ -149,11 +149,11 @@ function App(){
     try{
       const [c,i,g]=await Promise.all([
         sbFetch(url,key,"contacts?select=*&order=name"),
-        sbFetch(url,key,"interactions?select=*&order=date.desc"),
+        sbFetch(url,key,"interactions?select=*&order=date.desc&limit=2000"),
         sbFetch(url,key,"groups?select=*&order=name")
       ]);
       setContacts(c.map(r=>({...r,groupIds:(r.group_ids||"").split(",").filter(Boolean)})));
-      setInteractions(i.map(r=>({...r,personId:r.person_id})));
+      setInteractions(i.map(r=>({...r,personId:r.person_id,note:r.note||r.notes||""})));
       setGroups(g);
       if(g.length){setOverlapA(g[0]?.name||"");setOverlapB(g[1]?.name||"");}
       setImported(true);
@@ -193,7 +193,7 @@ function App(){
       files.forEach(f=>{const n=f.name.toLowerCase();if(n.includes("people"))pf=f;else if(n.includes("interaction"))intf=f;else if(n.includes("group"))gf=f;});
       if(gf){const rows=parseCSV(await read(gf));const gl=rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name,description:r.Description||"",icon:r.Icon||"",peopleIds:(r.People||"").split(",").map(s=>s.trim()).filter(Boolean)})).filter(g=>g.name);setGroups(gl);if(gl.length){setOverlapA(gl[0]?.name||"");setOverlapB(gl[1]?.name||"");}}
       if(pf){const rows=parseCSV(await read(pf));setContacts(rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name||"",email:r.Email||r.email||"",phone:r.Phone||r.phone||"",notes:r.Notes||r.notes||"",dateMet:toIso(r["Date Met"]||""),groupIds:(r.Groups||r.groups||"").split(",").map(s=>s.trim()).filter(Boolean),company:"",role:"",location:""})).filter(c=>c.name));}
-      if(intf){const rows=parseCSV(await read(intf));setInteractions(rows.map(r=>({id:r.Id||r.id,personId:r["Person Id"]||r.person_id||"",type:r.Type||r.type||"",date:toIso(r.Date||r.date||""),note:r.Notes||r.notes||""})).filter(i=>i.personId));}
+      if(intf){const rows=parseCSV(await read(intf));setInteractions(rows.map(r=>({id:r.Id||r.id,personId:r["Person Id"]||r["person_id"]||r["PersonId"]||"",type:r.Type||r.type||"",date:toIso(r.Date||r.date||""),note:r.Notes||r.notes||r.Note||r.note||r["notes"]||r["Notes"]||""})).filter(i=>i.personId));}
       setImported(true);
     }catch(e){alert("Import failed: "+e.message);}
     setImporting(false);e.target.value="";
