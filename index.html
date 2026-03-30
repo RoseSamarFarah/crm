@@ -343,6 +343,7 @@ function App(){
           ))}
           <button className="green" style={{padding:"5px 12px"}} onClick={()=>setShowAddContact(true)}>+ Contact</button>
           <button className="blue" style={{padding:"5px 12px"}} onClick={()=>setShowAddInteraction(true)}>+ Interaction</button>
+          <button style={{padding:"5px 10px"}} onClick={()=>importRef.current.click()}>📂 Import</button>
           <button style={{padding:"5px 10px"}} onClick={()=>{setSbUrlInput(sbUrl);setSbKeyInput(sbKey);setShowSettings(true);}}>⚙️</button>
           <button className="red-btn" style={{padding:"5px 12px",opacity:!sbUrl?0.4:1}} onClick={syncToSupabase} disabled={!sbUrl||syncing}>{syncing?"Syncing…":"☁️ Sync"}</button>
         </div>
