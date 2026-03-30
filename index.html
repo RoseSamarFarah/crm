@@ -70,24 +70,26 @@ function GIcon({name,size=20}){
 }
 
 function parseCSV(text){
-  const lines=text.split(/\r?\n/);if(!lines.length)return[];
-  const parseRow=line=>{
-    const cols=[];let cur="",inQ=false;
-    for(let i=0;i<line.length;i++){
-      const c=line[i];
-      if(c==='"'&&line[i+1]==='"'){cur+='"';i++;}
-      else if(c==='"')inQ=!inQ;
-      else if(c===','&&!inQ){cols.push(cur);cur="";}
-      else cur+=c;
+  const rows=[];
+  let cur="",inQ=false,fields=[],i=0;
+  while(i<text.length){
+    const c=text[i];
+    if(c==='"'){
+      if(inQ&&text[i+1]==='"'){cur+='"';i+=2;continue;}
+      inQ=!inQ;i++;continue;
     }
-    cols.push(cur);
-    return cols.map(s=>s.trim());
-  };
-  const headers=parseRow(lines[0]);
-  return lines.slice(1).filter(l=>l.trim()).map(l=>{
-    const vals=parseRow(l);const obj={};
-    headers.forEach((h,i)=>{obj[h]=vals[i]??"";});
-    return obj;
+    if(c===','&&!inQ){fields.push(cur);cur="";i++;continue;}
+    if((c==='\n'||c==='\r')&&!inQ){
+      if(c==='\r'&&text[i+1]==='\n')i++;
+      fields.push(cur);rows.push(fields);fields=[];cur="";i++;continue;
+    }
+    cur+=c;i++;
+  }
+  if(cur||fields.length){fields.push(cur);rows.push(fields);}
+  if(!rows.length)return[];
+  const headers=rows[0].map(h=>h.trim());
+  return rows.slice(1).filter(r=>r.some(f=>f.trim())).map(r=>{
+    const obj={};headers.forEach((h,i)=>{obj[h]=(r[i]||"").trim();});return obj;
   });
 }
 
