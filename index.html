@@ -36,7 +36,7 @@ const initials=n=>(n||"").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCas
 const avatarColor=n=>{const h=[...(n||"")].reduce((a,c)=>a+c.charCodeAt(0),0);return["#7F77DD","#1D9E75","#D85A30","#378ADD","#D4537E","#639922","#BA7517"][h%7];};
 const fmtDate=d=>{if(!d)return"";const dt=new Date(d+"T00:00:00");return isNaN(dt)?d:dt.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});};
 const daysAgo=d=>{if(!d)return"";const n=Math.floor((Date.now()-new Date(d+"T00:00:00"))/86400000);return n===0?"Today":n===1?"Yesterday":`${n}d ago`;};
-const toIso=d=>{if(!d)return"";const t=new Date(d);return isNaN(t)?"":t.toISOString().slice(0,10);};
+const toIso=d=>{if(!d)return"";const t=new Date(d);if(!isNaN(t))return t.toISOString().slice(0,10);const clean=d.replace(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+/i,"");const t2=new Date(clean);if(!isNaN(t2))return t2.toISOString().slice(0,10);return"";};
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DAYS=["Mo","Tu","We","Th","Fr","Sa","Su"];
 
@@ -193,7 +193,7 @@ function App(){
       files.forEach(f=>{const n=f.name.toLowerCase();if(n.includes("people"))pf=f;else if(n.includes("interaction"))intf=f;else if(n.includes("group"))gf=f;});
       if(gf){const rows=parseCSV(await read(gf));const gl=rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name,description:r.Description||"",icon:r.Icon||"",peopleIds:(r.People||"").split(",").map(s=>s.trim()).filter(Boolean)})).filter(g=>g.name);setGroups(gl);if(gl.length){setOverlapA(gl[0]?.name||"");setOverlapB(gl[1]?.name||"");}}
       if(pf){const rows=parseCSV(await read(pf));setContacts(rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name||"",email:r.Email||r.email||"",phone:r.Phone||r.phone||"",notes:r.Notes||r.notes||"",dateMet:toIso(r["Date Met"]||""),groupIds:(r.Groups||r.groups||"").split(",").map(s=>s.trim()).filter(Boolean),company:"",role:"",location:""})).filter(c=>c.name));}
-      if(intf){const rows=parseCSV(await read(intf));setInteractions(rows.map(r=>({id:r.Id||r.id,personId:r["Person Id"]||r["person_id"]||r["PersonId"]||"",type:r.Type||r.type||"",date:toIso(r.Date||r.date||""),note:r.Notes||r.notes||r.Note||r.note||r["notes"]||r["Notes"]||""})).filter(i=>i.personId));}
+      if(intf){const rows=parseCSV(await read(intf));setInteractions(rows.map(r=>({id:r["Id"]||r["id"],personId:r["Person Id"]||r["person_id"]||"",type:r["Type"]||r["type"]||"",date:toIso(r["Date"]||r["date"]||""),note:r["Notes"]||r["notes"]||""})).filter(i=>i.personId&&i.id));}
       setImported(true);
     }catch(e){alert("Import failed: "+e.message);}
     setImporting(false);e.target.value="";
