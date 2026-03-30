@@ -39,8 +39,17 @@ const daysAgo=d=>{if(!d)return"";const n=Math.floor((Date.now()-new Date(d+"T00:
 const toIso=d=>{if(!d)return"";const t=new Date(d);return isNaN(t)?"":t.toISOString().slice(0,10);};
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DAYS=["Mo","Tu","We","Th","Fr","Sa","Su"];
-const GROUP_ICONS={"vc":"💼","investor":"💰","gulf":"🌍","fintech":"💳","accelerator":"🚀","usa":"🇺🇸","uk":"🇬🇧","uae":"🇦🇪","family":"👨‍👩‍👧","friend":"👥","founder":"🏗️","media":"📺","government":"🏛️","angel":"👼","crypto":"₿","health":"🏥","tech":"💻","school":"🎓","sport":"⚽"};
-const groupIcon=name=>{const low=(name||"").toLowerCase();const k=Object.keys(GROUP_ICONS).find(k=>low.includes(k));return k?GROUP_ICONS[k]:"🏷️";};
+
+const GROUP_ICONS={
+  "Beirut":"🇱🇧","Boston":"⚾","Bridgespan":"🌉","California":"🌴","Climate":"☀️",
+  "Colombia":"🇨🇴","CrossBoundary":"🌐","Dubai":"🇦🇪","Duke":"🔵","Egypt":"🇪🇬",
+  "Gems":"💎","Goldman Sachs":"♠️","HBS":"📕","India":"🇮🇳","Infrastructure":"🏗️",
+  "Investment Banking":"🤝","Investors":"📉","Jusoor":"❤️","London":"🇬🇧",
+  "Morgan Stanley":"💙","New York":"🏙️","Paris":"🇫🇷",
+  "Philanthropy and Nonprofits":"🤍","Private Equity":"⚒️","Sacred Heart":"🌹",
+  "Saudi Arabia":"🇸🇦","Singapore":"🇸🇬","Syria":"🇸🇾","Venture":"🚀","Washington DC":"🏛️"
+};
+const groupIcon=name=>GROUP_ICONS[name]||"🏷️";
 
 function parseCSV(text){
   const lines=text.split(/\r?\n/);if(!lines.length)return[];
@@ -100,6 +109,7 @@ function App(){
   const [calDate,setCalDate]=useState(new Date());
   const [calMode,setCalMode]=useState("month");
   const [dashCalDate,setDashCalDate]=useState(new Date());
+  const [dashPopup,setDashPopup]=useState(null); // {date, hits}
   const [showAddContact,setShowAddContact]=useState(false);
   const [showAddInteraction,setShowAddInteraction]=useState(false);
   const [showAddGroup,setShowAddGroup]=useState(false);
@@ -165,7 +175,8 @@ function App(){
     setSyncing(true);setSyncStatus("Syncing…");
     try{
       const BATCH=50;
-      const upsert=async(table,rows)=>{for(let i=0;i<rows.length;i+=BATCH){await sbFetch(sbUrl,sbKey,table,"POST",rows.slice(i,i+BATCH));}};
+      const dedupe=rows=>{const seen=new Set();return rows.filter(r=>{if(seen.has(r.id))return false;seen.add(r.id);return true;});};
+      const upsert=async(table,rows)=>{const uniq=dedupe(rows);for(let i=0;i<uniq.length;i+=BATCH){await sbFetch(sbUrl,sbKey,table,"POST",uniq.slice(i,i+BATCH));}};
       await upsert("groups",groups.map(g=>({id:g.id,name:g.name,description:g.description||"",icon:g.icon||"",people_ids:(g.peopleIds||[]).join(",")})));
       await upsert("contacts",contacts.map(c=>({id:c.id,name:c.name,email:c.email||"",phone:c.phone||"",notes:c.notes||"",date_met:c.dateMet||"",company:c.company||"",role:c.role||"",location:c.location||"",group_ids:(c.groupIds||c.groups||[]).join(",")})));
       await upsert("interactions",interactions.map(i=>({id:i.id,person_id:i.personId||i.person_id||"",type:i.type||"",date:i.date||"",note:i.note||""})));
@@ -211,6 +222,8 @@ function App(){
   const contactName=useCallback(id=>contacts.find(c=>c.id===id)?.name||"Unknown",[contacts]);
   const intsOnDate=useCallback(d=>interactions.filter(i=>i.date===d),[interactions]);
   const groupMemberCount=useCallback(name=>contacts.filter(c=>contactGroups(c).includes(name)).length,[contacts,contactGroups]);
+
+  const sortedGroups=useMemo(()=>[...groups].sort((a,b)=>groupMemberCount(b.name)-groupMemberCount(a.name)),[groups,groupMemberCount]);
 
   const deleteContact=c=>{
     if(!window.confirm(`Delete ${c.name}? This cannot be undone.`))return;
@@ -274,7 +287,6 @@ function App(){
   };
   const stopRecording=()=>{if(mediaRec)mediaRec.stop();};
 
-  // Calendar helpers
   const prevMonth=()=>setCalDate(d=>new Date(d.getFullYear(),d.getMonth()-1,1));
   const nextMonth=()=>setCalDate(d=>new Date(d.getFullYear(),d.getMonth()+1,1));
   const cy=calDate.getFullYear(),cm=calDate.getMonth();
@@ -282,24 +294,19 @@ function App(){
   const calCells=Array(coff).fill(null).concat(Array.from({length:cdim},(_,i)=>i+1));
   while(calCells.length%7!==0)calCells.push(null);
 
-  // Dashboard calendar
   const dcy=dashCalDate.getFullYear(),dcm=dashCalDate.getMonth();
   const dcoff=(new Date(dcy,dcm,1).getDay()+6)%7,dcdim=new Date(dcy,dcm+1,0).getDate();
   const dashCells=Array(dcoff).fill(null).concat(Array.from({length:dcdim},(_,i)=>i+1));
   while(dashCells.length%7!==0)dashCells.push(null);
 
-  // Dashboard stats
-  const recentInts=useMemo(()=>{
-    const cutoff=new Date();cutoff.setDate(cutoff.getDate()-30);
-    const cutStr=cutoff.toISOString().slice(0,10);
-    return interactions.filter(i=>i.date>=cutStr);
-  },[interactions]);
+  const totalInts=interactions.length;
+  const uniqueContactsInteracted=useMemo(()=>new Set(interactions.map(i=>i.personId||i.person_id)).size,[interactions]);
 
   if(showSettings)return(
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#f5f5f3"}}>
       <div className="card" style={{maxWidth:460,width:"100%"}}>
         <div style={{fontSize:16,fontWeight:500,marginBottom:4}}>Supabase connection</div>
-        <p style={{fontSize:12,color:"#666",marginBottom:20,lineHeight:1.6}}>Credentials saved in your browser only — never shared anywhere else.</p>
+        <p style={{fontSize:12,color:"#666",marginBottom:20,lineHeight:1.6}}>Credentials saved in your browser only.</p>
         <div style={{fontSize:12,color:"#666",marginBottom:4}}>Project URL</div>
         <input type="password" placeholder="https://xxxx.supabase.co" value={sbUrlInput} onChange={e=>setSbUrlInput(e.target.value)} style={{marginBottom:12}}/>
         <div style={{fontSize:12,color:"#666",marginBottom:4}}>Anon / public key</div>
@@ -318,10 +325,9 @@ function App(){
       <div className="card" style={{maxWidth:480,width:"100%",textAlign:"center"}}>
         <div style={{fontSize:28,marginBottom:8}}>📂</div>
         <div style={{fontSize:17,fontWeight:500,marginBottom:8}}>My CRM</div>
-        <p style={{fontSize:13,color:"#666",marginBottom:20,lineHeight:1.6}}>Import your Mogul CSVs to get started, or connect Supabase if you've synced before.</p>
+        <p style={{fontSize:13,color:"#666",marginBottom:20,lineHeight:1.6}}>Import your Mogul CSVs, or connect Supabase if you've synced before.</p>
         <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
-          <input ref={importRef} type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/>
-          <button className="primary" onClick={()=>importRef.current.click()} disabled={importing}>{importing?"Importing…":"Select CSV files"}</button>
+          <label style={{padding:"8px 20px",borderRadius:8,border:"0.5px solid #7F77DD",background:"#7F77DD",cursor:"pointer",fontSize:14,color:"#fff",fontWeight:500}}>📂 Select CSV files<input type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/></label>
           <button onClick={()=>{setSbUrlInput(sbUrl);setSbKeyInput(sbKey);setShowSettings(true);}}>Connect Supabase</button>
         </div>
         {loadingDB&&<p style={{fontSize:12,color:"#666",marginTop:12}}>Loading from Supabase…</p>}
@@ -331,7 +337,6 @@ function App(){
 
   return(
     <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",background:"#f5f5f3"}}>
-      {/* Top bar */}
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"11px 20px",borderBottom:"0.5px solid #e5e5e2",background:"#fff",flexWrap:"wrap",gap:8}}>
         <div style={{display:"flex",alignItems:"baseline",gap:10}}>
           <span style={{fontSize:17,fontWeight:600}}>My CRM</span>
@@ -343,7 +348,7 @@ function App(){
           ))}
           <button className="green" style={{padding:"5px 12px"}} onClick={()=>setShowAddContact(true)}>+ Contact</button>
           <button className="blue" style={{padding:"5px 12px"}} onClick={()=>setShowAddInteraction(true)}>+ Interaction</button>
-          <label style={{padding:"5px 10px",borderRadius:8,border:"0.5px solid #ddd",background:"#f3f3f0",cursor:"pointer",fontSize:13}}>📂 Import<input type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/></label>
+          <label style={{padding:"5px 10px",borderRadius:8,border:"0.5px solid #ddd",background:"#f3f3f0",cursor:"pointer",fontSize:13}}>📂<input type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/></label>
           <button style={{padding:"5px 10px"}} onClick={()=>{setSbUrlInput(sbUrl);setSbKeyInput(sbKey);setShowSettings(true);}}>⚙️</button>
           <button className="red-btn" style={{padding:"5px 12px",opacity:!sbUrl?0.4:1}} onClick={syncToSupabase} disabled={!sbUrl||syncing}>{syncing?"Syncing…":"☁️ Sync"}</button>
         </div>
@@ -352,15 +357,14 @@ function App(){
 
       <div style={{flex:1,padding:20,maxWidth:1000,width:"100%",margin:"0 auto"}}>
 
-        {/* ── DASHBOARD ── */}
+        {/* DASHBOARD */}
         {tab==="dashboard"&&(
           <div>
-            {/* Stat row */}
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:24}}>
               {[
                 {num:contacts.length,label:"Total contacts",color:"#7F77DD"},
-                {num:groups.length,label:"Groups",color:"#1D9E75"},
-                {num:recentInts.length,label:"Interactions (30 days)",color:"#378ADD"},
+                {num:groups.length,label:"Total groups",color:"#1D9E75"},
+                {num:uniqueContactsInteracted,label:"People ever interacted with",color:"#378ADD"},
               ].map((s,i)=>(
                 <div key={i} className="card" style={{textAlign:"center",padding:"20px 16px"}}>
                   <div style={{fontSize:36,fontWeight:700,color:s.color,lineHeight:1}}>{s.num}</div>
@@ -368,9 +372,8 @@ function App(){
                 </div>
               ))}
             </div>
-
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,alignItems:"start"}}>
-              {/* Dashboard calendar */}
+              {/* Dashboard heatmap calendar */}
               <div className="card">
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
                   <span style={{fontWeight:500,fontSize:14}}>{MONTHS[dcm]} {dcy}</span>
@@ -386,53 +389,67 @@ function App(){
                   {dashCells.map((d,i)=>{
                     if(!d)return<div key={i}/>;
                     const ds=`${dcy}-${String(dcm+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-                    const hits=intsOnDate(ds).length;
+                    const hits=intsOnDate(ds);
+                    const cnt=hits.length;
                     const isToday=new Date().toDateString()===new Date(ds+"T00:00:00").toDateString();
-                    const intensity=hits===0?0:hits===1?0.3:hits<=3?0.6:1;
+                    const intensity=cnt===0?0:cnt===1?0.25:cnt<=3?0.55:0.9;
                     return(
-                      <div key={i} style={{aspectRatio:"1",borderRadius:4,display:"flex",alignItems:"center",justifyContent:"center",background:hits>0?`rgba(127,119,221,${intensity})`:"#f5f5f3",border:isToday?"1.5px solid #7F77DD":"none",position:"relative"}}>
-                        <span style={{fontSize:10,color:hits>0&&intensity>0.4?"#fff":isToday?"#7F77DD":"#999",fontWeight:isToday?600:400}}>{d}</span>
-                        {hits>0&&<span style={{position:"absolute",bottom:1,right:2,fontSize:8,color:intensity>0.4?"rgba(255,255,255,0.8)":"#7F77DD"}}>{hits}</span>}
+                      <div key={i} onClick={()=>cnt>0&&setDashPopup({date:ds,hits})} style={{aspectRatio:"1",borderRadius:4,display:"flex",alignItems:"center",justifyContent:"center",background:cnt>0?`rgba(127,119,221,${intensity})`:"#f5f5f3",border:isToday?"1.5px solid #7F77DD":"none",cursor:cnt>0?"pointer":"default",position:"relative",flexDirection:"column"}}>
+                        <span style={{fontSize:10,color:cnt>0&&intensity>0.4?"#fff":isToday?"#7F77DD":"#999",fontWeight:isToday?600:400,lineHeight:1}}>{d}</span>
+                        {cnt>0&&<span style={{fontSize:8,color:intensity>0.4?"rgba(255,255,255,0.85)":"#7F77DD",lineHeight:1,marginTop:1}}>{cnt}</span>}
                       </div>
                     );
                   })}
                 </div>
                 <div style={{marginTop:10,display:"flex",gap:6,alignItems:"center"}}>
                   <span style={{fontSize:10,color:"#bbb"}}>Less</span>
-                  {[0.15,0.3,0.6,1].map((o,i)=><div key={i} style={{width:12,height:12,borderRadius:2,background:`rgba(127,119,221,${o})`}}/>)}
+                  {[0.15,0.3,0.6,0.9].map((o,i)=><div key={i} style={{width:12,height:12,borderRadius:2,background:`rgba(127,119,221,${o})`}}/>)}
                   <span style={{fontSize:10,color:"#bbb"}}>More</span>
                 </div>
               </div>
 
-              {/* Groups overview */}
+              {/* Groups on dashboard — sorted by count, emoji + name + number only */}
               <div className="card">
                 <div style={{fontWeight:500,fontSize:14,marginBottom:12}}>Groups</div>
-                <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:320,overflowY:"auto"}}>
-                  {groups.map(g=>{
+                <div style={{display:"flex",flexDirection:"column",gap:0,maxHeight:340,overflowY:"auto"}}>
+                  {sortedGroups.map(g=>{
                     const cnt=groupMemberCount(g.name);
-                    const pct=contacts.length?Math.round(cnt/contacts.length*100):0;
                     return(
-                      <div key={g.id} onClick={()=>{setTab("groups");}} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 0",borderBottom:"0.5px solid #f0f0ee",cursor:"pointer"}}>
-                        <span style={{fontSize:16,width:24,textAlign:"center"}}>{groupIcon(g.name)}</span>
-                        <div style={{flex:1,minWidth:0}}>
-                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
-                            <span style={{fontSize:13,fontWeight:500}}>{g.name}</span>
-                            <span style={{fontSize:11,color:"#999"}}>{cnt}</span>
-                          </div>
-                          <div style={{height:3,background:"#f0f0ee",borderRadius:2,marginTop:4}}>
-                            <div style={{height:"100%",width:pct+"%",background:"#7F77DD",borderRadius:2}}/>
-                          </div>
-                        </div>
+                      <div key={g.id} onClick={()=>{setFilterGroup(g.name);setTab("contacts");}} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:"0.5px solid #f0f0ee",cursor:"pointer"}}>
+                        <span style={{fontSize:18,width:26,textAlign:"center",flexShrink:0}}>{groupIcon(g.name)}</span>
+                        <span style={{flex:1,fontSize:13}}>{g.name}</span>
+                        <span style={{fontSize:12,color:"#999",fontWeight:500}}>{cnt}</span>
                       </div>
                     );
                   })}
                 </div>
               </div>
             </div>
+
+            {/* Date popup */}
+            {dashPopup&&(
+              <div className="overlay" onClick={()=>setDashPopup(null)}>
+                <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:360}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                    <span style={{fontWeight:500,fontSize:15}}>{fmtDate(dashPopup.date)}</span>
+                    <button onClick={()=>setDashPopup(null)} style={{border:"none",background:"none",fontSize:18,color:"#999"}}>×</button>
+                  </div>
+                  {dashPopup.hits.map(h=>(
+                    <div key={h.id} style={{borderBottom:"0.5px solid #f0f0ee",paddingBottom:10,marginBottom:10}}>
+                      <div style={{fontWeight:500,fontSize:13,cursor:"pointer",color:"#7F77DD"}} onClick={()=>{const c=contacts.find(c=>c.id===(h.personId||h.person_id));if(c){setSelected(c);setTab("contacts");setDashPopup(null);}}}>
+                        {contactName(h.personId||h.person_id)}
+                      </div>
+                      {h.type&&h.type!=="Manual"&&<span className="tag" style={{marginTop:3,display:"inline-block"}}>{h.type}</span>}
+                      {h.note&&<div style={{fontSize:12,color:"#555",marginTop:4,lineHeight:1.5}}>{h.note}</div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* ── CONTACTS ── */}
+        {/* CONTACTS */}
         {tab==="contacts"&&!selected&&(
           <div>
             <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
@@ -461,12 +478,12 @@ function App(){
                   </div>
                 );
               })}
-              {filteredContacts.length>100&&<p style={{fontSize:12,color:"#999",textAlign:"center"}}>Showing first 100 — refine search to see more.</p>}
+              {filteredContacts.length>100&&<p style={{fontSize:12,color:"#999",textAlign:"center",marginTop:8}}>Showing first 100 — refine search to see more.</p>}
             </div>
           </div>
         )}
 
-        {/* ── CONTACT DETAIL ── */}
+        {/* CONTACT DETAIL */}
         {tab==="contacts"&&selected&&(
           <div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
@@ -513,40 +530,46 @@ function App(){
           </div>
         )}
 
-        {/* ── INTERACTIONS ── */}
+        {/* INTERACTIONS — full notes visible, date above name */}
         {tab==="interactions"&&(
           <div>
             <div style={{fontSize:12,color:"#999",marginBottom:12}}>{interactions.length} total interactions</div>
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              {interactions.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,150).map(i=>(
+              {interactions.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,200).map(i=>(
                 <div key={i.id} className="card" style={{padding:"12px 16px"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:11,color:"#999",marginBottom:3}}>{fmtDate(i.date)}{i.type&&i.type!=="Manual"&&<span style={{marginLeft:6}} className="tag">{i.type}</span>}</div>
-                      <div style={{fontWeight:500,fontSize:13,cursor:"pointer",marginBottom:i.note?4:0}} onClick={()=>{const c=contacts.find(c=>c.id===(i.personId||i.person_id));if(c){setSelected(c);setTab("contacts");}}}>{contactName(i.personId||i.person_id)}</div>
-                      {i.note&&<div style={{fontSize:13,color:"#444",lineHeight:1.5}}>{i.note}</div>}
+                      <div style={{fontSize:11,color:"#999",marginBottom:3}}>
+                        {fmtDate(i.date)}
+                        {i.type&&i.type!=="Manual"&&<span className="tag" style={{marginLeft:6}}>{i.type}</span>}
+                      </div>
+                      <div style={{fontWeight:500,fontSize:14,cursor:"pointer",color:"#1a1a1a",marginBottom:i.note?5:0}} onClick={()=>{const c=contacts.find(c=>c.id===(i.personId||i.person_id));if(c){setSelected(c);setTab("contacts");}}}>
+                        {contactName(i.personId||i.person_id)}
+                      </div>
+                      {i.note&&<div style={{fontSize:13,color:"#444",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{i.note}</div>}
                     </div>
-                    <button className="danger" onClick={()=>deleteInteraction(i)} style={{flexShrink:0}}>🗑</button>
+                    <button className="danger" onClick={()=>deleteInteraction(i)} style={{flexShrink:0,marginTop:2}}>🗑</button>
                   </div>
                 </div>
               ))}
-              {interactions.length>150&&<p style={{fontSize:12,color:"#999",textAlign:"center"}}>Showing 150 most recent.</p>}
+              {interactions.length>200&&<p style={{fontSize:12,color:"#999",textAlign:"center"}}>Showing 200 most recent.</p>}
             </div>
           </div>
         )}
 
-        {/* ── GROUPS ── */}
+        {/* GROUPS — sorted by count, emoji + name + number */}
         {tab==="groups"&&(
           <div>
             <div style={{fontSize:12,color:"#999",marginBottom:12}}>{groups.length} groups</div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:10}}>
-              {groups.map(g=>{
+            <div style={{display:"flex",flexDirection:"column",gap:0}}>
+              {sortedGroups.map(g=>{
                 const cnt=groupMemberCount(g.name);
                 return(
-                  <div key={g.id} className="card" onClick={()=>{setFilterGroup(g.name);setTab("contacts");}} style={{cursor:"pointer",padding:"16px",textAlign:"center"}}>
-                    <div style={{fontSize:28,marginBottom:8}}>{groupIcon(g.name)}</div>
-                    <div style={{fontWeight:500,fontSize:14,marginBottom:4}}>{g.name}</div>
-                    <div style={{fontSize:12,color:"#999"}}>{cnt} {cnt===1?"person":"people"}</div>
+                  <div key={g.id} onClick={()=>{setFilterGroup(g.name);setTab("contacts");}} style={{display:"flex",alignItems:"center",gap:14,padding:"12px 16px",background:"#fff",borderBottom:"0.5px solid #f0f0ee",cursor:"pointer",borderRadius:0}}>
+                    <span style={{fontSize:22,width:30,textAlign:"center",flexShrink:0}}>{groupIcon(g.name)}</span>
+                    <span style={{flex:1,fontSize:14,fontWeight:500}}>{g.name}</span>
+                    <span style={{fontSize:13,color:"#999"}}>{cnt} people</span>
+                    <span style={{color:"#ccc",fontSize:16}}>›</span>
                   </div>
                 );
               })}
@@ -554,7 +577,7 @@ function App(){
           </div>
         )}
 
-        {/* ── OVERLAP ── */}
+        {/* OVERLAP */}
         {tab==="overlap"&&(
           <div>
             <div className="card" style={{marginBottom:16}}>
@@ -578,7 +601,7 @@ function App(){
           </div>
         )}
 
-        {/* ── CALENDAR ── */}
+        {/* CALENDAR */}
         {tab==="calendar"&&(
           <div>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,flexWrap:"wrap",gap:8}}>
@@ -602,10 +625,10 @@ function App(){
                     const hits=intsOnDate(ds);
                     const isToday=new Date().toDateString()===new Date(ds+"T00:00:00").toDateString();
                     return(
-                      <div key={i} style={{minHeight:58,background:"#fff",border:"0.5px solid #e5e5e2",borderRadius:8,padding:"5px 6px"}}>
+                      <div key={i} style={{minHeight:64,background:"#fff",border:"0.5px solid #e5e5e2",borderRadius:8,padding:"5px 6px"}}>
                         <div style={{fontSize:11,fontWeight:isToday?600:400,color:isToday?"#7F77DD":"#999",marginBottom:3}}>{d}</div>
-                        {hits.slice(0,2).map(h=><div key={h.id} style={{fontSize:9,background:"#EEEDFE",color:"#3C3489",borderRadius:3,padding:"1px 4px",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{contactName(h.personId||h.person_id)}</div>)}
-                        {hits.length>2&&<div style={{fontSize:9,color:"#999"}}>+{hits.length-2}</div>}
+                        {hits.slice(0,3).map(h=><div key={h.id} style={{fontSize:9,background:"#EEEDFE",color:"#3C3489",borderRadius:3,padding:"1px 4px",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{contactName(h.personId||h.person_id)}</div>)}
+                        {hits.length>3&&<div style={{fontSize:9,color:"#999"}}>+{hits.length-3}</div>}
                       </div>
                     );
                   })}
@@ -630,7 +653,12 @@ function App(){
                         </div>
                         <div style={{flex:1}}>
                           {hits.length===0&&<span style={{fontSize:12,color:"#999"}}>No interactions</span>}
-                          {hits.map(h=><div key={h.id} style={{fontSize:13,marginBottom:4}}><span style={{fontWeight:500,cursor:"pointer"}} onClick={()=>{const c=contacts.find(c=>c.id===(h.personId||h.person_id));if(c){setSelected(c);setTab("contacts");}}}>{contactName(h.personId||h.person_id)}</span>{h.note&&<span style={{color:"#666"}}> — {h.note}</span>}</div>)}
+                          {hits.map(h=>(
+                            <div key={h.id} style={{marginBottom:6}}>
+                              <span style={{fontWeight:500,fontSize:13,cursor:"pointer",color:"#1a1a1a"}} onClick={()=>{const c=contacts.find(c=>c.id===(h.personId||h.person_id));if(c){setSelected(c);setTab("contacts");}}}>{contactName(h.personId||h.person_id)}</span>
+                              {h.note&&<div style={{fontSize:12,color:"#666",lineHeight:1.5}}>{h.note}</div>}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     );
@@ -642,7 +670,7 @@ function App(){
         )}
       </div>
 
-      {/* ADD CONTACT MODAL */}
+      {/* ADD CONTACT */}
       {showAddContact&&(
         <div className="overlay">
           <div className="modal">
@@ -665,7 +693,7 @@ function App(){
         </div>
       )}
 
-      {/* ADD INTERACTION MODAL */}
+      {/* ADD INTERACTION */}
       {showAddInteraction&&(
         <div className="overlay">
           <div className="modal">
