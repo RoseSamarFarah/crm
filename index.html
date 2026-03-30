@@ -41,15 +41,32 @@ const MONTHS=["January","February","March","April","May","June","July","August",
 const DAYS=["Mo","Tu","We","Th","Fr","Sa","Su"];
 
 const GROUP_ICONS={
-  "Beirut":"🇱🇧","Boston":"⚾","Bridgespan":"🌉","California":"🌴","Climate":"☀️",
-  "Colombia":"🇨🇴","CrossBoundary":"🌐","Dubai":"🇦🇪","Duke":"🔵","Egypt":"🇪🇬",
-  "Gems":"💎","Goldman Sachs":"♠️","HBS":"📕","India":"🇮🇳","Infrastructure":"🏗️",
-  "Investment Banking":"🤝","Investors":"📉","Jusoor":"❤️","London":"🇬🇧",
-  "Morgan Stanley":"💙","New York":"🏙️","Paris":"🇫🇷",
-  "Philanthropy and Nonprofits":"🤍","Private Equity":"⚒️","Sacred Heart":"🌹",
-  "Saudi Arabia":"🇸🇦","Singapore":"🇸🇬","Syria":"🇸🇾","Venture":"🚀","Washington DC":"🏛️"
+  "Beirut":{type:"flag",code:"lb"},"Boston":{type:"emoji",e:"⚾"},
+  "Bridgespan":{type:"emoji",e:"🌉"},"California":{type:"emoji",e:"🌴"},
+  "Climate":{type:"emoji",e:"☀️"},"Colombia":{type:"flag",code:"co"},
+  "CrossBoundary":{type:"emoji",e:"🌐"},"Dubai":{type:"flag",code:"ae"},
+  "Duke":{type:"emoji",e:"🔵"},"Egypt":{type:"flag",code:"eg"},
+  "Gems":{type:"emoji",e:"💎"},"Goldman Sachs":{type:"emoji",e:"♠️"},
+  "HBS":{type:"emoji",e:"📕"},"India":{type:"flag",code:"in"},
+  "Infrastructure":{type:"emoji",e:"🏗️"},"Investment Banking":{type:"emoji",e:"🤝"},
+  "Investors":{type:"emoji",e:"📉"},"Jusoor":{type:"emoji",e:"❤️"},
+  "London":{type:"flag",code:"gb"},"Morgan Stanley":{type:"emoji",e:"💙"},
+  "New York":{type:"emoji",e:"🏙️"},"Paris":{type:"flag",code:"fr"},
+  "Philanthropy and Nonprofits":{type:"emoji",e:"🤍"},"Private Equity":{type:"emoji",e:"⚒️"},
+  "Sacred Heart":{type:"emoji",e:"🌹"},"Saudi Arabia":{type:"flag",code:"sa"},
+  "Singapore":{type:"flag",code:"sg"},"Syria":{type:"flag",code:"sy"},
+  "Venture":{type:"emoji",e:"🚀"},"Washington DC":{type:"emoji",e:"🏛️"}
 };
-const groupIcon=name=>GROUP_ICONS[name]||"🏷️";
+const groupIcon=name=>{
+  const g=GROUP_ICONS[name];
+  if(!g)return{type:"emoji",e:"🏷️"};
+  return g;
+};
+const GroupIcon=({name,size=22})=>{
+  const g=groupIcon(name);
+  if(g.type==="flag")return<img src={`https://flagcdn.com/${size}x${Math.round(size*0.75)}/${g.code}.png`} style={{width:size,height:Math.round(size*0.75),objectFit:"cover",borderRadius:2,flexShrink:0}} alt={name}/>;
+  return<span style={{fontSize:size,lineHeight:1}}>{g.e}</span>;
+};
 
 function parseCSV(text){
   const lines=text.split(/\r?\n/);if(!lines.length)return[];
@@ -299,8 +316,12 @@ function App(){
   const dashCells=Array(dcoff).fill(null).concat(Array.from({length:dcdim},(_,i)=>i+1));
   while(dashCells.length%7!==0)dashCells.push(null);
 
-  const totalInts=interactions.length;
-  const uniqueContactsInteracted=useMemo(()=>new Set(interactions.map(i=>i.personId||i.person_id)).size,[interactions]);
+  const mostRecentInt=useMemo(()=>{
+    if(!interactions.length)return null;
+    const sorted=[...interactions].sort((a,b)=>b.date.localeCompare(a.date));
+    const i=sorted[0];
+    return{...i,cName:contacts.find(c=>c.id===(i.personId||i.person_id))?.name||"Unknown"};
+  },[interactions,contacts]);
 
   if(showSettings)return(
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#f5f5f3"}}>
@@ -364,13 +385,20 @@ function App(){
               {[
                 {num:contacts.length,label:"Total contacts",color:"#7F77DD"},
                 {num:groups.length,label:"Total groups",color:"#1D9E75"},
-                {num:uniqueContactsInteracted,label:"People ever interacted with",color:"#378ADD"},
               ].map((s,i)=>(
                 <div key={i} className="card" style={{textAlign:"center",padding:"20px 16px"}}>
                   <div style={{fontSize:36,fontWeight:700,color:s.color,lineHeight:1}}>{s.num}</div>
                   <div style={{fontSize:11,color:"#999",marginTop:6}}>{s.label}</div>
                 </div>
               ))}
+              {mostRecentInt&&(
+                <div className="card" style={{padding:"14px 16px",cursor:"pointer"}} onClick={()=>{const c=contacts.find(c=>c.id===(mostRecentInt.personId||mostRecentInt.person_id));if(c){setSelected(c);setTab("contacts");}}}>
+                  <div style={{fontSize:11,color:"#999",marginBottom:4}}>Most recent interaction</div>
+                  <div style={{fontWeight:600,fontSize:14,marginBottom:2}}>{mostRecentInt.cName}</div>
+                  <div style={{fontSize:11,color:"#999",marginBottom:mostRecentInt.note?4:0}}>{fmtDate(mostRecentInt.date)}</div>
+                  {mostRecentInt.note&&<div style={{fontSize:12,color:"#555",lineHeight:1.5,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:3,WebkitBoxOrient:"vertical"}}>{mostRecentInt.note}</div>}
+                </div>
+              )}
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,alignItems:"start"}}>
               {/* Dashboard heatmap calendar */}
@@ -530,28 +558,33 @@ function App(){
           </div>
         )}
 
-        {/* INTERACTIONS — full notes visible, date above name */}
         {tab==="interactions"&&(
           <div>
             <div style={{fontSize:12,color:"#999",marginBottom:12}}>{interactions.length} total interactions</div>
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              {interactions.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,200).map(i=>(
-                <div key={i.id} className="card" style={{padding:"12px 16px"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:11,color:"#999",marginBottom:3}}>
-                        {fmtDate(i.date)}
-                        {i.type&&i.type!=="Manual"&&<span className="tag" style={{marginLeft:6}}>{i.type}</span>}
-                      </div>
-                      <div style={{fontWeight:500,fontSize:14,cursor:"pointer",color:"#1a1a1a",marginBottom:i.note?5:0}} onClick={()=>{const c=contacts.find(c=>c.id===(i.personId||i.person_id));if(c){setSelected(c);setTab("contacts");}}}>
-                        {contactName(i.personId||i.person_id)}
-                      </div>
-                      {i.note&&<div style={{fontSize:13,color:"#444",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{i.note}</div>}
+              {interactions.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,200).map(i=>{
+                const [expanded,setExpanded]=React.useState(false);
+                return(
+                  <div key={i.id} className="card" style={{padding:"12px 16px"}}>
+                    <div style={{fontSize:11,color:"#999",marginBottom:3}}>
+                      {fmtDate(i.date)}
+                      {i.type&&i.type!=="Manual"&&<span className="tag" style={{marginLeft:6}}>{i.type}</span>}
                     </div>
-                    <button className="danger" onClick={()=>deleteInteraction(i)} style={{flexShrink:0,marginTop:2}}>🗑</button>
+                    <div style={{fontWeight:500,fontSize:14,cursor:"pointer",color:"#1a1a1a",marginBottom:i.note?5:0}} onClick={()=>{const c=contacts.find(c=>c.id===(i.personId||i.person_id));if(c){setSelected(c);setTab("contacts");}}}>
+                      {contactName(i.personId||i.person_id)}
+                    </div>
+                    {i.note&&<div style={{fontSize:13,color:"#444",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{i.note}</div>}
+                    {expanded&&(
+                      <div style={{marginTop:10,paddingTop:10,borderTop:"0.5px solid #f0f0ee",display:"flex",justifyContent:"flex-end"}}>
+                        <button className="danger" onClick={()=>{deleteInteraction(i);setExpanded(false);}}>🗑 Delete this interaction</button>
+                      </div>
+                    )}
+                    <div style={{marginTop:6,textAlign:"right"}}>
+                      <button onClick={()=>setExpanded(e=>!e)} style={{fontSize:11,color:"#bbb",border:"none",background:"none",padding:"2px 0",cursor:"pointer"}}>{expanded?"▲ less":"▼ options"}</button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {interactions.length>200&&<p style={{fontSize:12,color:"#999",textAlign:"center"}}>Showing 200 most recent.</p>}
             </div>
           </div>
@@ -566,7 +599,7 @@ function App(){
                 const cnt=groupMemberCount(g.name);
                 return(
                   <div key={g.id} onClick={()=>{setFilterGroup(g.name);setTab("contacts");}} style={{display:"flex",alignItems:"center",gap:14,padding:"12px 16px",background:"#fff",borderBottom:"0.5px solid #f0f0ee",cursor:"pointer",borderRadius:0}}>
-                    <span style={{fontSize:22,width:30,textAlign:"center",flexShrink:0}}>{groupIcon(g.name)}</span>
+                    <span style={{width:30,textAlign:"center",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}><GroupIcon name={g.name} size={22}/></span>
                     <span style={{flex:1,fontSize:14,fontWeight:500}}>{g.name}</span>
                     <span style={{fontSize:13,color:"#999"}}>{cnt} people</span>
                     <span style={{color:"#ccc",fontSize:16}}>›</span>
