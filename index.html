@@ -111,6 +111,30 @@ function DatePicker({value,onChange,placeholder="Pick a date"}){
   );
 }
 
+function InteractionCard({i,contacts,contactName,deleteInteraction,setSelected,setTab}){
+  const [expanded,setExpanded]=useState(false);
+  return(
+    <div className="card" style={{padding:"12px 16px"}}>
+      <div style={{fontSize:11,color:"#999",marginBottom:3}}>
+        {fmtDate(i.date)}
+        {i.type&&i.type!=="Manual"&&<span className="tag" style={{marginLeft:6}}>{i.type}</span>}
+      </div>
+      <div style={{fontWeight:500,fontSize:14,cursor:"pointer",color:"#1a1a1a",marginBottom:i.note?5:0}} onClick={()=>{const c=contacts.find(c=>c.id===(i.personId||i.person_id));if(c){setSelected(c);setTab("contacts");}}}>
+        {contactName(i.personId||i.person_id)}
+      </div>
+      {i.note&&<div style={{fontSize:13,color:"#444",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{i.note}</div>}
+      {expanded&&(
+        <div style={{marginTop:10,paddingTop:10,borderTop:"0.5px solid #f0f0ee",display:"flex",justifyContent:"flex-end"}}>
+          <button className="danger" onClick={()=>{deleteInteraction(i);setExpanded(false);}}>🗑 Delete this interaction</button>
+        </div>
+      )}
+      <div style={{marginTop:4,textAlign:"right"}}>
+        <button onClick={()=>setExpanded(e=>!e)} style={{fontSize:11,color:"#bbb",border:"none",background:"none",padding:"2px 0",cursor:"pointer"}}>{expanded?"▲ hide":"▼ options"}</button>
+      </div>
+    </div>
+  );
+}
+
 function App(){
   const [contacts,setContacts]=useState([]);
   const [interactions,setInteractions]=useState([]);
@@ -562,29 +586,9 @@ function App(){
           <div>
             <div style={{fontSize:12,color:"#999",marginBottom:12}}>{interactions.length} total interactions</div>
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              {interactions.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,200).map(i=>{
-                const [expanded,setExpanded]=React.useState(false);
-                return(
-                  <div key={i.id} className="card" style={{padding:"12px 16px"}}>
-                    <div style={{fontSize:11,color:"#999",marginBottom:3}}>
-                      {fmtDate(i.date)}
-                      {i.type&&i.type!=="Manual"&&<span className="tag" style={{marginLeft:6}}>{i.type}</span>}
-                    </div>
-                    <div style={{fontWeight:500,fontSize:14,cursor:"pointer",color:"#1a1a1a",marginBottom:i.note?5:0}} onClick={()=>{const c=contacts.find(c=>c.id===(i.personId||i.person_id));if(c){setSelected(c);setTab("contacts");}}}>
-                      {contactName(i.personId||i.person_id)}
-                    </div>
-                    {i.note&&<div style={{fontSize:13,color:"#444",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{i.note}</div>}
-                    {expanded&&(
-                      <div style={{marginTop:10,paddingTop:10,borderTop:"0.5px solid #f0f0ee",display:"flex",justifyContent:"flex-end"}}>
-                        <button className="danger" onClick={()=>{deleteInteraction(i);setExpanded(false);}}>🗑 Delete this interaction</button>
-                      </div>
-                    )}
-                    <div style={{marginTop:6,textAlign:"right"}}>
-                      <button onClick={()=>setExpanded(e=>!e)} style={{fontSize:11,color:"#bbb",border:"none",background:"none",padding:"2px 0",cursor:"pointer"}}>{expanded?"▲ less":"▼ options"}</button>
-                    </div>
-                  </div>
-                );
-              })}
+              {interactions.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,200).map(i=>(
+                <InteractionCard key={i.id} i={i} contacts={contacts} contactName={contactName} deleteInteraction={deleteInteraction} setSelected={setSelected} setTab={setTab}/>
+              ))}
               {interactions.length>200&&<p style={{fontSize:12,color:"#999",textAlign:"center"}}>Showing 200 most recent.</p>}
             </div>
           </div>
