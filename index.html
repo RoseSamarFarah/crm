@@ -3,30 +3,36 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>My CRM</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<title>Collective</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a1a;font-size:14px;-webkit-font-smoothing:antialiased;}
-input,select,textarea,button{font-family:inherit;font-size:13px;}
+body{font-family:'Inter',sans-serif;background:#0a1628;color:#1a1a1a;font-size:14px;-webkit-font-smoothing:antialiased;}
+input,select,textarea,button{font-family:'Inter',sans-serif;font-size:13px;}
 input,select,textarea{background:#f3f3f0;border:0.5px solid #ddd;border-radius:8px;padding:8px 12px;color:#1a1a1a;outline:none;width:100%;}
-input:focus,select:focus,textarea:focus{border-color:#7F77DD;}
+input:focus,select:focus,textarea:focus{border-color:#4f6ef7;}
 button{cursor:pointer;border-radius:8px;padding:6px 14px;border:0.5px solid #ddd;background:#f3f3f0;color:#1a1a1a;}
 button:hover{background:#ebebea;}
-button.primary{background:#7F77DD;border-color:#7F77DD;color:#fff;font-weight:500;}
+button.primary{background:#4f6ef7;border-color:#4f6ef7;color:#fff;font-weight:500;}
+button.primary:hover{background:#3d5ce0;}
 button.green{background:#1D9E75;border-color:#1D9E75;color:#fff;}
 button.blue{background:#378ADD;border-color:#378ADD;color:#fff;}
 button.red-btn{background:#D85A30;border-color:#D85A30;color:#fff;}
 button.danger{background:none;border:none;color:#c00;font-size:11px;padding:2px 4px;opacity:0.7;}
 button.danger:hover{opacity:1;}
-.card{background:#fff;border:0.5px solid #e5e5e2;border-radius:12px;padding:16px 20px;}
-.tag{font-size:10px;background:#f3f3f0;border:0.5px solid #ddd;border-radius:20px;padding:2px 8px;color:#666;white-space:nowrap;display:inline-block;}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:200;}
-.modal{background:#fff;border-radius:12px;padding:20px;width:420px;max-height:90vh;overflow-y:auto;}
-.status-bar{font-size:12px;padding:6px 20px;background:#f3f3f0;border-bottom:0.5px solid #e5e5e2;color:#666;}
+.card{background:#fff;border:none;border-radius:14px;padding:16px 20px;}
+.tag{font-size:10px;background:#eef0ff;border-radius:20px;padding:2px 8px;color:#4f6ef7;white-space:nowrap;display:inline-block;font-weight:500;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:200;}
+.modal{background:#fff;border-radius:14px;padding:20px;width:420px;max-height:90vh;overflow-y:auto;}
+.status-bar{font-size:12px;padding:6px 20px;background:#0d1e36;color:#8899bb;}
+.nav-btn{cursor:pointer;border-radius:8px;padding:6px 14px;border:none;background:transparent;color:rgba(255,255,255,0.6);font-family:'Inter',sans-serif;font-size:13px;font-weight:400;}
+.nav-btn.active{background:rgba(255,255,255,0.15);color:#fff;font-weight:500;}
+.nav-btn:hover{background:rgba(255,255,255,0.1);color:#fff;}
 </style>
 </head>
 <body>
@@ -35,15 +41,13 @@ button.danger:hover{opacity:1;}
 const {useState,useMemo,useRef,useCallback,useEffect}=React;
 
 const initials=n=>(n||"").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-const avatarColor=n=>{const h=[...(n||"")].reduce((a,c)=>a+c.charCodeAt(0),0);return["#7F77DD","#1D9E75","#D85A30","#378ADD","#D4537E","#639922","#BA7517"][h%7];};
+const avatarColor=n=>{const h=[...(n||"")].reduce((a,c)=>a+c.charCodeAt(0),0);return["#4f6ef7","#1D9E75","#D85A30","#7F77DD","#D4537E","#639922","#BA7517"][h%7];};
 const fmtDate=d=>{if(!d)return"";const dt=new Date(d+"T00:00:00");return isNaN(dt)?d:dt.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});};
 const daysAgo=d=>{if(!d)return"";const n=Math.floor((Date.now()-new Date(d+"T00:00:00"))/86400000);return n===0?"Today":n===1?"Yesterday":`${n}d ago`;};
 const toIso=d=>{
   if(!d)return"";
-  const t=new Date(d);
-  if(!isNaN(t))return t.toISOString().slice(0,10);
-  const clean=d.replace(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+/i,"");
-  const t2=new Date(clean);
+  const t=new Date(d);if(!isNaN(t))return t.toISOString().slice(0,10);
+  const t2=new Date(d.replace(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+/i,""));
   if(!isNaN(t2))return t2.toISOString().slice(0,10);
   return"";
 };
@@ -54,39 +58,29 @@ const GROUP_ICONS={
   "Beirut":"🌲","Boston":"⚾","Bridgespan":"🌉","California":"🌴","Climate":"☀️",
   "Colombia":"☕","CrossBoundary":"🌐","Dubai":"✈️","Duke":"🔵","Egypt":"🐪",
   "Gems":"💎","Goldman Sachs":"♠️","HBS":"📕","India":"🕌","Infrastructure":"🏗️",
-  "Investment Banking":"🤝","Investors":"📈","Jusoor":"❤️","London":"🎡",
-  "Morgan Stanley":"💙","New York":"🗽","Paris":"🗼",
-  "Philanthropy and Nonprofits":"🤲","Private Equity":"💼",
-  "Sacred Heart":"🌹","Saudi Arabia":"🕋","Singapore":"🌴",
+  "Investment Banking":"🤝","Investors":"📈","Jusoor":"❤️","London":"👑",
+  "Morgan Stanley":"💙","New York":"🗽","Paris":"🍷",
+  "Philanthropy and Nonprofits":"🤍","Private Equity":"💼",
+  "Sacred Heart":"🌹","Saudi Arabia":"🌙","Singapore":"🌴",
   "Syria":"💚","Venture":"🚀","Washington DC":"🏛️"
 };
 function GIcon({name,size=20}){
-  const e=GROUP_ICONS[name]||"🏷️";
-  return <span style={{fontSize:size,lineHeight:1}}>{e}</span>;
+  return <span style={{fontSize:size,lineHeight:1}}>{GROUP_ICONS[name]||"🏷️"}</span>;
 }
 
 function parseCSV(text){
-  const rows=[];
-  let cur="",inQ=false,fields=[],i=0;
+  const rows=[];let cur="",inQ=false,fields=[],i=0;
   while(i<text.length){
     const c=text[i];
-    if(c==='"'){
-      if(inQ&&text[i+1]==='"'){cur+='"';i+=2;continue;}
-      inQ=!inQ;i++;continue;
-    }
+    if(c==='"'){if(inQ&&text[i+1]==='"'){cur+='"';i+=2;continue;}inQ=!inQ;i++;continue;}
     if(c===','&&!inQ){fields.push(cur);cur="";i++;continue;}
-    if((c==='\n'||c==='\r')&&!inQ){
-      if(c==='\r'&&text[i+1]==='\n')i++;
-      fields.push(cur);rows.push(fields);fields=[];cur="";i++;continue;
-    }
+    if((c==='\n'||c==='\r')&&!inQ){if(c==='\r'&&text[i+1]==='\n')i++;fields.push(cur);rows.push(fields);fields=[];cur="";i++;continue;}
     cur+=c;i++;
   }
   if(cur||fields.length){fields.push(cur);rows.push(fields);}
   if(!rows.length)return[];
   const headers=rows[0].map(h=>h.trim());
-  return rows.slice(1).filter(r=>r.some(f=>f.trim())).map(r=>{
-    const obj={};headers.forEach((h,i)=>{obj[h]=(r[i]||"").trim();});return obj;
-  });
+  return rows.slice(1).filter(r=>r.some(f=>f.trim())).map(r=>{const obj={};headers.forEach((h,i)=>{obj[h]=(r[i]||"").trim();});return obj;});
 }
 
 function MiniCalendar({value,onChange}){
@@ -101,7 +95,7 @@ function MiniCalendar({value,onChange}){
   const isS=d=>sel&&sel.getFullYear()===view.y&&sel.getMonth()===view.m&&sel.getDate()===d;
   const pick=d=>{if(!d)return;onChange(`${view.y}-${String(view.m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`);};
   return(
-    <div style={{background:"#fff",border:"0.5px solid #ddd",borderRadius:12,padding:12,width:240,position:"absolute",zIndex:50,top:"calc(100% + 4px)",left:0,boxShadow:"0 4px 16px rgba(0,0,0,0.1)"}}>
+    <div style={{background:"#fff",border:"0.5px solid #ddd",borderRadius:12,padding:12,width:240,position:"absolute",zIndex:50,top:"calc(100% + 4px)",left:0,boxShadow:"0 4px 20px rgba(0,0,0,0.15)"}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
         <button onClick={()=>setView(v=>v.m===0?{y:v.y-1,m:11}:{y:v.y,m:v.m-1})} style={{background:"none",border:"none",fontSize:16,padding:"2px 6px"}}>‹</button>
         <span style={{fontSize:13,fontWeight:500}}>{MONTHS[view.m]} {view.y}</span>
@@ -109,7 +103,7 @@ function MiniCalendar({value,onChange}){
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
         {DAYS.map(d=><div key={d} style={{textAlign:"center",fontSize:11,color:"#999",padding:"2px 0"}}>{d}</div>)}
-        {cells.map((d,i)=><div key={i} onClick={()=>pick(d)} style={{textAlign:"center",fontSize:12,padding:"4px 2px",borderRadius:6,cursor:d?"pointer":"default",background:isS(d)?"#7F77DD":isT(d)?"#f3f3f0":"transparent",color:isS(d)?"#fff":d?"#1a1a1a":"transparent",fontWeight:isS(d)||isT(d)?500:400}}>{d||""}</div>)}
+        {cells.map((d,i)=><div key={i} onClick={()=>pick(d)} style={{textAlign:"center",fontSize:12,padding:"4px 2px",borderRadius:6,cursor:d?"pointer":"default",background:isS(d)?"#4f6ef7":isT(d)?"#f0f3ff":"transparent",color:isS(d)?"#fff":d?"#1a1a1a":"transparent",fontWeight:isS(d)||isT(d)?500:400}}>{d||""}</div>)}
       </div>
     </div>
   );
@@ -133,8 +127,7 @@ function IntCard({i,contacts,contactName,deleteInteraction,setSelected,setTab}){
         {fmtDate(i.date)}
         {i.type&&i.type!=="Manual"&&<span className="tag" style={{marginLeft:6}}>{i.type}</span>}
       </div>
-      <div style={{fontWeight:500,fontSize:14,cursor:"pointer",marginBottom:i.note?5:0,color:"#1a1a1a"}}
-        onClick={()=>{const c=contacts.find(c=>c.id===(i.personId||i.person_id));if(c){setSelected(c);setTab("contacts");}}}>
+      <div style={{fontWeight:500,fontSize:14,cursor:"pointer",marginBottom:i.note?5:0,color:"#1a1a1a"}} onClick={()=>{const c=contacts.find(c=>c.id===(i.personId||i.person_id));if(c){setSelected(c);setTab("contacts");}}}>
         {contactName(i.personId||i.person_id)}
       </div>
       {i.note&&<div style={{fontSize:13,color:"#444",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{i.note}</div>}
@@ -155,8 +148,7 @@ function App(){
   const [selected,setSelected]=useState(null);
   const [search,setSearch]=useState("");
   const [filterGroup,setFilterGroup]=useState("All");
-  const [overlapA,setOverlapA]=useState("");
-  const [overlapB,setOverlapB]=useState("");
+  const [filterGroup2,setFilterGroup2]=useState("All");
   const [calDate,setCalDate]=useState(new Date());
   const [calMode,setCalMode]=useState("month");
   const [dashCalDate,setDashCalDate]=useState(new Date());
@@ -165,6 +157,7 @@ function App(){
   const [showAddInteraction,setShowAddInteraction]=useState(false);
   const [showAddGroup,setShowAddGroup]=useState(false);
   const [showSettings,setShowSettings]=useState(false);
+  const [showEditGroups,setShowEditGroups]=useState(false);
   const [newGroup,setNewGroup]=useState("");
   const [aiLoading,setAiLoading]=useState(false);
   const [recording,setRecording]=useState(false);
@@ -187,8 +180,7 @@ function App(){
   const sbFetch=useCallback(async(url,key,path,method="GET",body=null)=>{
     const h={"apikey":key,"Authorization":"Bearer "+key,"Content-Type":"application/json"};
     if(method==="POST")h["Prefer"]="resolution=merge-duplicates";
-    const opts={method,headers:h};
-    if(body)opts.body=JSON.stringify(body);
+    const opts={method,headers:h};if(body)opts.body=JSON.stringify(body);
     const r=await fetch(url+"/rest/v1/"+path,opts);
     if(!r.ok){const e=await r.text();throw new Error(e);}
     return method==="GET"?r.json():null;
@@ -204,9 +196,7 @@ function App(){
       ]);
       setContacts(c.map(r=>({...r,groupIds:(r.group_ids||"").split(",").filter(Boolean)})));
       setInteractions(i.map(r=>({...r,personId:r.person_id,note:r.note||r.notes||""})));
-      setGroups(g);
-      if(g.length){setOverlapA(g[0]?.name||"");setOverlapB(g[1]?.name||"");}
-      setImported(true);
+      setGroups(g);setImported(true);
       setSyncStatus(`Loaded ${c.length} contacts · ${i.length} interactions · ${g.length} groups ✓`);
     }catch(e){setSyncStatus("Load failed: "+e.message);}
     setLoadingDB(false);
@@ -241,21 +231,10 @@ function App(){
       const read=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsText(f);});
       let pf=null,intf=null,gf=null;
       files.forEach(f=>{const n=f.name.toLowerCase();if(n.includes("people"))pf=f;else if(n.includes("interaction"))intf=f;else if(n.includes("group"))gf=f;});
-      if(gf){
-        const rows=parseCSV(await read(gf));
-        const gl=rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name,description:r.Description||"",icon:r.Icon||"",peopleIds:(r.People||"").split(",").map(s=>s.trim()).filter(Boolean)})).filter(g=>g.name);
-        setGroups(gl);
-        if(gl.length){setOverlapA(gl[0]?.name||"");setOverlapB(gl[1]?.name||"");}
-      }
-      if(pf){
-        const rows=parseCSV(await read(pf));
-        setContacts(rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name||"",email:r.Email||r.email||"",phone:r.Phone||r.phone||"",notes:r.Notes||r.notes||"",dateMet:toIso(r["Date Met"]||""),groupIds:(r.Groups||r.groups||"").split(",").map(s=>s.trim()).filter(Boolean),company:"",role:"",location:""})).filter(c=>c.name));
-      }
-      if(intf){
-        const rows=parseCSV(await read(intf));
-        setInteractions(rows.map(r=>({id:r["Id"]||r["id"],personId:r["Person Id"]||r["person_id"]||"",type:r["Type"]||r["type"]||"",date:toIso(r["Date"]||r["date"]||""),note:r["Notes"]||r["notes"]||""})).filter(i=>i.personId&&i.id));
-      }
-      setImported(true);setSyncStatus("CSVs imported ✓ — hit Sync to save to Supabase");
+      if(gf){const rows=parseCSV(await read(gf));const gl=rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name,description:r.Description||"",icon:r.Icon||"",peopleIds:(r.People||"").split(",").map(s=>s.trim()).filter(Boolean)})).filter(g=>g.name);setGroups(gl);}
+      if(pf){const rows=parseCSV(await read(pf));setContacts(rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name||"",email:r.Email||r.email||"",phone:r.Phone||r.phone||"",notes:r.Notes||r.notes||"",dateMet:toIso(r["Date Met"]||""),groupIds:(r.Groups||r.groups||"").split(",").map(s=>s.trim()).filter(Boolean),company:"",role:"",location:""})).filter(c=>c.name));}
+      if(intf){const rows=parseCSV(await read(intf));setInteractions(rows.map(r=>({id:r["Id"]||r["id"],personId:r["Person Id"]||r["person_id"]||"",type:r["Type"]||r["type"]||"",date:toIso(r["Date"]||r["date"]||""),note:r["Notes"]||r["notes"]||""})).filter(i=>i.personId&&i.id));}
+      setImported(true);setSyncStatus("CSVs imported ✓ — hit Sync to save");
     }catch(e){alert("Import failed: "+e.message);}
     e.target.value="";
   };
@@ -270,13 +249,11 @@ function App(){
   const filteredContacts=useMemo(()=>contacts.filter(c=>{
     const q=search.toLowerCase();
     const cg=contactGroups(c);
-    return(!q||c.name.toLowerCase().includes(q)||(c.email||"").toLowerCase().includes(q)||(c.company||"").toLowerCase().includes(q))&&(filterGroup==="All"||cg.includes(filterGroup));
-  }),[contacts,search,filterGroup,contactGroups]);
-
-  const overlapContacts=useMemo(()=>{
-    if(!overlapA||!overlapB)return[];
-    return contacts.filter(c=>{const cg=contactGroups(c);return cg.includes(overlapA)&&cg.includes(overlapB);});
-  },[contacts,overlapA,overlapB,contactGroups]);
+    const mq=!q||c.name.toLowerCase().includes(q)||(c.email||"").toLowerCase().includes(q)||(c.company||"").toLowerCase().includes(q);
+    const mg1=filterGroup==="All"||cg.includes(filterGroup);
+    const mg2=filterGroup2==="All"||cg.includes(filterGroup2);
+    return mq&&mg1&&mg2;
+  }),[contacts,search,filterGroup,filterGroup2,contactGroups]);
 
   const contactInts=useCallback(cId=>interactions.filter(i=>(i.personId||i.person_id)===cId).sort((a,b)=>b.date.localeCompare(a.date)),[interactions]);
   const lastInteraction=useCallback(cId=>{const hits=interactions.filter(i=>(i.personId||i.person_id)===cId).map(i=>i.date).filter(Boolean);return hits.length?hits.sort().reverse()[0]:null;},[interactions]);
@@ -289,8 +266,7 @@ function App(){
     if(!interactions.length)return null;
     const i=[...interactions].sort((a,b)=>b.date.localeCompare(a.date))[0];
     const c=contacts.find(c=>c.id===(i.personId||i.person_id));
-    const cg=c?contactGroups(c):[];
-    return{...i,cName:c?.name||"Unknown",cGroups:cg,contactObj:c};
+    return{...i,cName:c?.name||"Unknown",cGroups:c?contactGroups(c):[],contactObj:c};
   },[interactions,contacts,contactGroups]);
 
   const top3=useMemo(()=>{
@@ -365,16 +341,18 @@ function App(){
   const coff=(new Date(cy,cm,1).getDay()+6)%7,cdim=new Date(cy,cm+1,0).getDate();
   const calCells=Array(coff).fill(null).concat(Array.from({length:cdim},(_,i)=>i+1));
   while(calCells.length%7!==0)calCells.push(null);
-
   const dcy=dashCalDate.getFullYear(),dcm=dashCalDate.getMonth();
   const dcoff=(new Date(dcy,dcm,1).getDay()+6)%7,dcdim=new Date(dcy,dcm+1,0).getDate();
   const dashCells=Array(dcoff).fill(null).concat(Array.from({length:dcdim},(_,i)=>i+1));
   while(dashCells.length%7!==0)dashCells.push(null);
 
+  const cardStyle={background:"#fff",borderRadius:14,padding:"16px 20px"};
+  const overlapping=filterGroup!=="All"&&filterGroup2!=="All"&&filterGroup!==filterGroup2;
+
   if(showSettings)return(
-    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#f5f5f3"}}>
-      <div className="card" style={{maxWidth:460,width:"100%"}}>
-        <div style={{fontSize:16,fontWeight:500,marginBottom:4}}>Supabase connection</div>
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#0a1628"}}>
+      <div style={{...cardStyle,maxWidth:460,width:"100%"}}>
+        <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>Supabase connection</div>
         <p style={{fontSize:12,color:"#666",marginBottom:20,lineHeight:1.6}}>Credentials saved in your browser only.</p>
         <div style={{fontSize:12,color:"#666",marginBottom:4}}>Project URL</div>
         <input type="password" placeholder="https://xxxx.supabase.co" value={sbUrlInput} onChange={e=>setSbUrlInput(e.target.value)} style={{marginBottom:12}}/>
@@ -390,13 +368,13 @@ function App(){
   );
 
   if(!imported)return(
-    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#f5f5f3"}}>
-      <div className="card" style={{maxWidth:480,width:"100%",textAlign:"center"}}>
-        <div style={{fontSize:28,marginBottom:8}}>📂</div>
-        <div style={{fontSize:17,fontWeight:500,marginBottom:8}}>My CRM</div>
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#0a1628"}}>
+      <div style={{...cardStyle,maxWidth:480,width:"100%",textAlign:"center"}}>
+        <div style={{fontSize:28,marginBottom:8}}>✦</div>
+        <div style={{fontSize:20,fontWeight:700,marginBottom:6}}>Collective</div>
         <p style={{fontSize:13,color:"#666",marginBottom:20,lineHeight:1.6}}>Import your Mogul CSVs, or connect Supabase if you've synced before.</p>
         <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
-          <label style={{padding:"8px 20px",borderRadius:8,background:"#7F77DD",cursor:"pointer",fontSize:14,color:"#fff",fontWeight:500}}>
+          <label style={{padding:"8px 20px",borderRadius:8,background:"#4f6ef7",cursor:"pointer",fontSize:14,color:"#fff",fontWeight:500}}>
             📂 Select CSV files<input type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/>
           </label>
           <button onClick={()=>{setSbUrlInput(sbUrl);setSbKeyInput(sbKey);setShowSettings(true);}}>Connect Supabase</button>
@@ -408,35 +386,36 @@ function App(){
   );
 
   return(
-    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",background:"#f5f5f3"}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 20px",borderBottom:"0.5px solid #e5e5e2",background:"#fff",flexWrap:"wrap",gap:8}}>
+    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",background:"#0a1628"}}>
+      {/* Top nav */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 20px",flexWrap:"wrap",gap:8}}>
         <div style={{display:"flex",alignItems:"baseline",gap:10}}>
-          <span style={{fontSize:17,fontWeight:600}}>My CRM</span>
-          <span style={{fontSize:12,color:"#999"}}>{contacts.length} contacts · {groups.length} groups</span>
+          <span style={{fontSize:18,fontWeight:700,color:"#fff",letterSpacing:"-0.3px"}}>Collective</span>
+          <span style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>{contacts.length} contacts</span>
         </div>
-        <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
-          {["dashboard","contacts","interactions","groups","overlap","calendar"].map(t=>(
-            <button key={t} onClick={()=>{setTab(t);setSelected(null);}} style={{background:tab===t?"#7F77DD":"#f3f3f0",color:tab===t?"#fff":"#1a1a1a",border:"0.5px solid "+(tab===t?"#7F77DD":"#ddd"),fontWeight:tab===t?500:400,padding:"5px 12px"}}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
+        <div style={{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
+          {["dashboard","contacts","interactions","groups","calendar"].map(t=>(
+            <button key={t} className={`nav-btn${tab===t?" active":""}`} onClick={()=>{setTab(t);setSelected(null);setShowEditGroups(false);}}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
           ))}
-          <button className="green" style={{padding:"5px 12px"}} onClick={()=>setShowAddContact(true)}>+ Contact</button>
-          <button className="blue" style={{padding:"5px 12px"}} onClick={()=>setShowAddInteraction(true)}>+ Interaction</button>
-          <label style={{padding:"5px 10px",borderRadius:8,border:"0.5px solid #ddd",background:"#f3f3f0",cursor:"pointer",fontSize:13}}>📂<input type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/></label>
-          <button style={{padding:"5px 10px"}} onClick={()=>{setSbUrlInput(sbUrl);setSbKeyInput(sbKey);setShowSettings(true);}}>⚙️</button>
-          <button className="red-btn" style={{padding:"5px 12px",opacity:!sbUrl?0.4:1}} onClick={syncToSupabase} disabled={!sbUrl||syncing}>{syncing?"Syncing…":"☁️ Sync"}</button>
+          <button onClick={()=>setShowAddContact(true)} style={{padding:"5px 12px",borderRadius:8,background:"#4f6ef7",border:"none",color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer"}}>+ Contact</button>
+          <button onClick={()=>setShowAddInteraction(true)} style={{padding:"5px 12px",borderRadius:8,background:"rgba(255,255,255,0.12)",border:"none",color:"#fff",fontSize:13,cursor:"pointer"}}>+ Interaction</button>
+          <label style={{padding:"5px 10px",borderRadius:8,background:"rgba(255,255,255,0.08)",border:"none",cursor:"pointer",fontSize:13,color:"rgba(255,255,255,0.6)"}}>📂<input type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/></label>
+          <button onClick={()=>{setSbUrlInput(sbUrl);setSbKeyInput(sbKey);setShowSettings(true);}} style={{padding:"5px 10px",borderRadius:8,background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.6)",cursor:"pointer"}}>⚙️</button>
+          <button onClick={syncToSupabase} disabled={!sbUrl||syncing} style={{padding:"5px 12px",borderRadius:8,background:sbUrl?"#D85A30":"rgba(255,255,255,0.08)",border:"none",color:"#fff",fontSize:13,cursor:"pointer",opacity:!sbUrl?0.4:1}}>{syncing?"Syncing…":"☁️ Sync"}</button>
         </div>
       </div>
       {syncStatus&&<div className="status-bar">{syncStatus}</div>}
 
-      <div style={{flex:1,padding:20,maxWidth:1000,width:"100%",margin:"0 auto"}}>
+      <div style={{flex:1,padding:"16px 20px",maxWidth:1000,width:"100%",margin:"0 auto"}}>
 
+        {/* DASHBOARD */}
         {tab==="dashboard"&&(
           <div>
-            {/* Top 3 most interacted */}
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16}}>
               {top3.map(({id,cnt,contact},idx)=>{
                 const cg=contactGroups(contact);
                 return(
-                  <div key={id} className="card" style={{padding:"14px 16px",cursor:"pointer",display:"flex",flexDirection:"column",gap:8}} onClick={()=>{setSelected(contact);setTab("contacts");}}>
+                  <div key={id} style={cardStyle} onClick={()=>{setSelected(contact);setTab("contacts");}} className="card" style={{...cardStyle,cursor:"pointer",display:"flex",flexDirection:"column",gap:8,padding:"14px 16px"}}>
                     <div style={{fontSize:11,color:"#999"}}>#{idx+1} most interactions</div>
                     <div style={{display:"flex",alignItems:"center",gap:10}}>
                       <div style={{width:36,height:36,borderRadius:"50%",background:avatarColor(contact.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(contact.name)}</div>
@@ -451,36 +430,34 @@ function App(){
               })}
             </div>
 
-            {/* Stats row */}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:24}}>
-              <div className="card" style={{padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
-                <div style={{fontSize:36,fontWeight:700,color:"#7F77DD",lineHeight:1}}>{contacts.length}</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:20}}>
+              <div style={{...cardStyle,textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+                <div style={{fontSize:36,fontWeight:700,color:"#4f6ef7",lineHeight:1}}>{contacts.length}</div>
                 <div style={{fontSize:11,color:"#999",marginTop:6}}>Total contacts</div>
               </div>
-              <div className="card" style={{padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
+              <div style={{...cardStyle,textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
                 <div style={{fontSize:36,fontWeight:700,color:"#1D9E75",lineHeight:1}}>{groups.length}</div>
                 <div style={{fontSize:11,color:"#999",marginTop:6}}>Total groups</div>
               </div>
               {mostRecentInt?(
-                <div className="card" style={{padding:"14px 16px",cursor:"pointer",display:"flex",flexDirection:"column",justifyContent:"center"}} onClick={()=>{if(mostRecentInt.contactObj){setSelected(mostRecentInt.contactObj);setTab("contacts");}}}>
+                <div style={{...cardStyle,cursor:"pointer",display:"flex",flexDirection:"column",justifyContent:"center",padding:"14px 16px"}} onClick={()=>{if(mostRecentInt.contactObj){setSelected(mostRecentInt.contactObj);setTab("contacts");}}}>
                   <div style={{fontSize:11,color:"#999",marginBottom:6}}>Most recent interaction</div>
                   <div style={{fontWeight:600,fontSize:15,marginBottom:3}}>{mostRecentInt.cName}</div>
                   <div style={{fontSize:12,color:"#999",marginBottom:mostRecentInt.cGroups.length?6:0}}>{fmtDate(mostRecentInt.date)}</div>
                   {mostRecentInt.cGroups.length>0&&<div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{mostRecentInt.cGroups.slice(0,3).map(g=><span key={g} className="tag">{g}</span>)}</div>}
                 </div>
               ):(
-                <div className="card" style={{padding:"20px 16px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <div style={{...cardStyle,display:"flex",alignItems:"center",justifyContent:"center"}}>
                   <div style={{fontSize:11,color:"#999"}}>No interactions yet</div>
                 </div>
               )}
             </div>
 
-            {/* Calendar + Groups */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,alignItems:"start"}}>
-              <div className="card">
+              <div style={cardStyle}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-                  <span style={{fontWeight:500,fontSize:14}}>{MONTHS[dcm]} {dcy}</span>
-                  <div style={{display:"flex",gap:6}}>
+                  <span style={{fontWeight:600,fontSize:14}}>{MONTHS[dcm]} {dcy}</span>
+                  <div style={{display:"flex",gap:4}}>
                     <button onClick={()=>setDashCalDate(d=>new Date(d.getFullYear(),d.getMonth()-1,1))} style={{padding:"2px 8px",fontSize:15}}>‹</button>
                     <button onClick={()=>setDashCalDate(d=>new Date(d.getFullYear(),d.getMonth()+1,1))} style={{padding:"2px 8px",fontSize:15}}>›</button>
                   </div>
@@ -497,26 +474,26 @@ function App(){
                     const op=cnt===0?0:cnt===1?0.25:cnt<=3?0.55:0.9;
                     return(
                       <div key={i} onClick={()=>cnt>0&&setDashPopup({date:ds,hits})}
-                        style={{aspectRatio:"1",borderRadius:4,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:cnt>0?`rgba(127,119,221,${op})`:"#f5f5f3",border:isToday?"1.5px solid #7F77DD":"none",cursor:cnt>0?"pointer":"default"}}>
-                        <span style={{fontSize:10,color:cnt>0&&op>0.4?"#fff":isToday?"#7F77DD":"#999",fontWeight:isToday?600:400}}>{d}</span>
-                        {cnt>0&&<span style={{fontSize:8,color:op>0.4?"rgba(255,255,255,0.8)":"#7F77DD"}}>{cnt}</span>}
+                        style={{aspectRatio:"1",borderRadius:4,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:cnt>0?`rgba(79,110,247,${op})`:"#f5f5f3",border:isToday?"1.5px solid #4f6ef7":"none",cursor:cnt>0?"pointer":"default"}}>
+                        <span style={{fontSize:10,color:cnt>0&&op>0.4?"#fff":isToday?"#4f6ef7":"#999",fontWeight:isToday?600:400}}>{d}</span>
+                        {cnt>0&&<span style={{fontSize:8,color:op>0.4?"rgba(255,255,255,0.8)":"#4f6ef7"}}>{cnt}</span>}
                       </div>
                     );
                   })}
                 </div>
                 <div style={{marginTop:10,display:"flex",gap:6,alignItems:"center"}}>
                   <span style={{fontSize:10,color:"#bbb"}}>Less</span>
-                  {[0.15,0.3,0.6,0.9].map((o,i)=><div key={i} style={{width:12,height:12,borderRadius:2,background:`rgba(127,119,221,${o})`}}/>)}
+                  {[0.15,0.3,0.6,0.9].map((o,i)=><div key={i} style={{width:12,height:12,borderRadius:2,background:`rgba(79,110,247,${o})`}}/>)}
                   <span style={{fontSize:10,color:"#bbb"}}>More</span>
                 </div>
               </div>
-              <div className="card">
-                <div style={{fontWeight:500,fontSize:14,marginBottom:12}}>Groups</div>
+              <div style={cardStyle}>
+                <div style={{fontWeight:600,fontSize:14,marginBottom:12}}>Groups</div>
                 <div style={{display:"flex",flexDirection:"column",gap:0,maxHeight:340,overflowY:"auto"}}>
                   {sortedGroups.map(g=>{
                     const cnt=groupMemberCount(g.name);
                     return(
-                      <div key={g.id} onClick={()=>{setFilterGroup(g.name);setTab("contacts");}} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:"0.5px solid #f0f0ee",cursor:"pointer"}}>
+                      <div key={g.id} onClick={()=>{setFilterGroup(g.name);setFilterGroup2("All");setTab("contacts");}} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:"0.5px solid #f0f0ee",cursor:"pointer"}}>
                         <span style={{width:24,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><GIcon name={g.name} size={18}/></span>
                         <span style={{flex:1,fontSize:13}}>{g.name}</span>
                         <span style={{fontSize:12,color:"#999",fontWeight:500}}>{cnt}</span>
@@ -531,12 +508,12 @@ function App(){
               <div className="overlay" onClick={()=>setDashPopup(null)}>
                 <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:380}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-                    <span style={{fontWeight:500,fontSize:15}}>{fmtDate(dashPopup.date)}</span>
+                    <span style={{fontWeight:600,fontSize:15}}>{fmtDate(dashPopup.date)}</span>
                     <button onClick={()=>setDashPopup(null)} style={{border:"none",background:"none",fontSize:20,color:"#999",lineHeight:1}}>×</button>
                   </div>
                   {dashPopup.hits.map(h=>(
                     <div key={h.id} style={{borderBottom:"0.5px solid #f0f0ee",paddingBottom:10,marginBottom:10}}>
-                      <div style={{fontWeight:500,fontSize:13,color:"#7F77DD",cursor:"pointer",marginBottom:2}} onClick={()=>{const c=contacts.find(c=>c.id===(h.personId||h.person_id));if(c){setSelected(c);setTab("contacts");setDashPopup(null);}}}>
+                      <div style={{fontWeight:500,fontSize:13,color:"#4f6ef7",cursor:"pointer",marginBottom:2}} onClick={()=>{const c=contacts.find(c=>c.id===(h.personId||h.person_id));if(c){setSelected(c);setTab("contacts");setDashPopup(null);}}}>
                         {contactName(h.personId||h.person_id)}
                       </div>
                       {h.type&&h.type!=="Manual"&&<span className="tag">{h.type}</span>}
@@ -549,22 +526,30 @@ function App(){
           </div>
         )}
 
+        {/* CONTACTS */}
         {tab==="contacts"&&!selected&&(
           <div>
-            <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+            <div style={{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap",alignItems:"center"}}>
               <input placeholder="Search name, email…" value={search} onChange={e=>setSearch(e.target.value)} style={{flex:1,minWidth:180}}/>
-              <select value={filterGroup} onChange={e=>setFilterGroup(e.target.value)} style={{width:"auto"}}>
-                <option>All</option>
+              <select value={filterGroup} onChange={e=>setFilterGroup(e.target.value)} style={{width:"auto",background:"#fff"}}>
+                <option value="All">All groups</option>
                 {allGroupNames.map(g=><option key={g}>{g}</option>)}
               </select>
+              <select value={filterGroup2} onChange={e=>setFilterGroup2(e.target.value)} style={{width:"auto",background:"#fff"}}>
+                <option value="All">+ add filter</option>
+                {allGroupNames.map(g=><option key={g}>{g}</option>)}
+              </select>
+              {(filterGroup!=="All"||filterGroup2!=="All")&&<button onClick={()=>{setFilterGroup("All");setFilterGroup2("All");}} style={{fontSize:12,padding:"5px 10px",color:"#999"}}>✕ clear</button>}
             </div>
-            <div style={{fontSize:12,color:"#999",marginBottom:8}}>{filteredContacts.length} of {contacts.length} shown</div>
-            <div style={{display:"flex",flexDirection:"column",gap:5}}>
+            <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginBottom:10}}>
+              {overlapping?`${filteredContacts.length} contacts in both "${filterGroup}" and "${filterGroup2}"`:`${filteredContacts.length} of ${contacts.length} shown`}
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
               {filteredContacts.slice(0,100).map(c=>{
                 const cg=contactGroups(c);const li=lastInteraction(c.id);
                 return(
-                  <div key={c.id} onClick={()=>setSelected(c)} className="card" style={{cursor:"pointer",display:"flex",alignItems:"center",gap:12,padding:"9px 14px"}}>
-                    <div style={{width:34,height:34,borderRadius:"50%",background:avatarColor(c.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:500,color:"#fff",flexShrink:0}}>{initials(c.name)}</div>
+                  <div key={c.id} onClick={()=>setSelected(c)} style={{...cardStyle,cursor:"pointer",display:"flex",alignItems:"center",gap:12,padding:"10px 14px"}}>
+                    <div style={{width:34,height:34,borderRadius:"50%",background:avatarColor(c.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(c.name)}</div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontWeight:500,fontSize:13}}>{c.name}</div>
                       {c.email&&<div style={{fontSize:11,color:"#999",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.email}</div>}
@@ -577,31 +562,52 @@ function App(){
                   </div>
                 );
               })}
-              {filteredContacts.length>100&&<p style={{fontSize:12,color:"#999",textAlign:"center",marginTop:8}}>Showing first 100 — refine search to see more.</p>}
+              {filteredContacts.length>100&&<p style={{fontSize:12,color:"rgba(255,255,255,0.4)",textAlign:"center",marginTop:8}}>Showing first 100 — refine search to see more.</p>}
             </div>
           </div>
         )}
 
+        {/* CONTACT DETAIL */}
         {tab==="contacts"&&selected&&(
           <div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-              <button onClick={()=>{setSelected(null);setDetailNote("");}}>← Back</button>
-              <button className="danger" onClick={()=>deleteContact(selected)}>🗑 Delete contact</button>
+              <button onClick={()=>{setSelected(null);setDetailNote("");setShowEditGroups(false);}} style={{background:"rgba(255,255,255,0.1)",border:"none",color:"#fff",padding:"6px 14px",borderRadius:8,cursor:"pointer"}}>← Back</button>
+              <button className="danger" onClick={()=>deleteContact(selected)}>🗑 Delete</button>
             </div>
-            <div className="card">
+            <div style={cardStyle}>
               <div style={{display:"flex",gap:14,alignItems:"flex-start",marginBottom:16}}>
-                <div style={{width:48,height:48,borderRadius:"50%",background:avatarColor(selected.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:500,color:"#fff",flexShrink:0}}>{initials(selected.name)}</div>
+                <div style={{width:48,height:48,borderRadius:"50%",background:avatarColor(selected.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(selected.name)}</div>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:17,fontWeight:500}}>{selected.name}</div>
+                  <div style={{fontSize:17,fontWeight:600}}>{selected.name}</div>
                   {selected.email&&<div style={{fontSize:12,color:"#666",marginTop:2}}>{selected.email}</div>}
                   {selected.phone&&<div style={{fontSize:12,color:"#666"}}>{selected.phone}</div>}
                   {selected.dateMet&&<div style={{fontSize:11,color:"#999",marginTop:2}}>Met {fmtDate(selected.dateMet)}</div>}
-                  <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:8}}>{contactGroups(selected).map(g=><span key={g} className="tag">{g}</span>)}</div>
+                  <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:8,alignItems:"center"}}>
+                    {contactGroups(selected).map(g=><span key={g} className="tag">{g}</span>)}
+                    <button onClick={()=>setShowEditGroups(s=>!s)} style={{fontSize:11,padding:"2px 8px",borderRadius:20,border:"0.5px solid #4f6ef7",color:"#4f6ef7",background:"none",cursor:"pointer"}}>✏️ edit groups</button>
+                  </div>
+                  {showEditGroups&&(
+                    <div style={{marginTop:10,padding:10,background:"#f5f5f3",borderRadius:8}}>
+                      <div style={{fontSize:11,color:"#999",marginBottom:8}}>Tap to add or remove</div>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                        {allGroupNames.map(g=>{
+                          const has=contactGroups(selected).includes(g);
+                          const toggle=()=>{
+                            const newIds=has?(selected.groupIds||[]).filter(id=>{const grp=groups.find(x=>x.id===id||x.name===id);return grp?grp.name!==g:id!==g;}): [...(selected.groupIds||[]),groups.find(x=>x.name===g)?.id||g];
+                            const updated={...selected,groupIds:newIds};
+                            setSelected(updated);setContacts(cs=>cs.map(c=>c.id===selected.id?updated:c));
+                            if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+selected.id,"PATCH",{group_ids:newIds.join(",")}).catch(()=>{});
+                          };
+                          return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",borderRadius:20,border:"0.5px solid "+(has?"#4f6ef7":"#ddd"),background:has?"#4f6ef7":"#fff",color:has?"#fff":"#666",cursor:"pointer"}}>{g}</button>;
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-              {selected.notes&&<div style={{borderTop:"0.5px solid #e5e5e2",paddingTop:12,marginBottom:14}}><div style={{fontSize:12,fontWeight:500,color:"#666",marginBottom:4}}>Notes</div><div style={{fontSize:13,whiteSpace:"pre-wrap",lineHeight:1.6}}>{selected.notes}</div></div>}
-              <div style={{borderTop:"0.5px solid #e5e5e2",paddingTop:12,marginBottom:14}}>
-                <div style={{fontSize:12,fontWeight:500,color:"#666",marginBottom:6}}>Add note</div>
+              {selected.notes&&<div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}><div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:4}}>Notes</div><div style={{fontSize:13,whiteSpace:"pre-wrap",lineHeight:1.6,color:"#333"}}>{selected.notes}</div></div>}
+              <div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}>
+                <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:6}}>Add note</div>
                 <textarea value={detailNote} onChange={e=>setDetailNote(e.target.value)} placeholder="Type, upload image, or record…" rows={3} style={{resize:"vertical",marginBottom:8}}/>
                 <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
                   <button className="primary" onClick={saveDetailNote} disabled={!detailNote.trim()}>Save</button>
@@ -611,12 +617,12 @@ function App(){
                   {aiLoading&&<span style={{fontSize:12,color:"#999"}}>Processing…</span>}
                 </div>
               </div>
-              <div style={{borderTop:"0.5px solid #e5e5e2",paddingTop:12}}>
-                <div style={{fontSize:12,fontWeight:500,color:"#666",marginBottom:8}}>Interactions ({contactInts(selected.id).length})</div>
+              <div style={{borderTop:"0.5px solid #eee",paddingTop:12}}>
+                <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:8}}>Interactions ({contactInts(selected.id).length})</div>
                 {contactInts(selected.id).slice(0,30).map(i=>(
-                  <div key={i.id} style={{marginBottom:10,paddingBottom:10,borderBottom:"0.5px solid #f0f0ee"}}>
+                  <div key={i.id} style={{marginBottom:10,paddingBottom:10,borderBottom:"0.5px solid #f5f5f3"}}>
                     <div style={{fontSize:11,color:"#999",marginBottom:2}}>{fmtDate(i.date)}{i.type&&i.type!=="Manual"&&` · ${i.type}`}</div>
-                    {i.note&&<div style={{fontSize:13,lineHeight:1.5}}>{i.note}</div>}
+                    {i.note&&<div style={{fontSize:13,lineHeight:1.5,color:"#333"}}>{i.note}</div>}
                   </div>
                 ))}
                 {contactInts(selected.id).length===0&&<p style={{fontSize:13,color:"#999"}}>No interactions yet.</p>}
@@ -625,26 +631,28 @@ function App(){
           </div>
         )}
 
+        {/* INTERACTIONS */}
         {tab==="interactions"&&(
           <div>
-            <div style={{fontSize:12,color:"#999",marginBottom:12}}>{interactions.length} total interactions</div>
+            <div style={{fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:12}}>{interactions.length} total interactions</div>
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {interactions.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,200).map(i=>(
                 <IntCard key={i.id} i={i} contacts={contacts} contactName={contactName} deleteInteraction={deleteInteraction} setSelected={setSelected} setTab={setTab}/>
               ))}
-              {interactions.length>200&&<p style={{fontSize:12,color:"#999",textAlign:"center"}}>Showing 200 most recent.</p>}
+              {interactions.length>200&&<p style={{fontSize:12,color:"rgba(255,255,255,0.4)",textAlign:"center"}}>Showing 200 most recent.</p>}
             </div>
           </div>
         )}
 
+        {/* GROUPS */}
         {tab==="groups"&&(
           <div>
-            <div style={{fontSize:12,color:"#999",marginBottom:12}}>{groups.length} groups</div>
-            <div style={{background:"#fff",borderRadius:12,border:"0.5px solid #e5e5e2",overflow:"hidden"}}>
+            <div style={{fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:12}}>{groups.length} groups</div>
+            <div style={{background:"#fff",borderRadius:14,overflow:"hidden"}}>
               {sortedGroups.map((g,idx)=>{
                 const cnt=groupMemberCount(g.name);
                 return(
-                  <div key={g.id} onClick={()=>{setFilterGroup(g.name);setTab("contacts");}} style={{display:"flex",alignItems:"center",gap:14,padding:"13px 18px",borderBottom:idx<sortedGroups.length-1?"0.5px solid #f0f0ee":"none",cursor:"pointer"}}>
+                  <div key={g.id} onClick={()=>{setFilterGroup(g.name);setFilterGroup2("All");setTab("contacts");}} style={{display:"flex",alignItems:"center",gap:14,padding:"13px 18px",borderBottom:idx<sortedGroups.length-1?"0.5px solid #f0f0ee":"none",cursor:"pointer"}}>
                     <span style={{width:28,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><GIcon name={g.name} size={22}/></span>
                     <span style={{flex:1,fontSize:14,fontWeight:500}}>{g.name}</span>
                     <span style={{fontSize:13,color:"#999"}}>{cnt} people</span>
@@ -656,45 +664,24 @@ function App(){
           </div>
         )}
 
-        {tab==="overlap"&&(
-          <div>
-            <div className="card" style={{marginBottom:16}}>
-              <div style={{fontSize:13,color:"#666",marginBottom:10}}>Show contacts in both groups:</div>
-              <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
-                <select value={overlapA} onChange={e=>setOverlapA(e.target.value)} style={{width:"auto"}}>{allGroupNames.map(g=><option key={g}>{g}</option>)}</select>
-                <span style={{fontWeight:500,fontSize:16}}>∩</span>
-                <select value={overlapB} onChange={e=>setOverlapB(e.target.value)} style={{width:"auto"}}>{allGroupNames.map(g=><option key={g}>{g}</option>)}</select>
-                <span style={{fontSize:12,color:"#999"}}>{overlapContacts.length} result{overlapContacts.length!==1?"s":""}</span>
-              </div>
-            </div>
-            {overlapContacts.length===0&&<p style={{color:"#999",textAlign:"center",marginTop:40}}>No contacts in both groups.</p>}
-            <div style={{display:"flex",flexDirection:"column",gap:5}}>
-              {overlapContacts.map(c=>(
-                <div key={c.id} onClick={()=>{setTab("contacts");setSelected(c);}} className="card" style={{cursor:"pointer",display:"flex",gap:12,alignItems:"center",padding:"9px 14px"}}>
-                  <div style={{width:34,height:34,borderRadius:"50%",background:avatarColor(c.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:500,color:"#fff",flexShrink:0}}>{initials(c.name)}</div>
-                  <div><div style={{fontWeight:500,fontSize:13}}>{c.name}</div>{c.email&&<div style={{fontSize:11,color:"#999"}}>{c.email}</div>}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
+        {/* CALENDAR */}
         {tab==="calendar"&&(
           <div>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,flexWrap:"wrap",gap:8}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <button onClick={prevMonth}>‹</button>
-                <span style={{fontWeight:500,fontSize:15}}>{MONTHS[cm]} {cy}</span>
-                <button onClick={nextMonth}>›</button>
+                <button onClick={prevMonth} style={{background:"rgba(255,255,255,0.1)",border:"none",color:"#fff",borderRadius:8,padding:"4px 10px",cursor:"pointer"}}>‹</button>
+                <span style={{fontWeight:600,fontSize:15,color:"#fff"}}>{MONTHS[cm]} {cy}</span>
+                <button onClick={nextMonth} style={{background:"rgba(255,255,255,0.1)",border:"none",color:"#fff",borderRadius:8,padding:"4px 10px",cursor:"pointer"}}>›</button>
               </div>
               <div style={{display:"flex",gap:6}}>
-                <button onClick={()=>setCalMode("month")} style={{background:calMode==="month"?"#7F77DD":"#f3f3f0",color:calMode==="month"?"#fff":"#1a1a1a",border:"0.5px solid "+(calMode==="month"?"#7F77DD":"#ddd")}}>Month</button>
-                <button onClick={()=>setCalMode("week")} style={{background:calMode==="week"?"#7F77DD":"#f3f3f0",color:calMode==="week"?"#fff":"#1a1a1a",border:"0.5px solid "+(calMode==="week"?"#7F77DD":"#ddd")}}>Week</button>
+                {["month","week"].map(m=><button key={m} onClick={()=>setCalMode(m)} style={{background:calMode===m?"#4f6ef7":"rgba(255,255,255,0.1)",border:"none",color:"#fff",borderRadius:8,padding:"5px 14px",cursor:"pointer",fontWeight:calMode===m?500:400,fontSize:13}}>{m.charAt(0).toUpperCase()+m.slice(1)}</button>)}
               </div>
             </div>
             {calMode==="month"&&(
               <div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",marginBottom:4}}>{DAYS.map(d=><div key={d} style={{textAlign:"center",fontSize:11,color:"#999",padding:"4px 0"}}>{d}</div>)}</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",marginBottom:6}}>
+                  {DAYS.map(d=><div key={d} style={{textAlign:"center",fontSize:11,color:"rgba(255,255,255,0.3)",padding:"4px 0"}}>{d}</div>)}
+                </div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))",gap:3}}>
                   {calCells.map((d,i)=>{
                     if(!d)return<div key={i}/>;
@@ -702,9 +689,9 @@ function App(){
                     const hits=intsOnDate(ds);
                     const isToday=new Date().toDateString()===new Date(ds+"T00:00:00").toDateString();
                     return(
-                      <div key={i} style={{minHeight:64,background:"#fff",border:"0.5px solid #e5e5e2",borderRadius:8,padding:"5px 6px"}}>
-                        <div style={{fontSize:11,fontWeight:isToday?600:400,color:isToday?"#7F77DD":"#999",marginBottom:3}}>{d}</div>
-                        {hits.slice(0,3).map(h=><div key={h.id} style={{fontSize:9,background:"#EEEDFE",color:"#3C3489",borderRadius:3,padding:"1px 4px",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{contactName(h.personId||h.person_id)}</div>)}
+                      <div key={i} style={{minHeight:64,background:"#fff",borderRadius:10,padding:"5px 6px",border:isToday?"2px solid #4f6ef7":"none"}}>
+                        <div style={{fontSize:11,fontWeight:isToday?700:400,color:isToday?"#4f6ef7":"#999",marginBottom:3}}>{d}</div>
+                        {hits.slice(0,3).map(h=><div key={h.id} style={{fontSize:9,background:"#eef0ff",color:"#4f6ef7",borderRadius:3,padding:"1px 4px",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{contactName(h.personId||h.person_id)}</div>)}
                         {hits.length>3&&<div style={{fontSize:9,color:"#999"}}>+{hits.length-3}</div>}
                       </div>
                     );
@@ -717,22 +704,22 @@ function App(){
               const mon=new Date(calDate);mon.setDate(calDate.getDate()-dow);
               const wdays=Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
               return(
-                <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
                   {wdays.map((d,i)=>{
                     const ds=d.toISOString().slice(0,10);
                     const hits=intsOnDate(ds);
                     const isToday=d.toDateString()===new Date().toDateString();
                     return(
-                      <div key={i} className="card" style={{display:"flex",gap:16,alignItems:"flex-start",padding:"9px 14px"}}>
+                      <div key={i} style={{...cardStyle,display:"flex",gap:16,alignItems:"flex-start",padding:"10px 14px"}}>
                         <div style={{minWidth:44,textAlign:"right"}}>
                           <div style={{fontSize:10,color:"#999"}}>{DAYS[i]}</div>
-                          <div style={{fontSize:18,fontWeight:isToday?600:400,color:isToday?"#7F77DD":"#1a1a1a"}}>{d.getDate()}</div>
+                          <div style={{fontSize:18,fontWeight:isToday?700:400,color:isToday?"#4f6ef7":"#1a1a1a"}}>{d.getDate()}</div>
                         </div>
                         <div style={{flex:1}}>
                           {hits.length===0&&<span style={{fontSize:12,color:"#999"}}>No interactions</span>}
                           {hits.map(h=>(
                             <div key={h.id} style={{marginBottom:6}}>
-                              <span style={{fontWeight:500,fontSize:13,cursor:"pointer"}} onClick={()=>{const c=contacts.find(c=>c.id===(h.personId||h.person_id));if(c){setSelected(c);setTab("contacts");}}}>{contactName(h.personId||h.person_id)}</span>
+                              <span style={{fontWeight:500,fontSize:13,cursor:"pointer",color:"#1a1a1a"}} onClick={()=>{const c=contacts.find(c=>c.id===(h.personId||h.person_id));if(c){setSelected(c);setTab("contacts");}}}>{contactName(h.personId||h.person_id)}</span>
                               {h.note&&<div style={{fontSize:12,color:"#666",lineHeight:1.5}}>{h.note}</div>}
                             </div>
                           ))}
@@ -750,13 +737,13 @@ function App(){
       {showAddContact&&(
         <div className="overlay">
           <div className="modal">
-            <div style={{fontSize:16,fontWeight:500,marginBottom:14}}>Add contact</div>
+            <div style={{fontSize:16,fontWeight:600,marginBottom:14}}>Add contact</div>
             {[["name","Name *"],["email","Email"],["phone","Phone"],["company","Company"],["role","Role"],["location","Location"]].map(([k,p])=>(
               <input key={k} placeholder={p} value={cf[k]||""} onChange={e=>setCf(f=>({...f,[k]:e.target.value}))} style={{marginBottom:8}}/>
             ))}
             <div style={{fontSize:12,color:"#666",marginBottom:6,marginTop:4}}>Groups</div>
             <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
-              {allGroupNames.map(g=><button key={g} onClick={()=>setCf(f=>({...f,groups:f.groups.includes(g)?f.groups.filter(x=>x!==g):[...f.groups,g]}))} style={{background:cf.groups.includes(g)?"#7F77DD":"#f3f3f0",color:cf.groups.includes(g)?"#fff":"#1a1a1a",border:"0.5px solid "+(cf.groups.includes(g)?"#7F77DD":"#ddd"),fontSize:12}}>{g}</button>)}
+              {allGroupNames.map(g=><button key={g} onClick={()=>setCf(f=>({...f,groups:f.groups.includes(g)?f.groups.filter(x=>x!==g):[...f.groups,g]}))} style={{fontSize:12,padding:"3px 10px",borderRadius:20,border:"0.5px solid "+(cf.groups.includes(g)?"#4f6ef7":"#ddd"),background:cf.groups.includes(g)?"#4f6ef7":"#fff",color:cf.groups.includes(g)?"#fff":"#666",cursor:"pointer"}}>{g}</button>)}
               <button onClick={()=>setShowAddGroup(true)} style={{fontSize:12}}>+ New</button>
             </div>
             {showAddGroup&&<div style={{display:"flex",gap:6,marginBottom:8}}><input placeholder="Group name" value={newGroup} onChange={e=>setNewGroup(e.target.value)} style={{flex:1}}/><button className="primary" onClick={()=>{if(newGroup.trim()){setGroups(g=>[...g,{id:"g_"+Date.now(),name:newGroup.trim(),peopleIds:[]}]);setNewGroup("");setShowAddGroup(false);}}}>Add</button></div>}
@@ -772,7 +759,7 @@ function App(){
       {showAddInteraction&&(
         <div className="overlay">
           <div className="modal">
-            <div style={{fontSize:16,fontWeight:500,marginBottom:14}}>Log interaction</div>
+            <div style={{fontSize:16,fontWeight:600,marginBottom:14}}>Log interaction</div>
             <div style={{fontSize:12,color:"#666",marginBottom:6}}>Date</div>
             <div style={{marginBottom:12,position:"relative"}}><DatePicker value={inf.date} onChange={v=>setInf(f=>({...f,date:v}))}/></div>
             <div style={{fontSize:12,color:"#666",marginBottom:6}}>People</div>
@@ -796,7 +783,6 @@ function App(){
     </div>
   );
 }
-
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
