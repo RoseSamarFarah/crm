@@ -301,6 +301,7 @@ function App(){
   },[interactions,contacts]);
 
   const mostRecentInt=null;
+  const top3=[];
 
   const deleteContact=c=>{
     if(!window.confirm(`Delete ${c.name}?`))return;
@@ -440,25 +441,6 @@ function App(){
         {/* DASHBOARD */}
         {tab==="dashboard"&&!selected&&(
           <div>
-            {/* Top 3 */}
-            <div className="card" style={{padding:"16px 20px",marginBottom:16}}>
-              <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:12}}>Most interactions</div>
-              {top3.length===0?<div style={{fontSize:12,color:"#ccc"}}>Loading…</div>:top3.map(({id,cnt,contact},idx)=>{
-                const cg=contactGroups(contact);
-                return(
-                  <div key={id} onClick={()=>{setSelected(contact);goTab("contacts");}} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0",borderBottom:idx<top3.length-1?"0.5px solid #f0f0ee":"none",cursor:"pointer"}}>
-                    <div style={{fontSize:13,fontWeight:600,color:"#ccc",width:20,textAlign:"center"}}>#{idx+1}</div>
-                    <div style={{width:32,height:32,borderRadius:"50%",background:avatarColor(contact.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(contact.name)}</div>
-                    <div style={{flex:1,minWidth:0}}>
-                      <span style={{fontWeight:600,fontSize:13}}>{contact.name}</span>
-                      {cg.length>0&&<span style={{fontSize:11,color:"#999",marginLeft:8}}>{cg.slice(0,2).join(" · ")}</span>}
-                    </div>
-                    <div style={{fontSize:12,fontWeight:500,color:"#4f6ef7",whiteSpace:"nowrap"}}>{cnt} interactions</div>
-                  </div>
-                );
-              })}
-            </div>
-
             {/* Stats */}
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16}}>
               {[{n:contacts.length,l:"Total contacts"},{n:groups.length,l:"Total groups"},{n:interactions.length,l:"Total interactions"}].map((s,i)=>(
