@@ -253,16 +253,7 @@ function App(){
     return method==="GET"?r.json():null;
   },[]);
 
-  const fetchAll=async(url,key,table)=>{
-    const PAGE=1000;let all=[],from=0;
-    while(true){
-      const r=await sbFetch(url,key,`${table}?select=*&order=date.desc&offset=${from}&limit=${PAGE}`);
-      all=[...all,...r];
-      if(r.length<PAGE)break;
-      from+=PAGE;
-    }
-    return all;
-  };
+  const callClaude=async(prompt)=>{
     const key=localStorage.getItem("anthropic_key")||anthropicKey||sbKey;
     if(!key)throw new Error("No API key");
     const resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
@@ -276,7 +267,7 @@ function App(){
     try{
       const [c,i,g]=await Promise.all([
         sbFetch(url,key,"contacts?select=*&order=name&limit=2000"),
-        fetchAll(url,key,"interactions"),
+        sbFetch(url,key,"interactions?select=*&order=date.desc&limit=9999"),
         sbFetch(url,key,"groups?select=*&order=name&limit=200")
       ]);
       setContacts(c.map(r=>({...r,groupIds:(r.group_ids||"").split(",").filter(Boolean)})));
