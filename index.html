@@ -6,33 +6,30 @@
 <title>Collective</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet"/>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Inter',sans-serif;background:#0a1628;color:#1a1a1a;font-size:14px;-webkit-font-smoothing:antialiased;}
-input,select,textarea,button{font-family:'Inter',sans-serif;font-size:13px;}
+body{font-family:'Inter',sans-serif!important;background:#0a1628;color:#1a1a1a;font-size:14px;-webkit-font-smoothing:antialiased;}
+input,select,textarea,button,label,span,div,p{font-family:'Inter',sans-serif!important;}
 input,select,textarea{background:#f3f3f0;border:0.5px solid #ddd;border-radius:8px;padding:8px 12px;color:#1a1a1a;outline:none;width:100%;}
 input:focus,select:focus,textarea:focus{border-color:#4f6ef7;}
 button{cursor:pointer;border-radius:8px;padding:6px 14px;border:0.5px solid #ddd;background:#f3f3f0;color:#1a1a1a;}
-button:hover{background:#ebebea;}
+button:hover{background:#e8e8e8;}
 button.primary{background:#4f6ef7;border-color:#4f6ef7;color:#fff;font-weight:500;}
 button.primary:hover{background:#3d5ce0;}
-button.green{background:#1D9E75;border-color:#1D9E75;color:#fff;}
-button.blue{background:#378ADD;border-color:#378ADD;color:#fff;}
-button.red-btn{background:#D85A30;border-color:#D85A30;color:#fff;}
 button.danger{background:none;border:none;color:#c00;font-size:11px;padding:2px 4px;opacity:0.7;}
 button.danger:hover{opacity:1;}
 .card{background:#fff;border:none;border-radius:14px;padding:16px 20px;}
 .tag{font-size:10px;background:#eef0ff;border-radius:20px;padding:2px 8px;color:#4f6ef7;white-space:nowrap;display:inline-block;font-weight:500;}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:200;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:200;}
 .modal{background:#fff;border-radius:14px;padding:20px;width:420px;max-height:90vh;overflow-y:auto;}
-.status-bar{font-size:12px;padding:6px 20px;background:#0d1e36;color:#8899bb;}
-.nav-btn{cursor:pointer;border-radius:8px;padding:6px 14px;border:none;background:transparent;color:rgba(255,255,255,0.6);font-family:'Inter',sans-serif;font-size:13px;font-weight:400;}
+.status-bar{font-size:12px;padding:6px 20px;background:#0d1e36;color:#8899bb;border-bottom:1px solid #1a2d4a;}
+.nav-btn{cursor:pointer;border-radius:8px;padding:6px 14px;border:none;background:transparent;color:rgba(255,255,255,0.55);font-size:13px;font-weight:400;}
 .nav-btn.active{background:rgba(255,255,255,0.15);color:#fff;font-weight:500;}
-.nav-btn:hover{background:rgba(255,255,255,0.1);color:#fff;}
+.nav-btn:hover{background:rgba(255,255,255,0.08);color:#fff;}
 </style>
 </head>
 <body>
@@ -54,6 +51,14 @@ const toIso=d=>{
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DAYS=["Mo","Tu","We","Th","Fr","Sa","Su"];
 
+const intColor=type=>{
+  const t=(type||"").toLowerCase();
+  if(t.includes("video")||t.includes("phone")||t.includes("call"))return{bg:"#dbeafe",text:"#1d4ed8"};
+  if(t.includes("email")||t.includes("note"))return{bg:"#dcfce7",text:"#15803d"};
+  if(t.includes("person")||t.includes("coffee")||t.includes("lunch")||t.includes("dinner")||t.includes("meeting"))return{bg:"#ede9fe",text:"#7c3aed"};
+  return{bg:"#f3f4f6",text:"#6b7280"};
+};
+
 const GROUP_ICONS={
   "Beirut":"🌲","Boston":"⚾","Bridgespan":"🌉","California":"🌴","Climate":"☀️",
   "Colombia":"☕","CrossBoundary":"🌐","Dubai":"✈️","Duke":"🔵","Egypt":"🐪",
@@ -64,9 +69,7 @@ const GROUP_ICONS={
   "Sacred Heart":"🌹","Saudi Arabia":"🌙","Singapore":"🌴",
   "Syria":"💚","Venture":"🚀","Washington DC":"🏛️"
 };
-function GIcon({name,size=20}){
-  return <span style={{fontSize:size,lineHeight:1}}>{GROUP_ICONS[name]||"🏷️"}</span>;
-}
+const GIcon=({name,size=20})=><span style={{fontSize:size,lineHeight:1}}>{GROUP_ICONS[name]||"🏷️"}</span>;
 
 function parseCSV(text){
   const rows=[];let cur="",inQ=false,fields=[],i=0;
@@ -121,11 +124,12 @@ function DatePicker({value,onChange,placeholder="Pick a date"}){
 
 function IntCard({i,contacts,contactName,deleteInteraction,setSelected,setTab}){
   const [showDel,setShowDel]=useState(false);
+  const col=intColor(i.type);
   return(
     <div className="card" style={{padding:"12px 16px"}}>
-      <div style={{fontSize:11,color:"#999",marginBottom:3}}>
+      <div style={{fontSize:11,color:"#999",marginBottom:3,display:"flex",alignItems:"center",gap:6}}>
         {fmtDate(i.date)}
-        {i.type&&i.type!=="Manual"&&<span className="tag" style={{marginLeft:6}}>{i.type}</span>}
+        {i.type&&i.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 8px",fontWeight:500}}>{i.type}</span>}
       </div>
       <div style={{fontWeight:500,fontSize:14,cursor:"pointer",marginBottom:i.note?5:0,color:"#1a1a1a"}} onClick={()=>{const c=contacts.find(c=>c.id===(i.personId||i.person_id));if(c){setSelected(c);setTab("contacts");}}}>
         {contactName(i.personId||i.person_id)}
@@ -145,6 +149,7 @@ function App(){
   const [groups,setGroups]=useState([]);
   const [imported,setImported]=useState(false);
   const [tab,setTab]=useState("dashboard");
+  const [prevTab,setPrevTab]=useState(null);
   const [selected,setSelected]=useState(null);
   const [search,setSearch]=useState("");
   const [filterGroup,setFilterGroup]=useState("All");
@@ -176,6 +181,9 @@ function App(){
   const [inf,setInf]=useState({contactIds:[],date:"",note:""});
 
   useEffect(()=>{if(sbUrl&&sbKey)loadFromSupabase(sbUrl,sbKey);},[]);
+
+  const goTab=useCallback((t)=>{setPrevTab(tab);setTab(t);setSelected(null);setShowEditGroups(false);},[tab]);
+  const goBack=useCallback(()=>{if(selected){setSelected(null);setDetailNote("");setShowEditGroups(false);}else if(prevTab){setTab(prevTab);setPrevTab(null);}else{setTab("dashboard");}},[selected,prevTab]);
 
   const sbFetch=useCallback(async(url,key,path,method="GET",body=null)=>{
     const h={"apikey":key,"Authorization":"Bearer "+key,"Content-Type":"application/json"};
@@ -262,18 +270,18 @@ function App(){
   const groupMemberCount=useCallback(name=>contacts.filter(c=>contactGroups(c).includes(name)).length,[contacts,contactGroups]);
   const sortedGroups=useMemo(()=>[...groups].sort((a,b)=>groupMemberCount(b.name)-groupMemberCount(a.name)),[groups,groupMemberCount]);
 
+  const top3=useMemo(()=>{
+    const counts={};
+    interactions.forEach(i=>{const id=i.personId||i.person_id;if(id)counts[id]=(counts[id]||0)+1;});
+    return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([id,cnt])=>({id,cnt,contact:contacts.find(c=>c.id===id)})).filter(x=>x.contact);
+  },[interactions,contacts]);
+
   const mostRecentInt=useMemo(()=>{
     if(!interactions.length)return null;
     const i=[...interactions].sort((a,b)=>b.date.localeCompare(a.date))[0];
     const c=contacts.find(c=>c.id===(i.personId||i.person_id));
     return{...i,cName:c?.name||"Unknown",cGroups:c?contactGroups(c):[],contactObj:c};
   },[interactions,contacts,contactGroups]);
-
-  const top3=useMemo(()=>{
-    const counts={};
-    interactions.forEach(i=>{const id=i.personId||i.person_id;if(id)counts[id]=(counts[id]||0)+1;});
-    return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([id,cnt])=>({id,cnt,contact:contacts.find(c=>c.id===id)})).filter(x=>x.contact);
-  },[interactions,contacts]);
 
   const deleteContact=c=>{
     if(!window.confirm(`Delete ${c.name}?`))return;
@@ -295,11 +303,13 @@ function App(){
 
   const addInteraction=()=>{
     if(!inf.date||inf.contactIds.length===0)return;
+    const newInts=[];
     inf.contactIds.forEach(cId=>{
-      const ni={id:"i_"+Date.now()+"_"+cId,personId:cId,type:"Manual",date:inf.date,note:inf.note};
-      setInteractions(is=>[...is,ni]);
+      const ni={id:"i_"+Date.now()+"_"+cId,personId:cId,person_id:cId,type:"Manual",date:inf.date,note:inf.note};
+      newInts.push(ni);
       if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:cId,type:"Manual",date:inf.date,note:inf.note}]).catch(()=>{});
     });
+    setInteractions(is=>[...newInts,...is]);
     setInf({contactIds:[],date:"",note:""});setShowAddInteraction(false);
   };
 
@@ -346,12 +356,13 @@ function App(){
   const dashCells=Array(dcoff).fill(null).concat(Array.from({length:dcdim},(_,i)=>i+1));
   while(dashCells.length%7!==0)dashCells.push(null);
 
-  const cardStyle={background:"#fff",borderRadius:14,padding:"16px 20px"};
   const overlapping=filterGroup!=="All"&&filterGroup2!=="All"&&filterGroup!==filterGroup2;
+  const navBtnStyle=(active)=>({cursor:"pointer",borderRadius:8,padding:"6px 14px",border:"none",background:active?"rgba(255,255,255,0.15)":"transparent",color:active?"#fff":"rgba(255,255,255,0.55)",fontSize:13,fontWeight:active?500:400});
+  const actionBtnStyle=(bg)=>({padding:"6px 14px",borderRadius:8,background:bg,border:"none",color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer"});
 
   if(showSettings)return(
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#0a1628"}}>
-      <div style={{...cardStyle,maxWidth:460,width:"100%"}}>
+      <div className="card" style={{maxWidth:460,width:"100%"}}>
         <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>Supabase connection</div>
         <p style={{fontSize:12,color:"#666",marginBottom:20,lineHeight:1.6}}>Credentials saved in your browser only.</p>
         <div style={{fontSize:12,color:"#666",marginBottom:4}}>Project URL</div>
@@ -369,9 +380,8 @@ function App(){
 
   if(!imported)return(
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#0a1628"}}>
-      <div style={{...cardStyle,maxWidth:480,width:"100%",textAlign:"center"}}>
-        <div style={{fontSize:28,marginBottom:8}}>✦</div>
-        <div style={{fontSize:20,fontWeight:700,marginBottom:6}}>Collective</div>
+      <div className="card" style={{maxWidth:480,width:"100%",textAlign:"center"}}>
+        <div style={{fontSize:22,fontWeight:700,marginBottom:6,color:"#1a1a1a"}}>Collective</div>
         <p style={{fontSize:13,color:"#666",marginBottom:20,lineHeight:1.6}}>Import your Mogul CSVs, or connect Supabase if you've synced before.</p>
         <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
           <label style={{padding:"8px 20px",borderRadius:8,background:"#4f6ef7",cursor:"pointer",fontSize:14,color:"#fff",fontWeight:500}}>
@@ -387,35 +397,38 @@ function App(){
 
   return(
     <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",background:"#0a1628"}}>
-      {/* Top nav */}
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 20px",flexWrap:"wrap",gap:8}}>
-        <div style={{display:"flex",alignItems:"baseline",gap:10}}>
-          <span style={{fontSize:18,fontWeight:700,color:"#fff",letterSpacing:"-0.3px"}}>Collective</span>
-          <span style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>{contacts.length} contacts</span>
-        </div>
-        <div style={{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
+        <span style={{fontSize:18,fontWeight:700,color:"#fff",letterSpacing:"-0.3px",cursor:"pointer"}} onClick={()=>goTab("dashboard")}>Collective</span>
+        <div style={{display:"flex",gap:3,flexWrap:"wrap",alignItems:"center"}}>
           {["dashboard","contacts","interactions","groups","calendar"].map(t=>(
-            <button key={t} className={`nav-btn${tab===t?" active":""}`} onClick={()=>{setTab(t);setSelected(null);setShowEditGroups(false);}}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
+            <button key={t} style={navBtnStyle(tab===t&&!selected)} onClick={()=>goTab(t)}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
           ))}
-          <button onClick={()=>setShowAddContact(true)} style={{padding:"5px 12px",borderRadius:8,background:"#4f6ef7",border:"none",color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer"}}>+ Contact</button>
-          <button onClick={()=>setShowAddInteraction(true)} style={{padding:"5px 12px",borderRadius:8,background:"rgba(255,255,255,0.12)",border:"none",color:"#fff",fontSize:13,cursor:"pointer"}}>+ Interaction</button>
-          <label style={{padding:"5px 10px",borderRadius:8,background:"rgba(255,255,255,0.08)",border:"none",cursor:"pointer",fontSize:13,color:"rgba(255,255,255,0.6)"}}>📂<input type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/></label>
-          <button onClick={()=>{setSbUrlInput(sbUrl);setSbKeyInput(sbKey);setShowSettings(true);}} style={{padding:"5px 10px",borderRadius:8,background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.6)",cursor:"pointer"}}>⚙️</button>
-          <button onClick={syncToSupabase} disabled={!sbUrl||syncing} style={{padding:"5px 12px",borderRadius:8,background:sbUrl?"#D85A30":"rgba(255,255,255,0.08)",border:"none",color:"#fff",fontSize:13,cursor:"pointer",opacity:!sbUrl?0.4:1}}>{syncing?"Syncing…":"☁️ Sync"}</button>
+          <div style={{width:"1px",height:20,background:"rgba(255,255,255,0.15)",margin:"0 4px"}}/>
+          <button onClick={()=>setShowAddContact(true)} style={actionBtnStyle("#4f6ef7")}>+ Contact</button>
+          <button onClick={()=>setShowAddInteraction(true)} style={actionBtnStyle("rgba(255,255,255,0.15)")}>+ Interaction</button>
+          <label style={{padding:"6px 10px",borderRadius:8,background:"rgba(255,255,255,0.08)",border:"none",cursor:"pointer",fontSize:13,color:"rgba(255,255,255,0.5)"}}>📂<input type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/></label>
+          <button onClick={()=>{setSbUrlInput(sbUrl);setSbKeyInput(sbKey);setShowSettings(true);}} style={{padding:"6px 10px",borderRadius:8,background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer"}}>⚙️</button>
+          <button onClick={syncToSupabase} disabled={!sbUrl||syncing} style={{...actionBtnStyle(sbUrl?"#D85A30":"rgba(255,255,255,0.08)"),opacity:!sbUrl?0.4:1}}>{syncing?"Syncing…":"☁️ Sync"}</button>
         </div>
       </div>
       {syncStatus&&<div className="status-bar">{syncStatus}</div>}
 
-      <div style={{flex:1,padding:"16px 20px",maxWidth:1000,width:"100%",margin:"0 auto"}}>
+      <div style={{flex:1,padding:"12px 20px",maxWidth:1000,width:"100%",margin:"0 auto"}}>
+
+        {/* Back button — shown on all non-dashboard views */}
+        {(tab!=="dashboard"||selected)&&(
+          <button onClick={goBack} style={{marginBottom:14,padding:"5px 14px",borderRadius:8,background:"rgba(255,255,255,0.1)",border:"none",color:"rgba(255,255,255,0.8)",fontSize:13,cursor:"pointer"}}>← Back</button>
+        )}
 
         {/* DASHBOARD */}
-        {tab==="dashboard"&&(
+        {tab==="dashboard"&&!selected&&(
           <div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16}}>
+              {top3.length===0&&[0,1,2].map(i=><div key={i} className="card" style={{padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"center",height:90}}><span style={{fontSize:12,color:"#ccc"}}>Loading…</span></div>)}
               {top3.map(({id,cnt,contact},idx)=>{
                 const cg=contactGroups(contact);
                 return(
-                  <div key={id} style={cardStyle} onClick={()=>{setSelected(contact);setTab("contacts");}} className="card" style={{...cardStyle,cursor:"pointer",display:"flex",flexDirection:"column",gap:8,padding:"14px 16px"}}>
+                  <div key={id} className="card" onClick={()=>{setSelected(contact);goTab("contacts");}} style={{cursor:"pointer",display:"flex",flexDirection:"column",gap:8,padding:"14px 16px"}}>
                     <div style={{fontSize:11,color:"#999"}}>#{idx+1} most interactions</div>
                     <div style={{display:"flex",alignItems:"center",gap:10}}>
                       <div style={{width:36,height:36,borderRadius:"50%",background:avatarColor(contact.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(contact.name)}</div>
@@ -431,30 +444,30 @@ function App(){
             </div>
 
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:20}}>
-              <div style={{...cardStyle,textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+              <div className="card" style={{padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
                 <div style={{fontSize:36,fontWeight:700,color:"#4f6ef7",lineHeight:1}}>{contacts.length}</div>
                 <div style={{fontSize:11,color:"#999",marginTop:6}}>Total contacts</div>
               </div>
-              <div style={{...cardStyle,textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+              <div className="card" style={{padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
                 <div style={{fontSize:36,fontWeight:700,color:"#1D9E75",lineHeight:1}}>{groups.length}</div>
                 <div style={{fontSize:11,color:"#999",marginTop:6}}>Total groups</div>
               </div>
               {mostRecentInt?(
-                <div style={{...cardStyle,cursor:"pointer",display:"flex",flexDirection:"column",justifyContent:"center",padding:"14px 16px"}} onClick={()=>{if(mostRecentInt.contactObj){setSelected(mostRecentInt.contactObj);setTab("contacts");}}}>
+                <div className="card" style={{padding:"14px 16px",cursor:"pointer",display:"flex",flexDirection:"column",justifyContent:"center"}} onClick={()=>{if(mostRecentInt.contactObj){setSelected(mostRecentInt.contactObj);goTab("contacts");}}}>
                   <div style={{fontSize:11,color:"#999",marginBottom:6}}>Most recent interaction</div>
                   <div style={{fontWeight:600,fontSize:15,marginBottom:3}}>{mostRecentInt.cName}</div>
                   <div style={{fontSize:12,color:"#999",marginBottom:mostRecentInt.cGroups.length?6:0}}>{fmtDate(mostRecentInt.date)}</div>
                   {mostRecentInt.cGroups.length>0&&<div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{mostRecentInt.cGroups.slice(0,3).map(g=><span key={g} className="tag">{g}</span>)}</div>}
                 </div>
               ):(
-                <div style={{...cardStyle,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <div className="card" style={{padding:"20px 16px",display:"flex",alignItems:"center",justifyContent:"center"}}>
                   <div style={{fontSize:11,color:"#999"}}>No interactions yet</div>
                 </div>
               )}
             </div>
 
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,alignItems:"start"}}>
-              <div style={cardStyle}>
+              <div className="card">
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
                   <span style={{fontWeight:600,fontSize:14}}>{MONTHS[dcm]} {dcy}</span>
                   <div style={{display:"flex",gap:4}}>
@@ -487,13 +500,13 @@ function App(){
                   <span style={{fontSize:10,color:"#bbb"}}>More</span>
                 </div>
               </div>
-              <div style={cardStyle}>
+              <div className="card">
                 <div style={{fontWeight:600,fontSize:14,marginBottom:12}}>Groups</div>
                 <div style={{display:"flex",flexDirection:"column",gap:0,maxHeight:340,overflowY:"auto"}}>
                   {sortedGroups.map(g=>{
                     const cnt=groupMemberCount(g.name);
                     return(
-                      <div key={g.id} onClick={()=>{setFilterGroup(g.name);setFilterGroup2("All");setTab("contacts");}} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:"0.5px solid #f0f0ee",cursor:"pointer"}}>
+                      <div key={g.id} onClick={()=>{setFilterGroup(g.name);setFilterGroup2("All");goTab("contacts");}} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:"0.5px solid #f0f0ee",cursor:"pointer"}}>
                         <span style={{width:24,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><GIcon name={g.name} size={18}/></span>
                         <span style={{flex:1,fontSize:13}}>{g.name}</span>
                         <span style={{fontSize:12,color:"#999",fontWeight:500}}>{cnt}</span>
@@ -511,44 +524,47 @@ function App(){
                     <span style={{fontWeight:600,fontSize:15}}>{fmtDate(dashPopup.date)}</span>
                     <button onClick={()=>setDashPopup(null)} style={{border:"none",background:"none",fontSize:20,color:"#999",lineHeight:1}}>×</button>
                   </div>
-                  {dashPopup.hits.map(h=>(
-                    <div key={h.id} style={{borderBottom:"0.5px solid #f0f0ee",paddingBottom:10,marginBottom:10}}>
-                      <div style={{fontWeight:500,fontSize:13,color:"#4f6ef7",cursor:"pointer",marginBottom:2}} onClick={()=>{const c=contacts.find(c=>c.id===(h.personId||h.person_id));if(c){setSelected(c);setTab("contacts");setDashPopup(null);}}}>
-                        {contactName(h.personId||h.person_id)}
+                  {dashPopup.hits.map(h=>{
+                    const col=intColor(h.type);
+                    return(
+                      <div key={h.id} style={{borderBottom:"0.5px solid #f0f0ee",paddingBottom:10,marginBottom:10}}>
+                        <div style={{fontWeight:500,fontSize:13,color:"#4f6ef7",cursor:"pointer",marginBottom:4}} onClick={()=>{const c=contacts.find(c=>c.id===(h.personId||h.person_id));if(c){setSelected(c);goTab("contacts");setDashPopup(null);}}}>
+                          {contactName(h.personId||h.person_id)}
+                        </div>
+                        {h.type&&h.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 8px",fontWeight:500,display:"inline-block",marginBottom:4}}>{h.type}</span>}
+                        {h.note&&<div style={{fontSize:12,color:"#555",lineHeight:1.5}}>{h.note}</div>}
                       </div>
-                      {h.type&&h.type!=="Manual"&&<span className="tag">{h.type}</span>}
-                      {h.note&&<div style={{fontSize:12,color:"#555",marginTop:4,lineHeight:1.5}}>{h.note}</div>}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
           </div>
         )}
 
-        {/* CONTACTS */}
+        {/* CONTACTS LIST */}
         {tab==="contacts"&&!selected&&(
           <div>
             <div style={{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap",alignItems:"center"}}>
-              <input placeholder="Search name, email…" value={search} onChange={e=>setSearch(e.target.value)} style={{flex:1,minWidth:180}}/>
+              <input placeholder="Search name, email…" value={search} onChange={e=>setSearch(e.target.value)} style={{flex:1,minWidth:180,background:"#fff"}}/>
               <select value={filterGroup} onChange={e=>setFilterGroup(e.target.value)} style={{width:"auto",background:"#fff"}}>
                 <option value="All">All groups</option>
                 {allGroupNames.map(g=><option key={g}>{g}</option>)}
               </select>
               <select value={filterGroup2} onChange={e=>setFilterGroup2(e.target.value)} style={{width:"auto",background:"#fff"}}>
-                <option value="All">+ add filter</option>
-                {allGroupNames.map(g=><option key={g}>{g}</option>)}
+                <option value="All">+ intersect with</option>
+                {allGroupNames.filter(g=>g!==filterGroup).map(g=><option key={g}>{g}</option>)}
               </select>
-              {(filterGroup!=="All"||filterGroup2!=="All")&&<button onClick={()=>{setFilterGroup("All");setFilterGroup2("All");}} style={{fontSize:12,padding:"5px 10px",color:"#999"}}>✕ clear</button>}
+              {(filterGroup!=="All"||filterGroup2!=="All")&&<button onClick={()=>{setFilterGroup("All");setFilterGroup2("All");}} style={{fontSize:12,padding:"5px 10px",color:"rgba(255,255,255,0.6)",background:"rgba(255,255,255,0.1)",border:"none",borderRadius:8,cursor:"pointer"}}>✕ clear</button>}
             </div>
-            <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginBottom:10}}>
+            <div style={{fontSize:12,color:"rgba(255,255,255,0.45)",marginBottom:10}}>
               {overlapping?`${filteredContacts.length} contacts in both "${filterGroup}" and "${filterGroup2}"`:`${filteredContacts.length} of ${contacts.length} shown`}
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:6}}>
               {filteredContacts.slice(0,100).map(c=>{
                 const cg=contactGroups(c);const li=lastInteraction(c.id);
                 return(
-                  <div key={c.id} onClick={()=>setSelected(c)} style={{...cardStyle,cursor:"pointer",display:"flex",alignItems:"center",gap:12,padding:"10px 14px"}}>
+                  <div key={c.id} onClick={()=>setSelected(c)} className="card" style={{cursor:"pointer",display:"flex",alignItems:"center",gap:12,padding:"10px 14px"}}>
                     <div style={{width:34,height:34,borderRadius:"50%",background:avatarColor(c.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(c.name)}</div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontWeight:500,fontSize:13}}>{c.name}</div>
@@ -570,15 +586,14 @@ function App(){
         {/* CONTACT DETAIL */}
         {tab==="contacts"&&selected&&(
           <div>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-              <button onClick={()=>{setSelected(null);setDetailNote("");setShowEditGroups(false);}} style={{background:"rgba(255,255,255,0.1)",border:"none",color:"#fff",padding:"6px 14px",borderRadius:8,cursor:"pointer"}}>← Back</button>
-              <button className="danger" onClick={()=>deleteContact(selected)}>🗑 Delete</button>
-            </div>
-            <div style={cardStyle}>
+            <div className="card">
               <div style={{display:"flex",gap:14,alignItems:"flex-start",marginBottom:16}}>
-                <div style={{width:48,height:48,borderRadius:"50%",background:avatarColor(selected.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(selected.name)}</div>
+                <div style={{width:52,height:52,borderRadius:"50%",background:avatarColor(selected.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(selected.name)}</div>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:17,fontWeight:600}}>{selected.name}</div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                    <div style={{fontSize:18,fontWeight:600}}>{selected.name}</div>
+                    <button className="danger" onClick={()=>deleteContact(selected)}>🗑 Delete</button>
+                  </div>
                   {selected.email&&<div style={{fontSize:12,color:"#666",marginTop:2}}>{selected.email}</div>}
                   {selected.phone&&<div style={{fontSize:12,color:"#666"}}>{selected.phone}</div>}
                   {selected.dateMet&&<div style={{fontSize:11,color:"#999",marginTop:2}}>Met {fmtDate(selected.dateMet)}</div>}
@@ -587,7 +602,7 @@ function App(){
                     <button onClick={()=>setShowEditGroups(s=>!s)} style={{fontSize:11,padding:"2px 8px",borderRadius:20,border:"0.5px solid #4f6ef7",color:"#4f6ef7",background:"none",cursor:"pointer"}}>✏️ edit groups</button>
                   </div>
                   {showEditGroups&&(
-                    <div style={{marginTop:10,padding:10,background:"#f5f5f3",borderRadius:8}}>
+                    <div style={{marginTop:10,padding:10,background:"#f5f5f5",borderRadius:8}}>
                       <div style={{fontSize:11,color:"#999",marginBottom:8}}>Tap to add or remove</div>
                       <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
                         {allGroupNames.map(g=>{
@@ -605,7 +620,14 @@ function App(){
                   )}
                 </div>
               </div>
-              {selected.notes&&<div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}><div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:4}}>Notes</div><div style={{fontSize:13,whiteSpace:"pre-wrap",lineHeight:1.6,color:"#333"}}>{selected.notes}</div></div>}
+
+              {selected.notes&&(
+                <div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}>
+                  <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:4}}>Notes</div>
+                  <div style={{fontSize:13,whiteSpace:"pre-wrap",lineHeight:1.6,color:"#333"}}>{selected.notes}</div>
+                </div>
+              )}
+
               <div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}>
                 <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:6}}>Add note</div>
                 <textarea value={detailNote} onChange={e=>setDetailNote(e.target.value)} placeholder="Type, upload image, or record…" rows={3} style={{resize:"vertical",marginBottom:8}}/>
@@ -613,18 +635,25 @@ function App(){
                   <button className="primary" onClick={saveDetailNote} disabled={!detailNote.trim()}>Save</button>
                   <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={handleImageNote}/>
                   <button onClick={()=>fileRef.current.click()} disabled={aiLoading}>📎 Image</button>
-                  <button onClick={recording?()=>{if(mediaRec)mediaRec.stop();}:startRecording} className={recording?"red-btn":""}>{recording?"⏹ Stop":"🎙 Record"}</button>
+                  <button onClick={recording?()=>{if(mediaRec)mediaRec.stop();}:startRecording} style={{background:recording?"#D85A30":"#f3f3f0",border:recording?"none":"0.5px solid #ddd",color:recording?"#fff":"#1a1a1a",padding:"6px 14px",borderRadius:8,cursor:"pointer"}}>{recording?"⏹ Stop":"🎙 Record"}</button>
                   {aiLoading&&<span style={{fontSize:12,color:"#999"}}>Processing…</span>}
                 </div>
               </div>
+
               <div style={{borderTop:"0.5px solid #eee",paddingTop:12}}>
                 <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:8}}>Interactions ({contactInts(selected.id).length})</div>
-                {contactInts(selected.id).slice(0,30).map(i=>(
-                  <div key={i.id} style={{marginBottom:10,paddingBottom:10,borderBottom:"0.5px solid #f5f5f3"}}>
-                    <div style={{fontSize:11,color:"#999",marginBottom:2}}>{fmtDate(i.date)}{i.type&&i.type!=="Manual"&&` · ${i.type}`}</div>
-                    {i.note&&<div style={{fontSize:13,lineHeight:1.5,color:"#333"}}>{i.note}</div>}
-                  </div>
-                ))}
+                {contactInts(selected.id).slice(0,30).map(i=>{
+                  const col=intColor(i.type);
+                  return(
+                    <div key={i.id} style={{marginBottom:10,paddingBottom:10,borderBottom:"0.5px solid #f5f5f5"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                        <span style={{fontSize:11,color:"#999"}}>{fmtDate(i.date)}</span>
+                        {i.type&&i.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 7px",fontWeight:500}}>{i.type}</span>}
+                      </div>
+                      {i.note&&<div style={{fontSize:13,lineHeight:1.5,color:"#333"}}>{i.note}</div>}
+                    </div>
+                  );
+                })}
                 {contactInts(selected.id).length===0&&<p style={{fontSize:13,color:"#999"}}>No interactions yet.</p>}
               </div>
             </div>
@@ -652,7 +681,7 @@ function App(){
               {sortedGroups.map((g,idx)=>{
                 const cnt=groupMemberCount(g.name);
                 return(
-                  <div key={g.id} onClick={()=>{setFilterGroup(g.name);setFilterGroup2("All");setTab("contacts");}} style={{display:"flex",alignItems:"center",gap:14,padding:"13px 18px",borderBottom:idx<sortedGroups.length-1?"0.5px solid #f0f0ee":"none",cursor:"pointer"}}>
+                  <div key={g.id} onClick={()=>{setFilterGroup(g.name);setFilterGroup2("All");goTab("contacts");}} style={{display:"flex",alignItems:"center",gap:14,padding:"13px 18px",borderBottom:idx<sortedGroups.length-1?"0.5px solid #f0f0ee":"none",cursor:"pointer"}}>
                     <span style={{width:28,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><GIcon name={g.name} size={22}/></span>
                     <span style={{flex:1,fontSize:14,fontWeight:500}}>{g.name}</span>
                     <span style={{fontSize:13,color:"#999"}}>{cnt} people</span>
@@ -673,7 +702,12 @@ function App(){
                 <span style={{fontWeight:600,fontSize:15,color:"#fff"}}>{MONTHS[cm]} {cy}</span>
                 <button onClick={nextMonth} style={{background:"rgba(255,255,255,0.1)",border:"none",color:"#fff",borderRadius:8,padding:"4px 10px",cursor:"pointer"}}>›</button>
               </div>
-              <div style={{display:"flex",gap:6}}>
+              <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                <div style={{display:"flex",gap:8,marginRight:8}}>
+                  {[{label:"Call/Video",bg:"#dbeafe",text:"#1d4ed8"},{label:"Email/Note",bg:"#dcfce7",text:"#15803d"},{label:"In Person",bg:"#ede9fe",text:"#7c3aed"},{label:"Other",bg:"#f3f4f6",text:"#6b7280"}].map(l=>(
+                    <span key={l.label} style={{fontSize:10,background:l.bg,color:l.text,borderRadius:20,padding:"2px 8px",fontWeight:500}}>{l.label}</span>
+                  ))}
+                </div>
                 {["month","week"].map(m=><button key={m} onClick={()=>setCalMode(m)} style={{background:calMode===m?"#4f6ef7":"rgba(255,255,255,0.1)",border:"none",color:"#fff",borderRadius:8,padding:"5px 14px",cursor:"pointer",fontWeight:calMode===m?500:400,fontSize:13}}>{m.charAt(0).toUpperCase()+m.slice(1)}</button>)}
               </div>
             </div>
@@ -689,9 +723,9 @@ function App(){
                     const hits=intsOnDate(ds);
                     const isToday=new Date().toDateString()===new Date(ds+"T00:00:00").toDateString();
                     return(
-                      <div key={i} style={{minHeight:64,background:"#fff",borderRadius:10,padding:"5px 6px",border:isToday?"2px solid #4f6ef7":"none"}}>
+                      <div key={i} style={{minHeight:72,background:"#fff",borderRadius:10,padding:"5px 6px",border:isToday?"2px solid #4f6ef7":"none"}}>
                         <div style={{fontSize:11,fontWeight:isToday?700:400,color:isToday?"#4f6ef7":"#999",marginBottom:3}}>{d}</div>
-                        {hits.slice(0,3).map(h=><div key={h.id} style={{fontSize:9,background:"#eef0ff",color:"#4f6ef7",borderRadius:3,padding:"1px 4px",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{contactName(h.personId||h.person_id)}</div>)}
+                        {hits.slice(0,3).map(h=>{const col=intColor(h.type);return<div key={h.id} style={{fontSize:9,background:col.bg,color:col.text,borderRadius:3,padding:"1px 4px",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:500}}>{contactName(h.personId||h.person_id)}</div>;})}
                         {hits.length>3&&<div style={{fontSize:9,color:"#999"}}>+{hits.length-3}</div>}
                       </div>
                     );
@@ -710,19 +744,22 @@ function App(){
                     const hits=intsOnDate(ds);
                     const isToday=d.toDateString()===new Date().toDateString();
                     return(
-                      <div key={i} style={{...cardStyle,display:"flex",gap:16,alignItems:"flex-start",padding:"10px 14px"}}>
+                      <div key={i} className="card" style={{display:"flex",gap:16,alignItems:"flex-start",padding:"10px 14px"}}>
                         <div style={{minWidth:44,textAlign:"right"}}>
                           <div style={{fontSize:10,color:"#999"}}>{DAYS[i]}</div>
                           <div style={{fontSize:18,fontWeight:isToday?700:400,color:isToday?"#4f6ef7":"#1a1a1a"}}>{d.getDate()}</div>
                         </div>
                         <div style={{flex:1}}>
                           {hits.length===0&&<span style={{fontSize:12,color:"#999"}}>No interactions</span>}
-                          {hits.map(h=>(
+                          {hits.map(h=>{const col=intColor(h.type);return(
                             <div key={h.id} style={{marginBottom:6}}>
-                              <span style={{fontWeight:500,fontSize:13,cursor:"pointer",color:"#1a1a1a"}} onClick={()=>{const c=contacts.find(c=>c.id===(h.personId||h.person_id));if(c){setSelected(c);setTab("contacts");}}}>{contactName(h.personId||h.person_id)}</span>
+                              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                                <span style={{fontWeight:500,fontSize:13,cursor:"pointer",color:"#1a1a1a"}} onClick={()=>{const c=contacts.find(c=>c.id===(h.personId||h.person_id));if(c){setSelected(c);setTab("contacts");}}}>{contactName(h.personId||h.person_id)}</span>
+                                {h.type&&h.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 7px",fontWeight:500}}>{h.type}</span>}
+                              </div>
                               {h.note&&<div style={{fontSize:12,color:"#666",lineHeight:1.5}}>{h.note}</div>}
                             </div>
-                          ))}
+                          );})}
                         </div>
                       </div>
                     );
