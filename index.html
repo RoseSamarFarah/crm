@@ -6,30 +6,22 @@
 <title>Collective</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Inter',sans-serif!important;background:#0a1628;color:#1a1a1a;font-size:14px;-webkit-font-smoothing:antialiased;}
-input,select,textarea,button,label,span,div,p{font-family:'Inter',sans-serif!important;}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif!important;}
+body{background:#0a1628;color:#1a1a1a;font-size:14px;-webkit-font-smoothing:antialiased;}
 input,select,textarea{background:#f3f3f0;border:0.5px solid #ddd;border-radius:8px;padding:8px 12px;color:#1a1a1a;outline:none;width:100%;}
 input:focus,select:focus,textarea:focus{border-color:#4f6ef7;}
 button{cursor:pointer;border-radius:8px;padding:6px 14px;border:0.5px solid #ddd;background:#f3f3f0;color:#1a1a1a;}
 button:hover{background:#e8e8e8;}
-button.primary{background:#4f6ef7;border-color:#4f6ef7;color:#fff;font-weight:500;}
-button.primary:hover{background:#3d5ce0;}
-button.danger{background:none;border:none;color:#c00;font-size:11px;padding:2px 4px;opacity:0.7;}
-button.danger:hover{opacity:1;}
 .card{background:#fff;border:none;border-radius:14px;padding:16px 20px;}
 .tag{font-size:10px;background:#eef0ff;border-radius:20px;padding:2px 8px;color:#4f6ef7;white-space:nowrap;display:inline-block;font-weight:500;}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:200;}
 .modal{background:#fff;border-radius:14px;padding:20px;width:420px;max-height:90vh;overflow-y:auto;}
-.status-bar{font-size:12px;padding:6px 20px;background:#0d1e36;color:#8899bb;border-bottom:1px solid #1a2d4a;}
-.nav-btn{cursor:pointer;border-radius:8px;padding:6px 14px;border:none;background:transparent;color:rgba(255,255,255,0.55);font-size:13px;font-weight:400;}
-.nav-btn.active{background:rgba(255,255,255,0.15);color:#fff;font-weight:500;}
-.nav-btn:hover{background:rgba(255,255,255,0.08);color:#fff;}
+.status-bar{font-size:12px;padding:6px 20px;background:#0d1e36;color:#8899bb;}
 </style>
 </head>
 <body>
@@ -45,10 +37,9 @@ const toIso=d=>{
   if(!d)return"";
   const t=new Date(d);if(!isNaN(t))return t.toISOString().slice(0,10);
   const t2=new Date(d.replace(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+/i,""));
-  if(!isNaN(t2))return t2.toISOString().slice(0,10);
-  return"";
+  return isNaN(t2)?"":t2.toISOString().slice(0,10);
 };
-const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"]; 
+const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DAYS=["Mo","Tu","We","Th","Fr","Sa","Su"];
 
 const intColor=type=>{
@@ -136,7 +127,7 @@ function IntCard({i,contacts,contactName,deleteInteraction,setSelected,setTab}){
       </div>
       {i.note&&<div style={{fontSize:13,color:"#444",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{i.note}</div>}
       <div style={{marginTop:6,display:"flex",justifyContent:"flex-end",alignItems:"center",gap:8}}>
-        {showDel&&<button className="danger" onClick={()=>deleteInteraction(i)}>🗑 Confirm delete</button>}
+        {showDel&&<button onClick={()=>deleteInteraction(i)} style={{background:"none",border:"none",color:"#c00",fontSize:11,cursor:"pointer"}}>🗑 Confirm delete</button>}
         <button onClick={()=>setShowDel(s=>!s)} style={{fontSize:11,color:"#ccc",border:"none",background:"none",padding:0,cursor:"pointer"}}>{showDel?"cancel":"⋯"}</button>
       </div>
     </div>
@@ -182,8 +173,12 @@ function App(){
 
   useEffect(()=>{if(sbUrl&&sbKey)loadFromSupabase(sbUrl,sbKey);},[]);
 
-  const goTab=useCallback((t)=>{setPrevTab(tab);setTab(t);setSelected(null);setShowEditGroups(false);},[tab]);
-  const goBack=useCallback(()=>{if(selected){setSelected(null);setDetailNote("");setShowEditGroups(false);}else if(prevTab){setTab(prevTab);setPrevTab(null);}else{setTab("dashboard");}},[selected,prevTab]);
+  const goTab=t=>{setPrevTab(tab);setTab(t);setSelected(null);setShowEditGroups(false);};
+  const goBack=()=>{
+    if(selected){setSelected(null);setDetailNote("");setShowEditGroups(false);}
+    else if(prevTab){setTab(prevTab);setPrevTab(null);}
+    else setTab("dashboard");
+  };
 
   const sbFetch=useCallback(async(url,key,path,method="GET",body=null)=>{
     const h={"apikey":key,"Authorization":"Bearer "+key,"Content-Type":"application/json"};
@@ -357,8 +352,9 @@ function App(){
   while(dashCells.length%7!==0)dashCells.push(null);
 
   const overlapping=filterGroup!=="All"&&filterGroup2!=="All"&&filterGroup!==filterGroup2;
-  const navBtnStyle=(active)=>({cursor:"pointer",borderRadius:8,padding:"6px 14px",border:"none",background:active?"rgba(255,255,255,0.15)":"transparent",color:active?"#fff":"rgba(255,255,255,0.55)",fontSize:13,fontWeight:active?500:400});
-  const actionBtnStyle=(bg)=>({padding:"6px 14px",borderRadius:8,background:bg,border:"none",color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer"});
+  const nb=(active)=>({cursor:"pointer",borderRadius:8,padding:"6px 14px",border:"none",background:active?"rgba(255,255,255,0.15)":"transparent",color:active?"#fff":"rgba(255,255,255,0.55)",fontSize:13,fontWeight:active?500:400});
+  const ab=(bg)=>({padding:"6px 14px",borderRadius:8,background:bg,border:"none",color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer"});
+  const backBtn={marginBottom:14,padding:"5px 14px",borderRadius:8,background:"rgba(255,255,255,0.1)",border:"none",color:"rgba(255,255,255,0.8)",fontSize:13,cursor:"pointer"};
 
   if(showSettings)return(
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#0a1628"}}>
@@ -370,7 +366,7 @@ function App(){
         <div style={{fontSize:12,color:"#666",marginBottom:4}}>Anon / public key</div>
         <input type="password" placeholder="eyJhbGci…" value={sbKeyInput} onChange={e=>setSbKeyInput(e.target.value)} style={{marginBottom:16}}/>
         <div style={{display:"flex",gap:8}}>
-          <button className="primary" onClick={connectSupabase} disabled={loadingDB||!sbUrlInput||!sbKeyInput}>{loadingDB?"Connecting…":"Connect & load"}</button>
+          <button style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"7px 18px",borderRadius:8,cursor:"pointer"}} onClick={connectSupabase} disabled={loadingDB||!sbUrlInput||!sbKeyInput}>{loadingDB?"Connecting…":"Connect & load"}</button>
           <button onClick={()=>setShowSettings(false)}>Cancel</button>
         </div>
         {syncStatus&&<p style={{fontSize:12,marginTop:12,color:syncStatus.includes("failed")?"#c00":"#1D9E75"}}>{syncStatus}</p>}
@@ -381,7 +377,7 @@ function App(){
   if(!imported)return(
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#0a1628"}}>
       <div className="card" style={{maxWidth:480,width:"100%",textAlign:"center"}}>
-        <div style={{fontSize:22,fontWeight:700,marginBottom:6,color:"#1a1a1a"}}>Collective</div>
+        <div style={{fontSize:22,fontWeight:700,marginBottom:6}}>Collective</div>
         <p style={{fontSize:13,color:"#666",marginBottom:20,lineHeight:1.6}}>Import your Mogul CSVs, or connect Supabase if you've synced before.</p>
         <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
           <label style={{padding:"8px 20px",borderRadius:8,background:"#4f6ef7",cursor:"pointer",fontSize:14,color:"#fff",fontWeight:500}}>
@@ -401,31 +397,31 @@ function App(){
         <span style={{fontSize:18,fontWeight:700,color:"#fff",letterSpacing:"-0.3px",cursor:"pointer"}} onClick={()=>goTab("dashboard")}>Collective</span>
         <div style={{display:"flex",gap:3,flexWrap:"wrap",alignItems:"center"}}>
           {["dashboard","contacts","interactions","groups","calendar"].map(t=>(
-            <button key={t} style={navBtnStyle(tab===t&&!selected)} onClick={()=>goTab(t)}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
+            <button key={t} style={nb(tab===t&&!selected)} onClick={()=>goTab(t)}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
           ))}
-          <div style={{width:"1px",height:20,background:"rgba(255,255,255,0.15)",margin:"0 4px"}}/>
-          <button onClick={()=>setShowAddContact(true)} style={actionBtnStyle("#4f6ef7")}>+ Contact</button>
-          <button onClick={()=>setShowAddInteraction(true)} style={actionBtnStyle("rgba(255,255,255,0.15)")}>+ Interaction</button>
-          <label style={{padding:"6px 10px",borderRadius:8,background:"rgba(255,255,255,0.08)",border:"none",cursor:"pointer",fontSize:13,color:"rgba(255,255,255,0.5)"}}>📂<input type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/></label>
+          <div style={{width:1,height:20,background:"rgba(255,255,255,0.15)",margin:"0 4px"}}/>
+          <button onClick={()=>setShowAddContact(true)} style={ab("#4f6ef7")}>+ Contact</button>
+          <button onClick={()=>setShowAddInteraction(true)} style={ab("rgba(255,255,255,0.15)")}>+ Interaction</button>
+          <label style={{padding:"6px 10px",borderRadius:8,background:"rgba(255,255,255,0.08)",cursor:"pointer",fontSize:13,color:"rgba(255,255,255,0.5)"}}>📂<input type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/></label>
           <button onClick={()=>{setSbUrlInput(sbUrl);setSbKeyInput(sbKey);setShowSettings(true);}} style={{padding:"6px 10px",borderRadius:8,background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer"}}>⚙️</button>
-          <button onClick={syncToSupabase} disabled={!sbUrl||syncing} style={{...actionBtnStyle(sbUrl?"#D85A30":"rgba(255,255,255,0.08)"),opacity:!sbUrl?0.4:1}}>{syncing?"Syncing…":"☁️ Sync"}</button>
+          <button onClick={syncToSupabase} disabled={!sbUrl||syncing} style={{...ab(sbUrl?"#D85A30":"rgba(255,255,255,0.08)"),opacity:!sbUrl?0.4:1}}>{syncing?"Syncing…":"☁️ Sync"}</button>
         </div>
       </div>
       {syncStatus&&<div className="status-bar">{syncStatus}</div>}
 
       <div style={{flex:1,padding:"12px 20px",maxWidth:1000,width:"100%",margin:"0 auto"}}>
 
-        {/* Back button — shown on all non-dashboard views */}
-        {(tab!=="dashboard"||selected)&&(
-          <button onClick={goBack} style={{marginBottom:14,padding:"5px 14px",borderRadius:8,background:"rgba(255,255,255,0.1)",border:"none",color:"rgba(255,255,255,0.8)",fontSize:13,cursor:"pointer"}}>← Back</button>
-        )}
+        {(tab!=="dashboard"||selected)&&<button style={backBtn} onClick={goBack}>← Back</button>}
 
         {/* DASHBOARD */}
         {tab==="dashboard"&&!selected&&(
           <div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16}}>
-              {top3.length===0&&[0,1,2].map(i=><div key={i} className="card" style={{padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"center",height:90}}><span style={{fontSize:12,color:"#ccc"}}>Loading…</span></div>)}
-              {top3.map(({id,cnt,contact},idx)=>{
+              {top3.length===0?[0,1,2].map(i=>(
+                <div key={i} className="card" style={{padding:"14px 16px",height:90,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <span style={{fontSize:12,color:"#ccc"}}>Loading…</span>
+                </div>
+              )):top3.map(({id,cnt,contact},idx)=>{
                 const cg=contactGroups(contact);
                 return(
                   <div key={id} className="card" onClick={()=>{setSelected(contact);goTab("contacts");}} style={{cursor:"pointer",display:"flex",flexDirection:"column",gap:8,padding:"14px 16px"}}>
@@ -486,8 +482,7 @@ function App(){
                     const isToday=new Date().toDateString()===new Date(ds+"T00:00:00").toDateString();
                     const op=cnt===0?0:cnt===1?0.25:cnt<=3?0.55:0.9;
                     return(
-                      <div key={i} onClick={()=>cnt>0&&setDashPopup({date:ds,hits})}
-                        style={{aspectRatio:"1",borderRadius:4,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:cnt>0?`rgba(79,110,247,${op})`:"#f5f5f3",border:isToday?"1.5px solid #4f6ef7":"none",cursor:cnt>0?"pointer":"default"}}>
+                      <div key={i} onClick={()=>cnt>0&&setDashPopup({date:ds,hits})} style={{aspectRatio:"1",borderRadius:4,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:cnt>0?`rgba(79,110,247,${op})`:"#f5f5f3",border:isToday?"1.5px solid #4f6ef7":"none",cursor:cnt>0?"pointer":"default"}}>
                         <span style={{fontSize:10,color:cnt>0&&op>0.4?"#fff":isToday?"#4f6ef7":"#999",fontWeight:isToday?600:400}}>{d}</span>
                         {cnt>0&&<span style={{fontSize:8,color:op>0.4?"rgba(255,255,255,0.8)":"#4f6ef7"}}>{cnt}</span>}
                       </div>
@@ -578,84 +573,74 @@ function App(){
                   </div>
                 );
               })}
-              {filteredContacts.length>100&&<p style={{fontSize:12,color:"rgba(255,255,255,0.4)",textAlign:"center",marginTop:8}}>Showing first 100 — refine search to see more.</p>}
+              {filteredContacts.length>100&&<p style={{fontSize:12,color:"rgba(255,255,255,0.4)",textAlign:"center",marginTop:8}}>Showing first 100 — refine search.</p>}
             </div>
           </div>
         )}
 
         {/* CONTACT DETAIL */}
         {tab==="contacts"&&selected&&(
-          <div>
-            <div className="card">
-              <div style={{display:"flex",gap:14,alignItems:"flex-start",marginBottom:16}}>
-                <div style={{width:52,height:52,borderRadius:"50%",background:avatarColor(selected.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(selected.name)}</div>
-                <div style={{flex:1}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-                    <div style={{fontSize:18,fontWeight:600}}>{selected.name}</div>
-                    <button className="danger" onClick={()=>deleteContact(selected)}>🗑 Delete</button>
-                  </div>
-                  {selected.email&&<div style={{fontSize:12,color:"#666",marginTop:2}}>{selected.email}</div>}
-                  {selected.phone&&<div style={{fontSize:12,color:"#666"}}>{selected.phone}</div>}
-                  {selected.dateMet&&<div style={{fontSize:11,color:"#999",marginTop:2}}>Met {fmtDate(selected.dateMet)}</div>}
-                  <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:8,alignItems:"center"}}>
-                    {contactGroups(selected).map(g=><span key={g} className="tag">{g}</span>)}
-                    <button onClick={()=>setShowEditGroups(s=>!s)} style={{fontSize:11,padding:"2px 8px",borderRadius:20,border:"0.5px solid #4f6ef7",color:"#4f6ef7",background:"none",cursor:"pointer"}}>✏️ edit groups</button>
-                  </div>
-                  {showEditGroups&&(
-                    <div style={{marginTop:10,padding:10,background:"#f5f5f5",borderRadius:8}}>
-                      <div style={{fontSize:11,color:"#999",marginBottom:8}}>Tap to add or remove</div>
-                      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                        {allGroupNames.map(g=>{
-                          const has=contactGroups(selected).includes(g);
-                          const toggle=()=>{
-                            const newIds=has?(selected.groupIds||[]).filter(id=>{const grp=groups.find(x=>x.id===id||x.name===id);return grp?grp.name!==g:id!==g;}): [...(selected.groupIds||[]),groups.find(x=>x.name===g)?.id||g];
-                            const updated={...selected,groupIds:newIds};
-                            setSelected(updated);setContacts(cs=>cs.map(c=>c.id===selected.id?updated:c));
-                            if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+selected.id,"PATCH",{group_ids:newIds.join(",")}).catch(()=>{});
-                          };
-                          return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",borderRadius:20,border:"0.5px solid "+(has?"#4f6ef7":"#ddd"),background:has?"#4f6ef7":"#fff",color:has?"#fff":"#666",cursor:"pointer"}}>{g}</button>;
-                        })}
-                      </div>
+          <div className="card">
+            <div style={{display:"flex",gap:14,alignItems:"flex-start",marginBottom:16}}>
+              <div style={{width:52,height:52,borderRadius:"50%",background:avatarColor(selected.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(selected.name)}</div>
+              <div style={{flex:1}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                  <div style={{fontSize:18,fontWeight:600}}>{selected.name}</div>
+                  <button onClick={()=>deleteContact(selected)} style={{background:"none",border:"none",color:"#c00",fontSize:12,cursor:"pointer",opacity:0.7}}>🗑 Delete</button>
+                </div>
+                {selected.email&&<div style={{fontSize:12,color:"#666",marginTop:2}}>{selected.email}</div>}
+                {selected.phone&&<div style={{fontSize:12,color:"#666"}}>{selected.phone}</div>}
+                {selected.dateMet&&<div style={{fontSize:11,color:"#999",marginTop:2}}>Met {fmtDate(selected.dateMet)}</div>}
+                <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:8,alignItems:"center"}}>
+                  {contactGroups(selected).map(g=><span key={g} className="tag">{g}</span>)}
+                  <button onClick={()=>setShowEditGroups(s=>!s)} style={{fontSize:11,padding:"2px 8px",borderRadius:20,border:"0.5px solid #4f6ef7",color:"#4f6ef7",background:"none",cursor:"pointer"}}>✏️ edit groups</button>
+                </div>
+                {showEditGroups&&(
+                  <div style={{marginTop:10,padding:10,background:"#f5f5f5",borderRadius:8}}>
+                    <div style={{fontSize:11,color:"#999",marginBottom:8}}>Tap to add or remove</div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                      {allGroupNames.map(g=>{
+                        const has=contactGroups(selected).includes(g);
+                        const toggle=()=>{
+                          const newIds=has?(selected.groupIds||[]).filter(id=>{const grp=groups.find(x=>x.id===id||x.name===id);return grp?grp.name!==g:id!==g;}): [...(selected.groupIds||[]),groups.find(x=>x.name===g)?.id||g];
+                          const updated={...selected,groupIds:newIds};
+                          setSelected(updated);setContacts(cs=>cs.map(c=>c.id===selected.id?updated:c));
+                          if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+selected.id,"PATCH",{group_ids:newIds.join(",")}).catch(()=>{});
+                        };
+                        return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",borderRadius:20,border:"0.5px solid "+(has?"#4f6ef7":"#ddd"),background:has?"#4f6ef7":"#fff",color:has?"#fff":"#666",cursor:"pointer"}}>{g}</button>;
+                      })}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
-
-              {selected.notes&&(
-                <div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}>
-                  <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:4}}>Notes</div>
-                  <div style={{fontSize:13,whiteSpace:"pre-wrap",lineHeight:1.6,color:"#333"}}>{selected.notes}</div>
-                </div>
-              )}
-
-              <div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}>
-                <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:6}}>Add note</div>
-                <textarea value={detailNote} onChange={e=>setDetailNote(e.target.value)} placeholder="Type, upload image, or record…" rows={3} style={{resize:"vertical",marginBottom:8}}/>
-                <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
-                  <button className="primary" onClick={saveDetailNote} disabled={!detailNote.trim()}>Save</button>
-                  <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={handleImageNote}/>
-                  <button onClick={()=>fileRef.current.click()} disabled={aiLoading}>📎 Image</button>
-                  <button onClick={recording?()=>{if(mediaRec)mediaRec.stop();}:startRecording} style={{background:recording?"#D85A30":"#f3f3f0",border:recording?"none":"0.5px solid #ddd",color:recording?"#fff":"#1a1a1a",padding:"6px 14px",borderRadius:8,cursor:"pointer"}}>{recording?"⏹ Stop":"🎙 Record"}</button>
-                  {aiLoading&&<span style={{fontSize:12,color:"#999"}}>Processing…</span>}
-                </div>
+            </div>
+            {selected.notes&&<div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}><div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:4}}>Notes</div><div style={{fontSize:13,whiteSpace:"pre-wrap",lineHeight:1.6,color:"#333"}}>{selected.notes}</div></div>}
+            <div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}>
+              <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:6}}>Add note</div>
+              <textarea value={detailNote} onChange={e=>setDetailNote(e.target.value)} placeholder="Type, upload image, or record…" rows={3} style={{resize:"vertical",marginBottom:8}}/>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+                <button onClick={saveDetailNote} disabled={!detailNote.trim()} style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"6px 14px",borderRadius:8,cursor:"pointer"}}>Save</button>
+                <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={handleImageNote}/>
+                <button onClick={()=>fileRef.current.click()} disabled={aiLoading}>📎 Image</button>
+                <button onClick={recording?()=>{if(mediaRec)mediaRec.stop();}:startRecording} style={{background:recording?"#D85A30":"#f3f3f0",border:recording?"none":"0.5px solid #ddd",color:recording?"#fff":"#1a1a1a",padding:"6px 14px",borderRadius:8,cursor:"pointer"}}>{recording?"⏹ Stop":"🎙 Record"}</button>
+                {aiLoading&&<span style={{fontSize:12,color:"#999"}}>Processing…</span>}
               </div>
-
-              <div style={{borderTop:"0.5px solid #eee",paddingTop:12}}>
-                <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:8}}>Interactions ({contactInts(selected.id).length})</div>
-                {contactInts(selected.id).slice(0,30).map(i=>{
-                  const col=intColor(i.type);
-                  return(
-                    <div key={i.id} style={{marginBottom:10,paddingBottom:10,borderBottom:"0.5px solid #f5f5f5"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-                        <span style={{fontSize:11,color:"#999"}}>{fmtDate(i.date)}</span>
-                        {i.type&&i.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 7px",fontWeight:500}}>{i.type}</span>}
-                      </div>
-                      {i.note&&<div style={{fontSize:13,lineHeight:1.5,color:"#333"}}>{i.note}</div>}
+            </div>
+            <div style={{borderTop:"0.5px solid #eee",paddingTop:12}}>
+              <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:8}}>Interactions ({contactInts(selected.id).length})</div>
+              {contactInts(selected.id).slice(0,30).map(i=>{
+                const col=intColor(i.type);
+                return(
+                  <div key={i.id} style={{marginBottom:10,paddingBottom:10,borderBottom:"0.5px solid #f5f5f5"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                      <span style={{fontSize:11,color:"#999"}}>{fmtDate(i.date)}</span>
+                      {i.type&&i.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 7px",fontWeight:500}}>{i.type}</span>}
                     </div>
-                  );
-                })}
-                {contactInts(selected.id).length===0&&<p style={{fontSize:13,color:"#999"}}>No interactions yet.</p>}
-              </div>
+                    {i.note&&<div style={{fontSize:13,lineHeight:1.5,color:"#333"}}>{i.note}</div>}
+                  </div>
+                );
+              })}
+              {contactInts(selected.id).length===0&&<p style={{fontSize:13,color:"#999"}}>No interactions yet.</p>}
             </div>
           </div>
         )}
@@ -702,10 +687,10 @@ function App(){
                 <span style={{fontWeight:600,fontSize:15,color:"#fff"}}>{MONTHS[cm]} {cy}</span>
                 <button onClick={nextMonth} style={{background:"rgba(255,255,255,0.1)",border:"none",color:"#fff",borderRadius:8,padding:"4px 10px",cursor:"pointer"}}>›</button>
               </div>
-              <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                <div style={{display:"flex",gap:8,marginRight:8}}>
-                  {[{label:"Call/Video",bg:"#dbeafe",text:"#1d4ed8"},{label:"Email/Note",bg:"#dcfce7",text:"#15803d"},{label:"In Person",bg:"#ede9fe",text:"#7c3aed"},{label:"Other",bg:"#f3f4f6",text:"#6b7280"}].map(l=>(
-                    <span key={l.label} style={{fontSize:10,background:l.bg,color:l.text,borderRadius:20,padding:"2px 8px",fontWeight:500}}>{l.label}</span>
+              <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                <div style={{display:"flex",gap:6}}>
+                  {[{l:"Call/Video",bg:"#dbeafe",t:"#1d4ed8"},{l:"Email/Note",bg:"#dcfce7",t:"#15803d"},{l:"In Person",bg:"#ede9fe",t:"#7c3aed"},{l:"Other",bg:"#f3f4f6",t:"#6b7280"}].map(x=>(
+                    <span key={x.l} style={{fontSize:10,background:x.bg,color:x.t,borderRadius:20,padding:"2px 8px",fontWeight:500}}>{x.l}</span>
                   ))}
                 </div>
                 {["month","week"].map(m=><button key={m} onClick={()=>setCalMode(m)} style={{background:calMode===m?"#4f6ef7":"rgba(255,255,255,0.1)",border:"none",color:"#fff",borderRadius:8,padding:"5px 14px",cursor:"pointer",fontWeight:calMode===m?500:400,fontSize:13}}>{m.charAt(0).toUpperCase()+m.slice(1)}</button>)}
@@ -754,7 +739,7 @@ function App(){
                           {hits.map(h=>{const col=intColor(h.type);return(
                             <div key={h.id} style={{marginBottom:6}}>
                               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-                                <span style={{fontWeight:500,fontSize:13,cursor:"pointer",color:"#1a1a1a"}} onClick={()=>{const c=contacts.find(c=>c.id===(h.personId||h.person_id));if(c){setSelected(c);setTab("contacts");}}}>{contactName(h.personId||h.person_id)}</span>
+                                <span style={{fontWeight:500,fontSize:13,cursor:"pointer"}} onClick={()=>{const c=contacts.find(c=>c.id===(h.personId||h.person_id));if(c){setSelected(c);setTab("contacts");}}}>{contactName(h.personId||h.person_id)}</span>
                                 {h.type&&h.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 7px",fontWeight:500}}>{h.type}</span>}
                               </div>
                               {h.note&&<div style={{fontSize:12,color:"#666",lineHeight:1.5}}>{h.note}</div>}
@@ -783,10 +768,10 @@ function App(){
               {allGroupNames.map(g=><button key={g} onClick={()=>setCf(f=>({...f,groups:f.groups.includes(g)?f.groups.filter(x=>x!==g):[...f.groups,g]}))} style={{fontSize:12,padding:"3px 10px",borderRadius:20,border:"0.5px solid "+(cf.groups.includes(g)?"#4f6ef7":"#ddd"),background:cf.groups.includes(g)?"#4f6ef7":"#fff",color:cf.groups.includes(g)?"#fff":"#666",cursor:"pointer"}}>{g}</button>)}
               <button onClick={()=>setShowAddGroup(true)} style={{fontSize:12}}>+ New</button>
             </div>
-            {showAddGroup&&<div style={{display:"flex",gap:6,marginBottom:8}}><input placeholder="Group name" value={newGroup} onChange={e=>setNewGroup(e.target.value)} style={{flex:1}}/><button className="primary" onClick={()=>{if(newGroup.trim()){setGroups(g=>[...g,{id:"g_"+Date.now(),name:newGroup.trim(),peopleIds:[]}]);setNewGroup("");setShowAddGroup(false);}}}>Add</button></div>}
+            {showAddGroup&&<div style={{display:"flex",gap:6,marginBottom:8}}><input placeholder="Group name" value={newGroup} onChange={e=>setNewGroup(e.target.value)} style={{flex:1}}/><button onClick={()=>{if(newGroup.trim()){setGroups(g=>[...g,{id:"g_"+Date.now(),name:newGroup.trim(),peopleIds:[]}]);setNewGroup("");setShowAddGroup(false);}}} style={{background:"#4f6ef7",border:"none",color:"#fff",padding:"6px 14px",borderRadius:8,cursor:"pointer"}}>Add</button></div>}
             <textarea placeholder="Notes" value={cf.notes} onChange={e=>setCf(f=>({...f,notes:e.target.value}))} rows={3} style={{resize:"vertical",marginBottom:12}}/>
             <div style={{display:"flex",gap:8}}>
-              <button className="primary" onClick={addContact} disabled={!cf.name.trim()}>Save</button>
+              <button onClick={addContact} disabled={!cf.name.trim()} style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"7px 18px",borderRadius:8,cursor:"pointer"}}>Save</button>
               <button onClick={()=>setShowAddContact(false)}>Cancel</button>
             </div>
           </div>
@@ -811,7 +796,7 @@ function App(){
             </div>
             <textarea placeholder="Notes (optional)" value={inf.note} onChange={e=>setInf(f=>({...f,note:e.target.value}))} rows={3} style={{resize:"vertical",marginBottom:12}}/>
             <div style={{display:"flex",gap:8}}>
-              <button className="primary" onClick={addInteraction} disabled={!inf.date||inf.contactIds.length===0}>Save</button>
+              <button onClick={addInteraction} disabled={!inf.date||inf.contactIds.length===0} style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"7px 18px",borderRadius:8,cursor:"pointer"}}>Save</button>
               <button onClick={()=>setShowAddInteraction(false)}>Cancel</button>
             </div>
           </div>
