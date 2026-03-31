@@ -169,7 +169,7 @@ function App(){
   const [loadingDB,setLoadingDB]=useState(false);
   const fileRef=useRef();
   const [cf,setCf]=useState({name:"",company:"",role:"",location:"",email:"",phone:"",groups:[],notes:""});
-  const [inf,setInf]=useState({contactIds:[],date:"",note:""});
+  const [inf,setInf]=useState({contactIds:[],date:"",note:"",type:""});
 
   useEffect(()=>{if(sbUrl&&sbKey)loadFromSupabase(sbUrl,sbKey);},[]);
 
@@ -194,7 +194,7 @@ function App(){
     try{
       const [c,i,g]=await Promise.all([
         sbFetch(url,key,"contacts?select=*&order=name&limit=2000"),
-        sbFetch(url,key,"interactions?select=*&order=date.desc&limit=2000"),
+        sbFetch(url,key,"interactions?select=*&order=date.desc&limit=5000"),
         sbFetch(url,key,"groups?select=*&order=name&limit=200")
       ]);
       setContacts(c.map(r=>({...r,groupIds:(r.group_ids||"").split(",").filter(Boolean)})));
@@ -300,12 +300,12 @@ function App(){
     if(!inf.date||inf.contactIds.length===0)return;
     const newInts=[];
     inf.contactIds.forEach(cId=>{
-      const ni={id:"i_"+Date.now()+"_"+cId,personId:cId,person_id:cId,type:"Manual",date:inf.date,note:inf.note};
+      const ni={id:"i_"+Date.now()+"_"+cId,personId:cId,person_id:cId,type:inf.type||"Manual",date:inf.date,note:inf.note};
       newInts.push(ni);
-      if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:cId,type:"Manual",date:inf.date,note:inf.note}]).catch(()=>{});
+      if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:cId,type:inf.type||"Manual",date:inf.date,note:inf.note}]).catch(()=>{});
     });
     setInteractions(is=>[...newInts,...is]);
-    setInf({contactIds:[],date:"",note:""});setShowAddInteraction(false);
+    setInf({contactIds:[],date:"",note:"",type:""});setShowAddInteraction(false);
   };
 
   const saveDetailNote=()=>{
@@ -352,9 +352,8 @@ function App(){
   while(dashCells.length%7!==0)dashCells.push(null);
 
   const overlapping=filterGroup!=="All"&&filterGroup2!=="All"&&filterGroup!==filterGroup2;
-  const nb=(active)=>({cursor:"pointer",borderRadius:8,padding:"6px 14px",border:"none",background:active?"rgba(255,255,255,0.15)":"transparent",color:active?"#fff":"rgba(255,255,255,0.55)",fontSize:13,fontWeight:active?500:400});
-  const ab=(bg)=>({padding:"6px 14px",borderRadius:8,background:bg,border:"none",color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer"});
-  const backBtn={marginBottom:14,padding:"5px 14px",borderRadius:8,background:"rgba(255,255,255,0.1)",border:"none",color:"rgba(255,255,255,0.8)",fontSize:13,cursor:"pointer"};
+  const nb=active=>({cursor:"pointer",borderRadius:8,padding:"6px 14px",border:"none",background:active?"rgba(255,255,255,0.15)":"transparent",color:active?"#fff":"rgba(255,255,255,0.55)",fontSize:13,fontWeight:active?500:400});
+  const ab=bg=>({padding:"6px 14px",borderRadius:8,background:bg,border:"none",color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer"});
 
   if(showSettings)return(
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#0a1628"}}>
@@ -410,35 +409,33 @@ function App(){
       {syncStatus&&<div className="status-bar">{syncStatus}</div>}
 
       <div style={{flex:1,padding:"12px 20px",maxWidth:1000,width:"100%",margin:"0 auto"}}>
-
-        {(tab!=="dashboard"||selected)&&<button style={backBtn} onClick={goBack}>← Back</button>}
+        {(tab!=="dashboard"||selected)&&(
+          <button onClick={goBack} style={{marginBottom:14,padding:"5px 14px",borderRadius:8,background:"rgba(255,255,255,0.1)",border:"none",color:"rgba(255,255,255,0.8)",fontSize:13,cursor:"pointer"}}>← Back</button>
+        )}
 
         {/* DASHBOARD */}
         {tab==="dashboard"&&!selected&&(
           <div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16}}>
-              {top3.length===0?[0,1,2].map(i=>(
-                <div key={i} className="card" style={{padding:"14px 16px",height:90,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  <span style={{fontSize:12,color:"#ccc"}}>Loading…</span>
-                </div>
-              )):top3.map(({id,cnt,contact},idx)=>{
+            {/* Top 3 */}
+            <div className="card" style={{padding:"16px 20px",marginBottom:16}}>
+              <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:12}}>Most interactions</div>
+              {top3.length===0?<div style={{fontSize:12,color:"#ccc"}}>Loading…</div>:top3.map(({id,cnt,contact},idx)=>{
                 const cg=contactGroups(contact);
                 return(
-                  <div key={id} className="card" onClick={()=>{setSelected(contact);goTab("contacts");}} style={{cursor:"pointer",display:"flex",flexDirection:"column",gap:8,padding:"14px 16px"}}>
-                    <div style={{fontSize:11,color:"#999"}}>#{idx+1} most interactions</div>
-                    <div style={{display:"flex",alignItems:"center",gap:10}}>
-                      <div style={{width:36,height:36,borderRadius:"50%",background:avatarColor(contact.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(contact.name)}</div>
-                      <div style={{minWidth:0}}>
-                        <div style={{fontWeight:600,fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{contact.name}</div>
-                        <div style={{fontSize:11,color:"#999"}}>{cnt} interactions</div>
-                      </div>
+                  <div key={id} onClick={()=>{setSelected(contact);goTab("contacts");}} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0",borderBottom:idx<top3.length-1?"0.5px solid #f0f0ee":"none",cursor:"pointer"}}>
+                    <div style={{fontSize:13,fontWeight:600,color:"#ccc",width:20,textAlign:"center"}}>#{idx+1}</div>
+                    <div style={{width:32,height:32,borderRadius:"50%",background:avatarColor(contact.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(contact.name)}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <span style={{fontWeight:600,fontSize:13}}>{contact.name}</span>
+                      {cg.length>0&&<span style={{fontSize:11,color:"#999",marginLeft:8}}>{cg.slice(0,2).join(" · ")}</span>}
                     </div>
-                    {cg.length>0&&<div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{cg.slice(0,2).map(g=><span key={g} className="tag">{g}</span>)}</div>}
+                    <div style={{fontSize:12,fontWeight:500,color:"#4f6ef7",whiteSpace:"nowrap"}}>{cnt} interactions</div>
                   </div>
                 );
               })}
             </div>
 
+            {/* Stats */}
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:20}}>
               <div className="card" style={{padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
                 <div style={{fontSize:36,fontWeight:700,color:"#4f6ef7",lineHeight:1}}>{contacts.length}</div>
@@ -462,6 +459,7 @@ function App(){
               )}
             </div>
 
+            {/* Calendar + Groups */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,alignItems:"start"}}>
               <div className="card">
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
@@ -782,6 +780,15 @@ function App(){
         <div className="overlay">
           <div className="modal">
             <div style={{fontSize:16,fontWeight:600,marginBottom:14}}>Log interaction</div>
+            <div style={{fontSize:12,color:"#666",marginBottom:6}}>Type</div>
+            <select value={inf.type} onChange={e=>setInf(f=>({...f,type:e.target.value}))} style={{marginBottom:12}}>
+              <option value="">Select type…</option>
+              <option>Video Chat</option>
+              <option>Phone</option>
+              <option>In Person</option>
+              <option>Email</option>
+              <option>Note</option>
+            </select>
             <div style={{fontSize:12,color:"#666",marginBottom:6}}>Date</div>
             <div style={{marginBottom:12,position:"relative"}}><DatePicker value={inf.date} onChange={v=>setInf(f=>({...f,date:v}))}/></div>
             <div style={{fontSize:12,color:"#666",marginBottom:6}}>People</div>
