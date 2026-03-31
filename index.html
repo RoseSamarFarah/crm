@@ -256,13 +256,9 @@ function App(){
   const fetchAll=async(url,key,table)=>{
     const PAGE=1000;let all=[],from=0;
     while(true){
-      const to=from+PAGE-1;
-      const h={"apikey":key,"Authorization":"Bearer "+key,"Content-Type":"application/json","Range":`${from}-${to}`};
-      const r=await fetch(url+"/rest/v1/"+table+"?select=*&order=date.desc",{method:"GET",headers:h});
-      const data=await r.json();
-      if(!Array.isArray(data)||data.length===0)break;
-      all=[...all,...data];
-      if(data.length<PAGE)break;
+      const r=await sbFetch(url,key,`${table}?select=*&order=date.desc&offset=${from}&limit=${PAGE}`);
+      all=[...all,...r];
+      if(r.length<PAGE)break;
       from+=PAGE;
     }
     return all;
@@ -280,7 +276,7 @@ function App(){
     try{
       const [c,i,g]=await Promise.all([
         sbFetch(url,key,"contacts?select=*&order=name&limit=2000"),
-        sbFetch(url,key,"interactions?select=*&order=date.desc&limit=2000"),
+        fetchAll(url,key,"interactions"),
         sbFetch(url,key,"groups?select=*&order=name&limit=200")
       ]);
       setContacts(c.map(r=>({...r,groupIds:(r.group_ids||"").split(",").filter(Boolean)})));
