@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>My CRM</title>
+<title>Collective</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
@@ -11,10 +11,11 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#3B6B55;color:#1a1a1a;font-size:14px;letter-spacing:-0.01em;}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',system-ui,-apple-system,sans-serif;}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#3B6B55;color:#1a1a1a;font-size:14px;letter-spacing:-0.01em;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
 h1,h2,h3,.brand-title{font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;}
-input,select,textarea,button{font-family:'Inter',system-ui,sans-serif;font-size:13px;}
+input,select,textarea,button{font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:13px;}
+div,span,p,label,a{font-family:inherit;}
 input,select,textarea{background:#f7f6f3;border:1px solid #d4cfc4;border-radius:6px;padding:9px 13px;color:#1a1a1a;outline:none;width:100%;transition:border-color 0.2s;}
 input:focus,select:focus,textarea:focus{border-color:#C6A96C;box-shadow:0 0 0 2px rgba(198,169,108,0.15);}
 button{cursor:pointer;border-radius:6px;padding:6px 14px;border:1px solid #d4cfc4;background:#f7f6f3;color:#1a1a1a;font-weight:400;transition:all 0.15s;}
@@ -396,7 +397,7 @@ function App(){
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#3B6B55"}}>
       <div className="card" style={{maxWidth:480,width:"100%",textAlign:"center"}}>
         <div style={{fontSize:28,marginBottom:8}}>📂</div>
-        <div className="brand-title" style={{fontSize:22,fontWeight:600,marginBottom:8}}>My CRM</div>
+        <div className="brand-title" style={{fontSize:22,fontWeight:600,marginBottom:8}}>Collective</div>
         <p style={{fontSize:13,color:"#666",marginBottom:20,lineHeight:1.6}}>Import your Mogul CSVs, or connect Supabase if you've synced before.</p>
         <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
           <label style={{padding:"8px 20px",borderRadius:8,background:"#2D5A3D",cursor:"pointer",fontSize:14,color:"#fff",fontWeight:500}}>
@@ -414,7 +415,7 @@ function App(){
     <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",background:"#3B6B55"}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 20px",borderBottom:"1px solid #e8e4db",background:"#fff",flexWrap:"wrap",gap:8}}>
         <div style={{display:"flex",alignItems:"baseline",gap:10}}>
-          <span className="brand-title" style={{fontSize:22,fontWeight:600,letterSpacing:"-0.02em"}}>My CRM</span>
+          <span className="brand-title" style={{fontSize:22,fontWeight:600,letterSpacing:"-0.02em"}}>Collective</span>
           <span style={{fontSize:12,color:"#999"}}>{contacts.length} contacts · {groups.length} groups</span>
         </div>
         <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
