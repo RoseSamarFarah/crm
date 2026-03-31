@@ -256,9 +256,13 @@ function App(){
   const fetchAll=async(url,key,table)=>{
     const PAGE=1000;let all=[],from=0;
     while(true){
-      const r=await sbFetch(url,key,`${table}?select=*&order=date.desc&offset=${from}&limit=${PAGE}`);
-      all=[...all,...r];
-      if(r.length<PAGE)break;
+      const to=from+PAGE-1;
+      const h={"apikey":key,"Authorization":"Bearer "+key,"Content-Type":"application/json","Range":`${from}-${to}`};
+      const r=await fetch(url+"/rest/v1/"+table+"?select=*&order=date.desc",{method:"GET",headers:h});
+      const data=await r.json();
+      if(!Array.isArray(data)||data.length===0)break;
+      all=[...all,...data];
+      if(data.length<PAGE)break;
       from+=PAGE;
     }
     return all;
