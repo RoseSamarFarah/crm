@@ -1,4 +1,32 @@
-<!DOCTYPE html>
+{/* Stats */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16}}>
+              <div className="card" style={{padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
+                <div style={{fontSize:36,fontWeight:700,color:"#4f6ef7",lineHeight:1}}>{contacts.length}</div>
+                <div style={{fontSize:11,color:"#999",marginTop:6}}>Total contacts</div>
+              </div>
+              <div className="card" style={{padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
+                <div style={{fontSize:36,fontWeight:700,color:"#1D9E75",lineHeight:1}}>{groups.length}</div>
+                <div style={{fontSize:11,color:"#999",marginTop:6}}>Total groups</div>
+              </div>
+              <div className="card" style={{padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
+                <div style={{fontSize:36,fontWeight:700,color:"#D85A30",lineHeight:1}}>{interactions.length}</div>
+                <div style={{fontSize:11,color:"#999",marginTop:6}}>Total interactions</div>
+              </div>
+            </div>
+
+            {/* Recent 3 */}
+            <div className="card" style={{padding:"16px 20px",marginBottom:16}}>
+              <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:12}}>Most recent interactions</div>
+              {recent3.map(({id,date,type,note,cName,contactObj},idx)=>{
+                const col=intColor(type);
+                return(
+                  <div key={id+idx} onClick={()=>{if(contactObj){setSelected(contactObj);goTab("contacts");}}} style={{display:"flex",alignItems:"flex-start",gap:12,padding:"8px 0",borderBottom:idx<recent3.length-1?"0.5px solid #f0f0ee":"none",cursor:"pointer"}}>
+                    <div style={{width:32,height:32,borderRadius:"50%",background:contactObj?avatarColor(cName):"#ddd",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(cName)}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
+                        <span style={{fontWeight:600,fontSize:13}}>{cName}</span>
+                        {type&&type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 7px",fontWeight:500}}>{type}</span>}
+                        <span style={{fontSize<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -265,18 +293,14 @@ function App(){
   const groupMemberCount=useCallback(name=>contacts.filter(c=>contactGroups(c).includes(name)).length,[contacts,contactGroups]);
   const sortedGroups=useMemo(()=>[...groups].sort((a,b)=>groupMemberCount(b.name)-groupMemberCount(a.name)),[groups,groupMemberCount]);
 
-  const top3=useMemo(()=>{
-    const counts={};
-    interactions.forEach(i=>{const id=i.personId||i.person_id;if(id)counts[id]=(counts[id]||0)+1;});
-    return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([id,cnt])=>({id,cnt,contact:contacts.find(c=>c.id===id)})).filter(x=>x.contact);
+  const recent3=useMemo(()=>{
+    return[...interactions].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3).map(i=>{
+      const c=contacts.find(c=>c.id===(i.personId||i.person_id));
+      return{...i,contactObj:c,cName:c?.name||"Unknown"};
+    });
   },[interactions,contacts]);
 
-  const mostRecentInt=useMemo(()=>{
-    if(!interactions.length)return null;
-    const i=[...interactions].sort((a,b)=>b.date.localeCompare(a.date))[0];
-    const c=contacts.find(c=>c.id===(i.personId||i.person_id));
-    return{...i,cName:c?.name||"Unknown",cGroups:c?contactGroups(c):[],contactObj:c};
-  },[interactions,contacts,contactGroups]);
+  const mostRecentInt=null;
 
   const deleteContact=c=>{
     if(!window.confirm(`Delete ${c.name}?`))return;
@@ -436,27 +460,34 @@ function App(){
             </div>
 
             {/* Stats */}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:20}}>
-              <div className="card" style={{padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
-                <div style={{fontSize:36,fontWeight:700,color:"#4f6ef7",lineHeight:1}}>{contacts.length}</div>
-                <div style={{fontSize:11,color:"#999",marginTop:6}}>Total contacts</div>
-              </div>
-              <div className="card" style={{padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
-                <div style={{fontSize:36,fontWeight:700,color:"#1D9E75",lineHeight:1}}>{groups.length}</div>
-                <div style={{fontSize:11,color:"#999",marginTop:6}}>Total groups</div>
-              </div>
-              {mostRecentInt?(
-                <div className="card" style={{padding:"14px 16px",cursor:"pointer",display:"flex",flexDirection:"column",justifyContent:"center"}} onClick={()=>{if(mostRecentInt.contactObj){setSelected(mostRecentInt.contactObj);goTab("contacts");}}}>
-                  <div style={{fontSize:11,color:"#999",marginBottom:6}}>Most recent interaction</div>
-                  <div style={{fontWeight:600,fontSize:15,marginBottom:3}}>{mostRecentInt.cName}</div>
-                  <div style={{fontSize:12,color:"#999",marginBottom:mostRecentInt.cGroups.length?6:0}}>{fmtDate(mostRecentInt.date)}</div>
-                  {mostRecentInt.cGroups.length>0&&<div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{mostRecentInt.cGroups.slice(0,3).map(g=><span key={g} className="tag">{g}</span>)}</div>}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16}}>
+              {[{n:contacts.length,l:"Total contacts"},{n:groups.length,l:"Total groups"},{n:interactions.length,l:"Total interactions"}].map((s,i)=>(
+                <div key={i} className="card" style={{padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
+                  <div style={{fontSize:36,fontWeight:700,color:"#0a1628",lineHeight:1}}>{s.n}</div>
+                  <div style={{fontSize:11,color:"#999",marginTop:6}}>{s.l}</div>
                 </div>
-              ):(
-                <div className="card" style={{padding:"20px 16px",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  <div style={{fontSize:11,color:"#999"}}>No interactions yet</div>
-                </div>
-              )}
+              ))}
+            </div>
+
+            {/* Recent 3 */}
+            <div className="card" style={{padding:"16px 20px",marginBottom:20}}>
+              <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:12}}>Most recent interactions</div>
+              {recent3.map((i,idx)=>{
+                const col=intColor(i.type);
+                return(
+                  <div key={i.id+idx} onClick={()=>{if(i.contactObj){setSelected(i.contactObj);goTab("contacts");}}} style={{display:"flex",alignItems:"center",gap:12,padding:"9px 0",borderBottom:idx<recent3.length-1?"0.5px solid #f0f0ee":"none",cursor:"pointer"}}>
+                    <div style={{width:32,height:32,borderRadius:"50%",background:avatarColor(i.cName),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(i.cName)}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontWeight:600,fontSize:13,color:"#0a1628"}}>{i.cName}</div>
+                      {i.note&&<div style={{fontSize:11,color:"#999",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}}>{i.note}</div>}
+                    </div>
+                    <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4,flexShrink:0}}>
+                      <span style={{fontSize:11,color:"#666"}}>{fmtDate(i.date)}</span>
+                      {i.type&&i.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 7px",fontWeight:500}}>{i.type}</span>}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Calendar + Groups */}
