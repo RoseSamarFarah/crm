@@ -1,0 +1,15 @@
+{
+  "name": "Collective",
+  "short_name": "Collective",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#3B6B55",
+  "theme_color": "#3B6B55",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
