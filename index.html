@@ -231,6 +231,8 @@ function App(){
   const [waText,setWaText]=useState("");
   const [waContact,setWaContact]=useState("");
   const [waLoading,setWaLoading]=useState(false);
+  const [anthropicKey,setAnthropicKey]=useState(()=>localStorage.getItem("anthropic_key")||"");
+  const [anthropicKeyInput,setAnthropicKeyInput]=useState("");
   const fileRef=useRef();
   const cardRef=useRef();
   const [cf,setCf]=useState({name:"",company:"",role:"",location:"",email:"",phone:"",groups:[],notes:""});
@@ -252,7 +254,8 @@ function App(){
   },[]);
 
   const callClaude=async(prompt)=>{
-    const resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":sbKey,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+    const key=anthropicKey||sbKey;
+    const resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
     const data=await resp.json();
     return(data.content||[]).map(b=>b.text||"").join("");
   };
@@ -277,7 +280,8 @@ function App(){
     if(!sbUrlInput.trim()||!sbKeyInput.trim())return;
     const url=sbUrlInput.trim().replace(/\/$/,"");const key=sbKeyInput.trim();
     localStorage.setItem("sb_url",url);localStorage.setItem("sb_key",key);
-    setSbUrl(url);setSbKey(key);setShowSettings(false);
+    if(anthropicKeyInput.trim())localStorage.setItem("anthropic_key",anthropicKeyInput.trim());
+    setSbUrl(url);setSbKey(key);setAnthropicKey(anthropicKeyInput.trim()||anthropicKey);setShowSettings(false);
     await loadFromSupabase(url,key);
   };
 
@@ -412,7 +416,12 @@ function App(){
         <div style={{fontSize:12,color:"#666",marginBottom:4}}>Project URL</div>
         <input type="password" placeholder="https://xxxx.supabase.co" value={sbUrlInput} onChange={e=>setSbUrlInput(e.target.value)} style={{marginBottom:12}}/>
         <div style={{fontSize:12,color:"#666",marginBottom:4}}>Anon / public key</div>
-        <input type="password" placeholder="eyJhbGci…" value={sbKeyInput} onChange={e=>setSbKeyInput(e.target.value)} style={{marginBottom:16}}/>
+        <input type="password" placeholder="eyJhbGci…" value={sbKeyInput} onChange={e=>setSbKeyInput(e.target.value)} style={{marginBottom:12}}/>
+        <div style={{fontSize:13,fontWeight:600,marginBottom:8,marginTop:4}}>Anthropic API key</div>
+        <p style={{fontSize:12,color:"#666",marginBottom:8,lineHeight:1.5}}>Required for AI summaries, business card scanning, and WhatsApp import.</p>
+        <div style={{fontSize:12,color:"#666",marginBottom:4}}>API key</div>
+        <input type="password" placeholder="sk-ant-api03-…" value={anthropicKeyInput} onChange={e=>setAnthropicKeyInput(e.target.value)} style={{marginBottom:16}}/>
+        {anthropicKey&&<p style={{fontSize:11,color:"#1D9E75",marginBottom:12}}>✓ Anthropic key saved</p>}
         <div style={{display:"flex",gap:8}}>
           <button style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"7px 18px",borderRadius:8,cursor:"pointer"}} onClick={connectSupabase} disabled={loadingDB||!sbUrlInput||!sbKeyInput}>{loadingDB?"Connecting…":"Connect & load"}</button>
           <button onClick={()=>setShowSettings(false)}>Cancel</button>
