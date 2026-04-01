@@ -1,9 +1,17 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
 <title>Collective</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a1628'/%3E%3Ctext x='16' y='22.5' text-anchor='middle' font-family='Inter,system-ui,sans-serif' font-size='22' font-weight='600' fill='white'%3EC%3C/text%3E%3C/svg%3E"/>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230a1628'/%3E%3Ctext x='90' y='125' text-anchor='middle' font-family='Inter,system-ui,sans-serif' font-size='120' font-weight='600' fill='white'%3EC%3C/text%3E%3C/svg%3E"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Collective"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -12,16 +20,33 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif!important;}
-body{background:#0a1628;color:#1a1a1a;font-size:14px;-webkit-font-smoothing:antialiased;}
-input,select,textarea{background:#f3f3f0;border:0.5px solid #ddd;border-radius:8px;padding:8px 12px;color:#1a1a1a;outline:none;width:100%;}
+body{background:#0a1628;color:#1a1a1a;font-size:14px;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;}
+input,select,textarea{background:#f3f3f0;border:0.5px solid #ddd;border-radius:8px;padding:8px 12px;color:#1a1a1a;outline:none;width:100%;font-size:16px;}
 input:focus,select:focus,textarea:focus{border-color:#4f6ef7;}
 button{cursor:pointer;border-radius:8px;padding:6px 14px;border:0.5px solid #ddd;background:#f3f3f0;color:#1a1a1a;}
 button:hover{background:#e8e8e8;}
 .card{background:#fff;border:none;border-radius:14px;padding:16px 20px;}
 .tag{font-size:10px;background:#eef0ff;border-radius:20px;padding:2px 8px;color:#4f6ef7;white-space:nowrap;display:inline-block;font-weight:500;}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:200;}
-.modal{background:#fff;border-radius:14px;padding:20px;width:440px;max-height:90vh;overflow-y:auto;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px;}
+.modal{background:#fff;border-radius:14px;padding:20px;width:440px;max-width:100%;max-height:90vh;overflow-y:auto;}
 .sbar{font-size:11px;padding:3px 20px;background:#0d1e36;color:#8899bb;}
+@media(max-width:700px){
+  .mob-header{flex-direction:column!important;align-items:flex-start!important;gap:8px!important;}
+  .mob-header>span{font-size:22px!important;}
+  .mob-header-right{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;display:flex!important;gap:6px!important;}
+  .mob-header-right::-webkit-scrollbar{display:none;}
+  .mob-header-right>*{flex-shrink:0;}
+  .card{padding:12px 14px;border-radius:12px;}
+  .mob-stats{grid-template-columns:repeat(2,1fr)!important;}
+  .mob-grid-1{grid-template-columns:1fr!important;}
+  .mob-sidebar-layout{grid-template-columns:1fr!important;min-height:auto!important;}
+  .mob-sidebar-layout>.mob-sidebar{border-right:none!important;border-bottom:0.5px solid #eee;max-height:160px;overflow-y:auto;}
+  .mob-contact-row{flex-wrap:wrap;gap:6px!important;}
+  .mob-contact-row .mob-tags{justify-content:flex-start!important;max-width:none!important;width:100%;padding-left:46px;}
+  .mob-filter-row{flex-direction:column!important;}
+  .mob-filter-row>input{min-width:0!important;}
+  .mob-filter-row>select{width:100%!important;}
+}
 </style>
 </head>
 <body>
@@ -40,6 +65,9 @@ const DAYS=["Mo","Tu","We","Th","Fr","Sa","Su"];
 const intColor=type=>{const t=(type||"").toLowerCase();if(t.includes("video")||t.includes("phone")||t.includes("call"))return{bg:"#dbeafe",text:"#1d4ed8"};if(t.includes("email")||t.includes("note"))return{bg:"#dcfce7",text:"#15803d"};if(t.includes("person")||t.includes("coffee")||t.includes("lunch")||t.includes("dinner")||t.includes("meeting"))return{bg:"#ede9fe",text:"#7c3aed"};return{bg:"#f3f4f6",text:"#6b7280"};};
 const GROUP_ICONS={"Beirut":"🌲","Boston":"⚾","Bridgespan":"🌉","California":"🌴","Climate":"☀️","Colombia":"☕","CrossBoundary":"🌐","Dubai":"✈️","Duke":"🔵","Egypt":"🐪","Gems":"💎","Goldman Sachs":"♠️","HBS":"📕","India":"🕌","Infrastructure":"🏗️","Investment Banking":"🤝","Investors":"📈","Jusoor":"❤️","London":"👑","Morgan Stanley":"💙","New York":"🗽","Paris":"🍷","Philanthropy and Nonprofits":"🤍","Private Equity":"💼","Sacred Heart":"🌹","Saudi Arabia":"🌙","Singapore":"🌴","Syria":"💚","Venture":"🚀","Washington DC":"🏛️"};
 const GIcon=({name,size=20})=>React.createElement("span",{style:{fontSize:size,lineHeight:1}},GROUP_ICONS[name]||"🏷️");
+const fmtDur=s=>{if(!s||s<0)return"0m";const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);const sec=Math.floor(s%60);if(h>0)return h+"h "+String(m).padStart(2,"0")+"m";if(m>0)return m+"m "+String(sec).padStart(2,"0")+"s";return sec+"s";};
+const fmtDurShort=s=>{if(!s||s<0)return"0m";const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);if(h>0)return h+"h "+m+"m";return m+"m";};
+const fmtTimer=s=>{const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);const sec=Math.floor(s%60);return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(sec).padStart(2,"0");};
 
 function parseCSV(text){
   const rows=[];let cur="",inQ=false,fields=[],i=0;
@@ -151,7 +179,8 @@ function IntCard({i,contacts,contactName,deleteInteraction,saveEditInt,setSelect
   );
 }
 
-function QuickAdd({contacts,onAdd}){
+function QuickAdd({contacts,onAdd,onAddContact,allGroupNames,groups}){
+  const [mode,setMode]=useState("interaction");
   const [contactId,setContactId]=useState("");
   const [type,setType]=useState("");
   const [date,setDate]=useState(today());
@@ -160,40 +189,432 @@ function QuickAdd({contacts,onAdd}){
   const [showPicker,setShowPicker]=useState(false);
   const filtered=contacts.filter(c=>search&&c.name.toLowerCase().includes(search.toLowerCase())).slice(0,6);
   const selC=contacts.find(c=>c.id===contactId);
-  const submit=()=>{if(!contactId||!date)return;onAdd({contactId,type,date,note});setContactId("");setType("");setDate(today());setNote("");setSearch("");};
+  const submitInt=()=>{if(!contactId||!date)return;onAdd({contactId,type,date,note});setContactId("");setType("");setDate(today());setNote("");setSearch("");};
+  const [cf,setCf]=useState({name:"",email:"",phone:"",company:"",role:"",location:"",groups:[],notes:""});
+  const submitContact=()=>{if(!cf.name.trim())return;onAddContact(cf);setCf({name:"",email:"",phone:"",company:"",role:"",location:"",groups:[],notes:""});};
   return(
     <div className="card" style={{padding:"16px 20px",marginBottom:12}}>
-      <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:12}}>Quick add interaction</div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-        <div style={{position:"relative"}}>
-          <input placeholder="Search contact…" value={selC?selC.name:search} onChange={e=>{setSearch(e.target.value);setContactId("");setShowPicker(true);}} onFocus={()=>setShowPicker(true)} style={{fontSize:13}}/>
-          {showPicker&&search&&!selC&&filtered.length>0&&(
-            <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,background:"#fff",border:"0.5px solid #ddd",borderRadius:8,boxShadow:"0 4px 16px rgba(0,0,0,0.1)",zIndex:20,maxHeight:160,overflowY:"auto"}}>
-              {filtered.map(c=>(
-                <div key={c.id} onClick={()=>{setContactId(c.id);setSearch(c.name);setShowPicker(false);}} style={{padding:"8px 12px",fontSize:13,cursor:"pointer",borderBottom:"0.5px solid #f5f5f5"}}
-                  onMouseEnter={e=>e.currentTarget.style.background="#f5f5f3"} onMouseLeave={e=>e.currentTarget.style.background="#fff"}>
-                  {c.name}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        <select value={type} onChange={e=>setType(e.target.value)} style={{fontSize:13}}>
-          <option value="">Type (optional)</option>
-          <option>Video Chat</option><option>Phone</option><option>In Person</option><option>Email</option><option>Note</option>
-        </select>
+      <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:12}}>
+        <span style={{fontSize:10,fontWeight:600,color:"#bbb",letterSpacing:"1px"}}>QUICK ADD</span>
+        <span onClick={()=>setMode("interaction")} style={{fontSize:12,fontWeight:mode==="interaction"?500:400,color:mode==="interaction"?"#1a1a1a":"#999",cursor:"pointer",borderBottom:mode==="interaction"?"1.5px solid #1a1a1a":"1.5px solid transparent",paddingBottom:4}}>Interaction</span>
+        <span onClick={()=>setMode("contact")} style={{fontSize:12,fontWeight:mode==="contact"?500:400,color:mode==="contact"?"#1a1a1a":"#999",cursor:"pointer",borderBottom:mode==="contact"?"1.5px solid #1a1a1a":"1.5px solid transparent",paddingBottom:4}}>Contact</span>
       </div>
-      <div style={{marginBottom:8,position:"relative"}}><DatePicker value={date} onChange={v=>setDate(v)}/></div>
-      <textarea placeholder="Notes…" value={note} onChange={e=>setNote(e.target.value)} rows={3} style={{resize:"vertical",marginBottom:10,fontSize:13}}/>
-      <button onClick={submit} disabled={!contactId||!date} style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"7px 20px",borderRadius:8,cursor:"pointer",opacity:(!contactId||!date)?0.5:1}}>Add interaction</button>
+      {mode==="interaction"?(
+        <div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+            <div style={{position:"relative"}}>
+              <input placeholder="Search contact…" value={selC?selC.name:search} onChange={e=>{setSearch(e.target.value);setContactId("");setShowPicker(true);}} onFocus={()=>setShowPicker(true)} style={{fontSize:13}}/>
+              {showPicker&&search&&!selC&&filtered.length>0&&(
+                <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,background:"#fff",border:"0.5px solid #ddd",borderRadius:8,boxShadow:"0 4px 16px rgba(0,0,0,0.1)",zIndex:20,maxHeight:160,overflowY:"auto"}}>
+                  {filtered.map(c=>(
+                    <div key={c.id} onClick={()=>{setContactId(c.id);setSearch(c.name);setShowPicker(false);}} style={{padding:"8px 12px",fontSize:13,cursor:"pointer",borderBottom:"0.5px solid #f5f5f5"}}
+                      onMouseEnter={e=>e.currentTarget.style.background="#f5f5f3"} onMouseLeave={e=>e.currentTarget.style.background="#fff"}>
+                      {c.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <select value={type} onChange={e=>setType(e.target.value)} style={{fontSize:13}}>
+              <option value="">Type</option>
+              <option>Video Chat</option><option>Phone</option><option>In Person</option><option>Email</option><option>Note</option>
+            </select>
+          </div>
+          <div style={{marginBottom:8,position:"relative"}}><DatePicker value={date} onChange={v=>setDate(v)}/></div>
+          <textarea placeholder="Notes…" value={note} onChange={e=>setNote(e.target.value)} rows={3} style={{resize:"vertical",marginBottom:10,fontSize:13}}/>
+          <button onClick={submitInt} disabled={!contactId||!date} style={{background:"#1a1a1a",border:"none",color:"#fff",fontWeight:500,padding:"7px 20px",borderRadius:8,cursor:"pointer",opacity:(!contactId||!date)?0.4:1}}>Add interaction</button>
+        </div>
+      ):(
+        <div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+            <input placeholder="Name *" value={cf.name} onChange={e=>setCf(f=>({...f,name:e.target.value}))} style={{fontSize:13}}/>
+            <input placeholder="Email" value={cf.email} onChange={e=>setCf(f=>({...f,email:e.target.value}))} style={{fontSize:13}}/>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+            <input placeholder="Phone" value={cf.phone} onChange={e=>setCf(f=>({...f,phone:e.target.value}))} style={{fontSize:13}}/>
+            <input placeholder="Company" value={cf.company} onChange={e=>setCf(f=>({...f,company:e.target.value}))} style={{fontSize:13}}/>
+          </div>
+          <textarea placeholder="Notes…" value={cf.notes} onChange={e=>setCf(f=>({...f,notes:e.target.value}))} rows={2} style={{resize:"vertical",marginBottom:10,fontSize:13}}/>
+          <button onClick={submitContact} disabled={!cf.name.trim()} style={{background:"#1a1a1a",border:"none",color:"#fff",fontWeight:500,padding:"7px 20px",borderRadius:8,cursor:"pointer",opacity:!cf.name.trim()?0.4:1}}>Add contact</button>
+        </div>
+      )}
     </div>
   );
 }
+
+/* ===== PROJECTS TAB COMPONENT ===== */
+function ProjectsTab({contacts,projects,setProjects,tasks,setTasks,timeEntries,setTimeEntries,timer,setTimer,sbUrl,sbKey,sbFetch}){
+  const [subTab,setSubTab]=useState("upcoming");
+  const [selProject,setSelProject]=useState("all");
+  const [showAddProject,setShowAddProject]=useState(false);
+  const [showAddSub,setShowAddSub]=useState(null);
+  const [showAddTask,setShowAddTask]=useState(false);
+  const [newProjName,setNewProjName]=useState("");
+  const [newSubName,setNewSubName]=useState("");
+  const [expandedProjects,setExpandedProjects]=useState({});
+  const [taskDraft,setTaskDraft]=useState({title:"",projectId:"",contactId:"",dueDate:"",priority:"",notes:""});
+  const [editingTask,setEditingTask]=useState(null);
+  const [editingProjectId,setEditingProjectId]=useState(null);
+  const [editProjectName,setEditProjectName]=useState("");
+  const [contactSearch,setContactSearch]=useState("");
+  const [timePeriod,setTimePeriod]=useState("today");
+
+  const PROJECT_COLORS=["#4f6ef7","#1D9E75","#D85A30","#7F77DD","#D4537E","#639922","#BA7517","#378ADD"];
+  const getProjectColor=(idx)=>PROJECT_COLORS[idx%PROJECT_COLORS.length];
+
+  const topProjects=projects.filter(p=>!p.parentId);
+  const subProjects=pid=>projects.filter(p=>p.parentId===pid);
+  const projectName=id=>{const p=projects.find(p=>p.id===id);return p?p.name:"";};
+  const topProjectOf=id=>{const p=projects.find(x=>x.id===id);if(!p)return null;if(!p.parentId)return p;return projects.find(x=>x.id===p.parentId)||p;};
+  const projectColor=id=>{const tp=topProjectOf(id);if(!tp)return"#999";const idx=topProjects.indexOf(tp);return idx>=0?getProjectColor(idx):"#999";};
+  const projectPath=id=>{const p=projects.find(x=>x.id===id);if(!p)return"";if(p.parentId){const par=projects.find(x=>x.id===p.parentId);return par?par.name+" · "+p.name:p.name;}return p.name;};
+
+  const filteredTasks=useMemo(()=>{
+    let t=tasks;
+    if(selProject!=="all"){
+      const subs=subProjects(selProject).map(s=>s.id);
+      t=t.filter(x=>x.projectId===selProject||subs.includes(x.projectId));
+    }
+    if(subTab==="upcoming")t=t.filter(x=>x.status!=="done");
+    if(subTab==="completed")t=t.filter(x=>x.status==="done");
+    return t;
+  },[tasks,selProject,subTab]);
+
+  const tasksBySubProject=useMemo(()=>{
+    if(selProject==="all"){
+      const grouped={};
+      topProjects.forEach(p=>{
+        const subs=subProjects(p.id);
+        const projTasks=filteredTasks.filter(t=>t.projectId===p.id);
+        const subGroups=subs.map(s=>({sub:s,tasks:filteredTasks.filter(t=>t.projectId===s.id)})).filter(sg=>sg.tasks.length>0);
+        if(projTasks.length>0||subGroups.length>0)grouped[p.id]={project:p,directTasks:projTasks,subGroups};
+      });
+      const ungrouped=filteredTasks.filter(t=>!t.projectId||!projects.find(p=>p.id===t.projectId));
+      if(ungrouped.length>0)grouped["_none"]={project:{id:"_none",name:"No project"},directTasks:ungrouped,subGroups:[]};
+      return grouped;
+    }
+    const proj=projects.find(p=>p.id===selProject);
+    if(!proj)return{};
+    const subs=subProjects(selProject);
+    const directTasks=filteredTasks.filter(t=>t.projectId===selProject);
+    const subGroups=subs.map(s=>({sub:s,tasks:filteredTasks.filter(t=>t.projectId===s.id)}));
+    return{[selProject]:{project:proj,directTasks,subGroups}};
+  },[filteredTasks,selProject,projects]);
+
+  const openTaskCount=pid=>{const subs=subProjects(pid).map(s=>s.id);return tasks.filter(t=>t.status!=="done"&&(t.projectId===pid||subs.includes(t.projectId))).length;};
+
+  const toggleExpand=pid=>setExpandedProjects(e=>({...e,[pid]:!e[pid]}));
+
+  const addProject=()=>{if(!newProjName.trim())return;const np={id:"proj_"+Date.now(),name:newProjName.trim(),parentId:null};setProjects(ps=>[...ps,np]);setNewProjName("");setShowAddProject(false);};
+  const addSubProject=(parentId)=>{if(!newSubName.trim())return;const ns={id:"proj_"+Date.now(),name:newSubName.trim(),parentId};setProjects(ps=>[...ps,ns]);setNewSubName("");setShowAddSub(null);};
+  const deleteProject=(pid)=>{if(!window.confirm("Delete this project and all its sub-projects?"))return;const subs=subProjects(pid).map(s=>s.id);setProjects(ps=>ps.filter(p=>p.id!==pid&&p.parentId!==pid));setTasks(ts=>ts.map(t=>[pid,...subs].includes(t.projectId)?{...t,projectId:""}:t));if(selProject===pid)setSelProject("all");};
+  const renameProject=(pid,newName)=>{if(!newName.trim())return;setProjects(ps=>ps.map(p=>p.id===pid?{...p,name:newName.trim()}:p));setEditingProjectId(null);setEditProjectName("");};
+  const deleteSubProject=(sid)=>{if(!window.confirm("Delete this sub-project?"))return;setProjects(ps=>ps.filter(p=>p.id!==sid));setTasks(ts=>ts.map(t=>t.projectId===sid?{...t,projectId:""}:t));if(selProject===sid)setSelProject("all");};
+
+  const addTask=()=>{if(!taskDraft.title.trim())return;const nt={id:"task_"+Date.now(),title:taskDraft.title.trim(),projectId:taskDraft.projectId||(selProject!=="all"?selProject:""),contactId:taskDraft.contactId,dueDate:taskDraft.dueDate,priority:taskDraft.priority,notes:taskDraft.notes,status:"todo",createdAt:today()};setTasks(ts=>[...ts,nt]);setTaskDraft({title:"",projectId:"",contactId:"",dueDate:"",priority:"",notes:""});setShowAddTask(false);};
+  const toggleTask=id=>setTasks(ts=>ts.map(t=>t.id===id?{...t,status:t.status==="done"?"todo":"done"}:t));
+  const deleteTask=id=>setTasks(ts=>ts.filter(t=>t.id!==id));
+  const saveTask=draft=>{setTasks(ts=>ts.map(t=>t.id===draft.id?{...draft}:t));setEditingTask(null);};
+
+  const startTimer=(taskId,desc)=>{
+    const t=tasks.find(x=>x.id===taskId);
+    setTimer({running:true,taskId:taskId||null,projectId:t?.projectId||"",description:desc||t?.title||"",startTime:Date.now()});
+  };
+  const stopTimer=()=>{
+    if(!timer.running)return;
+    const dur=Math.floor((Date.now()-timer.startTime)/1000);
+    const entry={id:"te_"+Date.now(),taskId:timer.taskId,projectId:timer.projectId,description:timer.description,startTime:timer.startTime,endTime:Date.now(),duration:dur,date:today()};
+    setTimeEntries(es=>[entry,...es]);
+    setTimer({running:false,taskId:null,projectId:"",description:"",startTime:null});
+  };
+
+  const filteredTimeEntries=useMemo(()=>{
+    const now=new Date();
+    const todayStr=today();
+    if(timePeriod==="today")return timeEntries.filter(e=>e.date===todayStr);
+    if(timePeriod==="week"){const d=new Date();d.setDate(d.getDate()-7);const w=d.toISOString().slice(0,10);return timeEntries.filter(e=>e.date>=w);}
+    if(timePeriod==="month"){const d=new Date();d.setDate(d.getDate()-30);const m=d.toISOString().slice(0,10);return timeEntries.filter(e=>e.date>=m);}
+    return timeEntries;
+  },[timeEntries,timePeriod]);
+
+  const timeByProject=useMemo(()=>{
+    const m={};
+    filteredTimeEntries.forEach(e=>{const tp=topProjectOf(e.projectId);const key=tp?tp.id:"_none";const name=tp?tp.name:"Other";if(!m[key])m[key]={name,dur:0,color:projectColor(e.projectId)};m[key].dur+=e.duration;});
+    return Object.values(m).sort((a,b)=>b.dur-a.dur);
+  },[filteredTimeEntries,projects]);
+
+  const totalTime=filteredTimeEntries.reduce((a,e)=>a+e.duration,0);
+
+  const priLabel={high:"High",med:"Med",low:"Low"};
+  const priStyle={high:{background:"rgba(220,60,60,0.08)",color:"#b91c1c"},med:{background:"rgba(180,130,20,0.08)",color:"#92400e"},low:{background:"rgba(79,110,247,0.06)",color:"#6b7280"}};
+
+  const sideItemStyle=(active)=>({display:"flex",alignItems:"center",gap:8,padding:"7px 16px",cursor:"pointer",fontSize:13,color:active?"#1a1a1a":"#666",background:active?"#f5f5f3":"transparent",fontWeight:active?500:400,borderRadius:0});
+
+  return(
+    <div>
+      <div className="card" style={{padding:0,overflow:"hidden"}}>
+        {/* Tabs */}
+        <div style={{display:"flex",gap:0,borderBottom:"0.5px solid #eee",padding:"0 20px"}}>
+          {[["upcoming","Upcoming"],["completed","Completed"],["timelog","Time log"]].map(([k,l])=>(
+            <div key={k} onClick={()=>setSubTab(k)} style={{fontSize:13,padding:"12px 0",marginRight:24,cursor:"pointer",color:subTab===k?"#1a1a1a":"#999",fontWeight:subTab===k?500:400,borderBottom:subTab===k?"2px solid #1a1a1a":"2px solid transparent"}}>{l}{k==="upcoming"?" ("+tasks.filter(t=>t.status!=="done").length+")":""}</div>
+          ))}
+        </div>
+
+        <div className="mob-sidebar-layout" style={{display:"grid",gridTemplateColumns:"210px minmax(0,1fr)",minHeight:420}}>
+          {/* Sidebar */}
+          <div className="mob-sidebar" style={{borderRight:"0.5px solid #eee",padding:"10px 0"}}>
+            <div style={{fontSize:10,fontWeight:600,color:"#999",padding:"6px 16px 4px",letterSpacing:"0.5px",textTransform:"uppercase"}}>Projects</div>
+            <div style={sideItemStyle(selProject==="all")} onClick={()=>setSelProject("all")}>
+              <span style={{fontSize:13}}>All tasks</span>
+              <span style={{marginLeft:"auto",fontSize:11,color:"#bbb"}}>{tasks.filter(t=>t.status!=="done").length}</span>
+            </div>
+            {topProjects.map((p,pi)=>(
+              <React.Fragment key={p.id}>
+                {editingProjectId===p.id?(
+                  <div style={{padding:"5px 16px",display:"flex",gap:4,alignItems:"center"}}>
+                    <div style={{width:8,height:8,borderRadius:2,background:getProjectColor(pi),flexShrink:0}}/>
+                    <input value={editProjectName} onChange={e=>setEditProjectName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")renameProject(p.id,editProjectName);if(e.key==="Escape"){setEditingProjectId(null);setEditProjectName("");}}} autoFocus style={{fontSize:12,padding:"3px 6px",flex:1}}/>
+                    <button onClick={()=>renameProject(p.id,editProjectName)} style={{fontSize:10,padding:"2px 6px",background:"#4f6ef7",border:"none",color:"#fff",borderRadius:4}}>Save</button>
+                    <button onClick={()=>{setEditingProjectId(null);setEditProjectName("");}} style={{fontSize:10,padding:"2px 6px",border:"none",background:"none",color:"#999"}}>✕</button>
+                  </div>
+                ):(
+                <div style={{...sideItemStyle(selProject===p.id),justifyContent:"flex-start"}} onClick={()=>setSelProject(p.id)}>
+                  <div style={{width:8,height:8,borderRadius:2,background:getProjectColor(pi),flexShrink:0}}/>
+                  <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</span>
+                  <span style={{fontSize:11,color:"#bbb",flexShrink:0}}>{openTaskCount(p.id)}</span>
+                  <span onClick={e=>{e.stopPropagation();toggleExpand(p.id);}} style={{fontSize:10,color:"#bbb",marginLeft:4,cursor:"pointer",flexShrink:0}}>{expandedProjects[p.id]?"▼":"▶"}</span>
+                </div>
+                )}
+                {expandedProjects[p.id]&&subProjects(p.id).map(s=>(
+                  editingProjectId===s.id?(
+                    <div key={s.id} style={{paddingLeft:36,paddingRight:12,paddingBottom:4,display:"flex",gap:4,alignItems:"center"}}>
+                      <input value={editProjectName} onChange={e=>setEditProjectName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")renameProject(s.id,editProjectName);if(e.key==="Escape"){setEditingProjectId(null);setEditProjectName("");}}} autoFocus style={{fontSize:12,padding:"3px 6px",flex:1}}/>
+                      <button onClick={()=>renameProject(s.id,editProjectName)} style={{fontSize:10,padding:"2px 6px",background:"#4f6ef7",border:"none",color:"#fff",borderRadius:4}}>Save</button>
+                      <button onClick={()=>{setEditingProjectId(null);setEditProjectName("");}} style={{fontSize:10,padding:"2px 6px",border:"none",background:"none",color:"#999"}}>✕</button>
+                    </div>
+                  ):(
+                  <div key={s.id} style={{...sideItemStyle(selProject===s.id),paddingLeft:36,fontSize:12}} onClick={()=>setSelProject(s.id)}>
+                    <span style={{flex:1}}>{s.name}</span>
+                    <span style={{fontSize:11,color:"#bbb"}}>{tasks.filter(t=>t.status!=="done"&&t.projectId===s.id).length}</span>
+                    <span onClick={e=>{e.stopPropagation();setEditingProjectId(s.id);setEditProjectName(s.name);}} style={{fontSize:10,color:"#ccc",cursor:"pointer",marginLeft:4}}>✏️</span>
+                    <span onClick={e=>{e.stopPropagation();deleteSubProject(s.id);}} style={{fontSize:10,color:"#ccc",cursor:"pointer",marginLeft:2}}>✕</span>
+                  </div>
+                  )
+                ))}
+                {expandedProjects[p.id]&&showAddSub===p.id&&(
+                  <div style={{paddingLeft:36,paddingRight:12,paddingBottom:6}}>
+                    <div style={{display:"flex",gap:4}}>
+                      <input placeholder="Sub-project name" value={newSubName} onChange={e=>setNewSubName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addSubProject(p.id)} style={{fontSize:12,padding:"4px 8px",flex:1}}/>
+                      <button onClick={()=>addSubProject(p.id)} style={{fontSize:11,padding:"4px 8px",background:"#4f6ef7",border:"none",color:"#fff",borderRadius:6}}>Add</button>
+                    </div>
+                  </div>
+                )}
+                {expandedProjects[p.id]&&(
+                  <div style={{paddingLeft:36,paddingBottom:4}}>
+                    <span onClick={()=>setShowAddSub(showAddSub===p.id?null:p.id)} style={{fontSize:11,color:"#4f6ef7",cursor:"pointer"}}>+ Sub-project</span>
+                    <span onClick={()=>{setEditingProjectId(p.id);setEditProjectName(p.name);}} style={{fontSize:11,color:"#ccc",cursor:"pointer",marginLeft:12}}>Rename</span>
+                    <span onClick={()=>deleteProject(p.id)} style={{fontSize:11,color:"#ccc",cursor:"pointer",marginLeft:8}}>Delete</span>
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
+            {showAddProject?(
+              <div style={{padding:"6px 16px"}}>
+                <input placeholder="Project name" value={newProjName} onChange={e=>setNewProjName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addProject()} style={{fontSize:12,padding:"5px 8px",marginBottom:4}}/>
+                <div style={{display:"flex",gap:4}}>
+                  <button onClick={addProject} style={{fontSize:11,padding:"3px 10px",background:"#4f6ef7",border:"none",color:"#fff",borderRadius:6}}>Create</button>
+                  <button onClick={()=>{setShowAddProject(false);setNewProjName("");}} style={{fontSize:11,padding:"3px 10px"}}>Cancel</button>
+                </div>
+              </div>
+            ):(
+              <div onClick={()=>setShowAddProject(true)} style={{fontSize:12,color:"#4f6ef7",cursor:"pointer",padding:"8px 16px"}}>+ New project</div>
+            )}
+          </div>
+
+          {/* Main task area */}
+          <div>
+            {subTab!=="timelog"&&(
+              <div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 20px",borderBottom:"0.5px solid #eee"}}>
+                  {editingProjectId===selProject&&selProject!=="all"?(
+                    <div style={{display:"flex",alignItems:"center",gap:6,flex:1}}>
+                      <input value={editProjectName} onChange={e=>setEditProjectName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")renameProject(selProject,editProjectName);if(e.key==="Escape"){setEditingProjectId(null);setEditProjectName("");}}} autoFocus style={{fontSize:15,fontWeight:500,padding:"4px 8px",flex:1,maxWidth:300}}/>
+                      <button onClick={()=>renameProject(selProject,editProjectName)} style={{fontSize:12,padding:"4px 12px",background:"#4f6ef7",border:"none",color:"#fff",borderRadius:6}}>Save</button>
+                      <button onClick={()=>{setEditingProjectId(null);setEditProjectName("");}} style={{fontSize:12,padding:"4px 8px"}}>Cancel</button>
+                    </div>
+                  ):(
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <span style={{fontSize:15,fontWeight:500}}>{selProject==="all"?"All tasks":projectName(selProject)}</span>
+                      {selProject!=="all"&&(
+                        <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                          <button onClick={()=>{setEditingProjectId(selProject);setEditProjectName(projectName(selProject));}} style={{fontSize:11,color:"#4f6ef7",background:"none",border:"0.5px solid #4f6ef7",padding:"2px 8px",borderRadius:6,cursor:"pointer"}}>Rename</button>
+                          <button onClick={()=>{const p=projects.find(x=>x.id===selProject);if(p&&p.parentId)deleteSubProject(selProject);else deleteProject(selProject);}} style={{fontSize:11,color:"#c00",background:"none",border:"0.5px solid #eee",padding:"2px 8px",borderRadius:6,cursor:"pointer"}}>Delete</button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {selProject!=="all"&&<button onClick={()=>{setShowAddSub(selProject);setExpandedProjects(e=>({...e,[selProject]:true}));}} style={{fontSize:12,color:"#999",background:"none",border:"0.5px solid #ddd",padding:"3px 10px"}}>+ Sub-project</button>}
+                </div>
+
+                {/* Create task row */}
+                {!showAddTask?(
+                  <div onClick={()=>setShowAddTask(true)} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 20px",borderBottom:"0.5px solid #eee",color:"#999",fontSize:13,cursor:"pointer"}}>
+                    <span style={{fontSize:16,width:20,textAlign:"center"}}>+</span>Create task
+                  </div>
+                ):(
+                  <div style={{padding:"12px 20px",borderBottom:"0.5px solid #eee",background:"#fafaf8"}}>
+                    <input placeholder="Task name" value={taskDraft.title} onChange={e=>setTaskDraft(d=>({...d,title:e.target.value}))} onKeyDown={e=>{if(e.key==="Enter"&&taskDraft.title.trim())addTask();}} style={{marginBottom:8,fontSize:13}}/>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:8}}>
+                      <select value={taskDraft.projectId||(selProject!=="all"?selProject:"")} onChange={e=>setTaskDraft(d=>({...d,projectId:e.target.value}))} style={{fontSize:12}}>
+                        <option value="">No project</option>
+                        {projects.map(p=><option key={p.id} value={p.id}>{p.parentId?"  ↳ ":""}{p.name}</option>)}
+                      </select>
+                      <select value={taskDraft.priority} onChange={e=>setTaskDraft(d=>({...d,priority:e.target.value}))} style={{fontSize:12}}>
+                        <option value="">Priority</option><option value="high">High</option><option value="med">Medium</option><option value="low">Low</option>
+                      </select>
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:8}}>
+                      <div style={{position:"relative"}}><DatePicker value={taskDraft.dueDate} onChange={v=>setTaskDraft(d=>({...d,dueDate:v}))} placeholder="Due date"/></div>
+                      <div style={{position:"relative"}}>
+                        <input placeholder="Link contact…" value={contactSearch} onChange={e=>setContactSearch(e.target.value)} style={{fontSize:12}}/>
+                        {contactSearch&&(
+                          <div style={{position:"absolute",top:"calc(100% + 2px)",left:0,right:0,background:"#fff",border:"0.5px solid #ddd",borderRadius:8,boxShadow:"0 4px 12px rgba(0,0,0,0.1)",zIndex:20,maxHeight:120,overflowY:"auto"}}>
+                            {contacts.filter(c=>c.name.toLowerCase().includes(contactSearch.toLowerCase())).slice(0,6).map(c=>(
+                              <div key={c.id} onClick={()=>{setTaskDraft(d=>({...d,contactId:c.id}));setContactSearch(c.name);}} style={{padding:"6px 10px",fontSize:12,cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.background="#f5f5f3"} onMouseLeave={e=>e.currentTarget.style.background="#fff"}>{c.name}</div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{display:"flex",gap:6}}>
+                      <button onClick={addTask} disabled={!taskDraft.title.trim()} style={{fontSize:12,padding:"5px 14px",background:"#4f6ef7",border:"none",color:"#fff",borderRadius:8,cursor:"pointer"}}>Add task</button>
+                      <button onClick={()=>{setShowAddTask(false);setTaskDraft({title:"",projectId:"",contactId:"",dueDate:"",priority:"",notes:""});setContactSearch("");}} style={{fontSize:12}}>Cancel</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Task list */}
+                {Object.entries(tasksBySubProject).map(([pid,group])=>(
+                  <React.Fragment key={pid}>
+                    {selProject==="all"&&(
+                      <div style={{fontSize:11,fontWeight:600,color:"#999",padding:"10px 20px 4px",background:"#fafaf8",borderBottom:"0.5px solid #eee",display:"flex",alignItems:"center",gap:6}}>
+                        <div style={{width:7,height:7,borderRadius:2,background:projectColor(pid)}}/>
+                        {group.project.name}
+                      </div>
+                    )}
+                    {group.directTasks.map(t=>(
+                      <TaskRow key={t.id} t={t} contacts={contacts} projectPath={projectPath} projectColor={projectColor} priStyle={priStyle} priLabel={priLabel} toggleTask={toggleTask} deleteTask={deleteTask} startTimer={startTimer} timer={timer} editingTask={editingTask} setEditingTask={setEditingTask} saveTask={saveTask} projects={projects} selProject={selProject}/>
+                    ))}
+                    {group.subGroups&&group.subGroups.map(sg=>(
+                      <React.Fragment key={sg.sub.id}>
+                        {sg.tasks.length>0&&<div style={{fontSize:10,fontWeight:600,color:"#bbb",padding:"8px 20px 3px",textTransform:"uppercase",letterSpacing:"0.3px",background:"#fafaf8",borderBottom:"0.5px solid #eee"}}>{sg.sub.name}</div>}
+                        {sg.tasks.map(t=>(
+                          <TaskRow key={t.id} t={t} contacts={contacts} projectPath={projectPath} projectColor={projectColor} priStyle={priStyle} priLabel={priLabel} toggleTask={toggleTask} deleteTask={deleteTask} startTimer={startTimer} timer={timer} editingTask={editingTask} setEditingTask={setEditingTask} saveTask={saveTask} projects={projects} selProject={selProject}/>
+                        ))}
+                      </React.Fragment>
+                    ))}
+                  </React.Fragment>
+                ))}
+                {filteredTasks.length===0&&<div style={{padding:"40px 20px",textAlign:"center",color:"#ccc",fontSize:13}}>{subTab==="completed"?"No completed tasks yet.":"No tasks yet. Create one above."}</div>}
+              </div>
+            )}
+
+            {/* Time log sub-tab */}
+            {subTab==="timelog"&&(
+              <div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 20px",borderBottom:"0.5px solid #eee"}}>
+                  <div style={{display:"flex",gap:4}}>
+                    {[["today","Today"],["week","This week"],["month","This month"]].map(([k,l])=>(
+                      <button key={k} onClick={()=>setTimePeriod(k)} style={{fontSize:12,padding:"4px 10px",borderRadius:6,border:"none",background:timePeriod===k?"#f0f0ee":"transparent",color:timePeriod===k?"#1a1a1a":"#999",fontWeight:timePeriod===k?500:400,cursor:"pointer"}}>{l}</button>
+                    ))}
+                  </div>
+                  <span style={{fontSize:14,fontWeight:500}}>{fmtDurShort(totalTime)}</span>
+                </div>
+                {filteredTimeEntries.map(e=>(
+                  <div key={e.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 20px",borderBottom:"0.5px solid #eee"}}>
+                    <div style={{width:8,height:8,borderRadius:2,background:projectColor(e.projectId),flexShrink:0}}/>
+                    <span style={{fontSize:13,flex:1}}>{e.description}</span>
+                    <span style={{fontSize:12,color:"#999"}}>{projectPath(e.projectId)}</span>
+                    <span style={{fontSize:13,fontWeight:500,minWidth:56,textAlign:"right"}}>{fmtDurShort(e.duration)}</span>
+                  </div>
+                ))}
+                {filteredTimeEntries.length===0&&<div style={{padding:"40px 20px",textAlign:"center",color:"#ccc",fontSize:13}}>No time entries for this period.</div>}
+                {timeByProject.length>0&&(
+                  <div style={{padding:"14px 20px",background:"#fafaf8",borderTop:"0.5px solid #eee"}}>
+                    <div style={{display:"flex",height:8,borderRadius:4,overflow:"hidden",gap:2,marginBottom:8}}>
+                      {timeByProject.map((p,i)=><div key={i} style={{flex:p.dur,background:p.color,borderRadius:i===0?"4px 0 0 4px":i===timeByProject.length-1?"0 4px 4px 0":"0"}}/>)}
+                    </div>
+                    <div style={{display:"flex",gap:14,flexWrap:"wrap"}}>
+                      {timeByProject.map((p,i)=>(
+                        <span key={i} style={{fontSize:11,display:"flex",alignItems:"center",gap:4,color:"#666"}}>
+                          <span style={{width:7,height:7,borderRadius:2,background:p.color,display:"inline-block"}}/>
+                          {p.name} {fmtDurShort(p.dur)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TaskRow({t,contacts,projectPath,projectColor,priStyle,priLabel,toggleTask,deleteTask,startTimer,timer,editingTask,setEditingTask,saveTask,projects,selProject}){
+  const [showDel,setShowDel]=useState(false);
+  const contact=contacts.find(c=>c.id===t.contactId);
+  const isDone=t.status==="done";
+  const isTimerOn=timer.running&&timer.taskId===t.id;
+
+  if(editingTask===t.id){
+    return(
+      <div style={{padding:"10px 20px",borderBottom:"0.5px solid #eee",background:"#fafaf8"}}>
+        <input value={t.title} onChange={e=>saveTask({...t,title:e.target.value})} style={{fontSize:13,marginBottom:6}}/>
+        <div style={{display:"flex",gap:6,marginBottom:6}}>
+          <select value={t.priority||""} onChange={e=>saveTask({...t,priority:e.target.value})} style={{fontSize:12,flex:1}}><option value="">Priority</option><option value="high">High</option><option value="med">Medium</option><option value="low">Low</option></select>
+          <select value={t.projectId||""} onChange={e=>saveTask({...t,projectId:e.target.value})} style={{fontSize:12,flex:1}}><option value="">No project</option>{projects.map(p=><option key={p.id} value={p.id}>{p.parentId?"  ↳ ":""}{p.name}</option>)}</select>
+        </div>
+        <div style={{display:"flex",gap:6}}>
+          <button onClick={()=>setEditingTask(null)} style={{fontSize:12,padding:"4px 12px",background:"#4f6ef7",border:"none",color:"#fff",borderRadius:6}}>Done</button>
+          <button onClick={()=>deleteTask(t.id)} style={{fontSize:12,padding:"4px 12px",color:"#c00",background:"none",border:"none"}}>Delete</button>
+        </div>
+      </div>
+    );
+  }
+
+  return(
+    <div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 20px",borderBottom:"0.5px solid #eee"}} onMouseEnter={e=>e.currentTarget.style.background="#fafaf8"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+      <div onClick={()=>toggleTask(t.id)} style={{width:18,height:18,borderRadius:"50%",border:isDone?"none":"1.5px solid #ccc",background:isDone?"#1D9E75":"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        {isDone&&<svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4L3.5 6.5L9 1" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+      </div>
+      <span onClick={()=>setEditingTask(t.id)} style={{flex:1,fontSize:13,cursor:"pointer",textDecoration:isDone?"line-through":"none",color:isDone?"#bbb":"#1a1a1a"}}>{t.title}</span>
+      <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+        {contact&&<span style={{fontSize:11,color:"#4f6ef7",background:"#eef0ff",padding:"2px 8px",borderRadius:12,whiteSpace:"nowrap"}}>{contact.name}</span>}
+        {t.priority&&priStyle[t.priority]&&<span style={{fontSize:10,padding:"2px 7px",borderRadius:10,fontWeight:500,...priStyle[t.priority]}}>{priLabel[t.priority]}</span>}
+        {t.dueDate&&<span style={{fontSize:12,color:"#999",whiteSpace:"nowrap"}}>{fmtDate(t.dueDate)}</span>}
+        {!isDone&&(
+          <div onClick={()=>{if(isTimerOn)return;startTimer(t.id);}} style={{width:24,height:24,borderRadius:"50%",background:isTimerOn?"rgba(220,60,60,0.1)":"#f0f0ee",display:"flex",alignItems:"center",justifyContent:"center",cursor:isTimerOn?"default":"pointer",flexShrink:0}} title={isTimerOn?"Timer running":"Start timer"}>
+            {isTimerOn?<div style={{width:6,height:6,borderRadius:1,background:"#b91c1c"}}/>:<svg width="8" height="10" viewBox="0 0 8 10"><polygon points="0,0 8,5 0,10" fill="#999"/></svg>}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 
 function App(){
   const [contacts,setContacts]=useState([]);
   const [interactions,setInteractions]=useState([]);
   const [groups,setGroups]=useState([]);
+  const [projects,setProjects]=useState(()=>{try{return JSON.parse(localStorage.getItem("collective_projects")||"[]");}catch{return[];}});
+  const [tasks,setTasks]=useState(()=>{try{return JSON.parse(localStorage.getItem("collective_tasks")||"[]");}catch{return[];}});
+  const [timeEntries,setTimeEntries]=useState(()=>{try{return JSON.parse(localStorage.getItem("collective_time_entries")||"[]");}catch{return[];}});
+  const [timer,setTimer]=useState({running:false,taskId:null,projectId:"",description:"",startTime:null});
+  const [timerDisplay,setTimerDisplay]=useState(0);
   const [reminders,setReminders]=useState(()=>{try{return JSON.parse(localStorage.getItem("reminders")||"[]");}catch{return[];}});
   const [imported,setImported]=useState(false);
   const [tab,setTab]=useState("dashboard");
@@ -231,12 +652,27 @@ function App(){
   const [waText,setWaText]=useState("");
   const [waContact,setWaContact]=useState("");
   const [waLoading,setWaLoading]=useState(false);
+  const [showTimerStart,setShowTimerStart]=useState(false);
+  const [freeTimerDesc,setFreeTimerDesc]=useState("");
+  const [freeTimerProject,setFreeTimerProject]=useState("");
   const [anthropicKey,setAnthropicKey]=useState(()=>localStorage.getItem("anthropic_key")||"");
   const [anthropicKeyInput,setAnthropicKeyInput]=useState("");
   const fileRef=useRef();
   const cardRef=useRef();
   const [cf,setCf]=useState({name:"",company:"",role:"",location:"",email:"",phone:"",groups:[],notes:""});
   const [inf,setInf]=useState({contactIds:[],date:"",note:"",type:""});
+
+  // Persist projects/tasks/time to localStorage
+  useEffect(()=>{localStorage.setItem("collective_projects",JSON.stringify(projects));},[projects]);
+  useEffect(()=>{localStorage.setItem("collective_tasks",JSON.stringify(tasks));},[tasks]);
+  useEffect(()=>{localStorage.setItem("collective_time_entries",JSON.stringify(timeEntries));},[timeEntries]);
+
+  // Timer tick
+  useEffect(()=>{
+    if(!timer.running)return;
+    const iv=setInterval(()=>{setTimerDisplay(Math.floor((Date.now()-timer.startTime)/1000));},1000);
+    return()=>clearInterval(iv);
+  },[timer.running,timer.startTime]);
 
   useEffect(()=>{if(sbUrl&&sbKey)loadFromSupabase(sbUrl,sbKey);},[]);
   useEffect(()=>{localStorage.setItem("reminders",JSON.stringify(reminders));},[reminders]);
@@ -375,6 +811,9 @@ function App(){
   const upcomingReminders=useMemo(()=>reminders.filter(r=>r.date>=today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5),[reminders]);
   const overdueReminders=useMemo(()=>reminders.filter(r=>r.date<today()).sort((a,b)=>b.date.localeCompare(a.date)),[reminders]);
 
+  // Tasks linked to a contact
+  const contactTasks=useCallback(cId=>tasks.filter(t=>t.contactId===cId&&t.status!=="done"),[tasks]);
+
   const deleteContact=c=>{if(!window.confirm("Delete "+c.name+"?"))return;setContacts(cs=>cs.filter(x=>x.id!==c.id));setSelected(null);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+c.id,"DELETE").catch(()=>{});};
   const deleteInteraction=i=>{setInteractions(is=>is.filter(x=>x.id!==i.id));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+i.id,"DELETE").catch(()=>{});};
   const saveEditInt=draft=>{setInteractions(is=>is.map(i=>i.id===draft.id?{...draft}:i));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+draft.id,"PATCH",{person_id:draft.personId||draft.person_id,type:draft.type||"",date:draft.date||"",note:draft.note||""}).catch(()=>{});};
@@ -395,6 +834,14 @@ function App(){
 
   const startRecording=async()=>{try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});const mr=new MediaRecorder(stream);const chunks=[];mr.ondataavailable=e=>chunks.push(e.data);mr.onstop=()=>{stream.getTracks().forEach(t=>t.stop());setRecording(false);setDetailNote(n=>n?n+"\n[Voice note]":"[Voice note]");};mr.start();setMediaRec(mr);setRecording(true);}catch(err){alert("Microphone access denied.");}};
 
+  const stopProjectTimer=()=>{
+    if(!timer.running)return;
+    const dur=Math.floor((Date.now()-timer.startTime)/1000);
+    const entry={id:"te_"+Date.now(),taskId:timer.taskId,projectId:timer.projectId,description:timer.description,startTime:timer.startTime,endTime:Date.now(),duration:dur,date:today()};
+    setTimeEntries(es=>[entry,...es]);
+    setTimer({running:false,taskId:null,projectId:"",description:"",startTime:null});
+  };
+
   const prevMonth=()=>setCalDate(d=>new Date(d.getFullYear(),d.getMonth()-1,1));
   const nextMonth=()=>setCalDate(d=>new Date(d.getFullYear(),d.getMonth()+1,1));
   const cy=calDate.getFullYear(),cm=calDate.getMonth();
@@ -407,8 +854,8 @@ function App(){
   while(dashCells.length%7!==0)dashCells.push(null);
 
   const overlapping=filterGroup!=="All"&&filterGroup2!=="All"&&filterGroup!==filterGroup2;
-  const nb=active=>({cursor:"pointer",borderRadius:8,padding:"5px 12px",border:"none",background:active?"rgba(255,255,255,0.15)":"transparent",color:active?"#fff":"rgba(255,255,255,0.55)",fontSize:13,fontWeight:active?500:400});
-  const ab=bg=>({padding:"5px 14px",borderRadius:8,background:bg,border:"none",color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer"});
+  const nb=active=>({cursor:"pointer",borderRadius:6,padding:"4px 10px",border:"none",background:active?"rgba(255,255,255,0.15)":"transparent",color:active?"#fff":"rgba(255,255,255,0.55)",fontSize:13,fontWeight:active?500:400});
+  const ab=bg=>({padding:"4px 12px",borderRadius:6,background:bg,border:"none",color:"#0a1628",fontSize:13,fontWeight:500,cursor:"pointer"});
 
   if(showSettings)return(
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#0a1628"}}>
@@ -450,27 +897,49 @@ function App(){
 
   return(
     <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",background:"#0a1628"}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 20px",flexWrap:"wrap",gap:6}}>
-        <span style={{fontSize:17,fontWeight:700,color:"#fff",letterSpacing:"-0.3px",cursor:"pointer"}} onClick={()=>goTab("dashboard")}>Collective</span>
-        <div style={{display:"flex",gap:3,flexWrap:"wrap",alignItems:"center"}}>
-          {["dashboard","contacts","interactions","groups","calendar"].map(t=>(
-            <button key={t} style={nb(tab===t&&!selected)} onClick={()=>goTab(t)}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
-          ))}
-          <div style={{width:1,height:18,background:"rgba(255,255,255,0.15)",margin:"0 3px"}}/>
-          <button onClick={()=>setShowAddContact(true)} style={ab("#4f6ef7")}>+ Contact</button>
-          <button onClick={()=>setShowAddInteraction(true)} style={ab("rgba(255,255,255,0.15)")}>+ Interaction</button>
-          <label style={{padding:"5px 10px",borderRadius:8,background:"rgba(255,255,255,0.08)",cursor:"pointer",fontSize:13,color:"rgba(255,255,255,0.5)",title:"Scan business card"}} title="Scan business card">
-            📇<input ref={cardRef} type="file" accept="image/*" style={{display:"none"}} onChange={handleCardScan}/>
-          </label>
-          <button onClick={()=>setShowWhatsApp(true)} style={{padding:"5px 10px",borderRadius:8,background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer"}} title="Import WhatsApp chat">💬</button>
-          <label style={{padding:"5px 10px",borderRadius:8,background:"rgba(255,255,255,0.08)",cursor:"pointer",fontSize:13,color:"rgba(255,255,255,0.5)"}}>📂<input type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/></label>
-          <button onClick={()=>{setSbUrlInput(sbUrl);setSbKeyInput(sbKey);setShowSettings(true);}} style={{padding:"5px 10px",borderRadius:8,background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer"}}>⚙️</button>
-          <button onClick={syncToSupabase} disabled={!sbUrl||syncing} style={{...ab(sbUrl?"#D85A30":"rgba(255,255,255,0.08)"),opacity:!sbUrl?0.4:1}}>{syncing?"Syncing…":"Sync"}</button>
+      <div style={{padding:"10px 20px 6px"}}>
+        <div className="mob-header" style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+          <span style={{fontSize:26,fontWeight:700,color:"#fff",letterSpacing:"-0.5px",cursor:"pointer"}} onClick={()=>goTab("dashboard")}>Collective</span>
+          <div className="mob-header-right" style={{display:"flex",alignItems:"center",gap:8}}>
+            {["dashboard","projects","contacts","interactions","groups","calendar"].map(t=>(
+              <button key={t} style={nb(tab===t&&!selected)} onClick={()=>goTab(t)}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
+            ))}
+            <button onClick={()=>setShowAddContact(true)} style={ab("rgba(255,255,255,0.9)")}>+ Contact</button>
+            <button onClick={()=>setShowAddInteraction(true)} style={ab("rgba(255,255,255,0.9)")}>+ Interaction</button>
+            <label style={{padding:"5px 10px",borderRadius:6,background:"rgba(255,255,255,0.08)",cursor:"pointer",fontSize:13,color:"rgba(255,255,255,0.5)"}} title="Scan business card">
+              📇<input ref={cardRef} type="file" accept="image/*" style={{display:"none"}} onChange={handleCardScan}/>
+            </label>
+            <button onClick={()=>setShowWhatsApp(true)} style={{padding:"5px 10px",borderRadius:6,background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer"}} title="Import WhatsApp chat">💬</button>
+            <label style={{padding:"5px 10px",borderRadius:6,background:"rgba(255,255,255,0.08)",cursor:"pointer",fontSize:13,color:"rgba(255,255,255,0.5)"}}>📂<input type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/></label>
+            <button onClick={()=>{setSbUrlInput(sbUrl);setSbKeyInput(sbKey);setShowSettings(true);}} style={{padding:"5px 10px",borderRadius:6,background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer"}}>⚙️</button>
+            {/* Timer */}
+            {timer.running?(
+              <div onClick={stopProjectTimer} style={{display:"flex",alignItems:"center",gap:6,background:"rgba(220,60,60,0.15)",borderRadius:6,padding:"4px 12px",cursor:"pointer"}} title="Click to stop timer">
+                <div style={{width:6,height:6,borderRadius:"50%",background:"#e24b4a",animation:"pulse 1.5s infinite"}}/>
+                <span style={{fontSize:12,color:"#f87171",fontWeight:500,fontVariantNumeric:"tabular-nums"}}>{fmtTimer(timerDisplay)}</span>
+                <span style={{fontSize:11,color:"rgba(248,113,113,0.7)",maxWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{timer.description}</span>
+                <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}`}</style>
+              </div>
+            ):showTimerStart?(
+              <div style={{display:"flex",alignItems:"center",gap:4}}>
+                <input placeholder="What are you working on?" value={freeTimerDesc} onChange={e=>setFreeTimerDesc(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&freeTimerDesc.trim()){setTimer({running:true,taskId:null,projectId:freeTimerProject,description:freeTimerDesc.trim(),startTime:Date.now()});setShowTimerStart(false);setFreeTimerDesc("");setFreeTimerProject("");}}} style={{fontSize:12,padding:"4px 8px",width:140,background:"rgba(255,255,255,0.1)",border:"0.5px solid rgba(255,255,255,0.2)",color:"#fff",borderRadius:6}}/>
+                <select value={freeTimerProject} onChange={e=>setFreeTimerProject(e.target.value)} style={{fontSize:11,padding:"4px 6px",width:90,background:"rgba(255,255,255,0.1)",border:"0.5px solid rgba(255,255,255,0.2)",color:"#fff",borderRadius:6}}>
+                  <option value="">Project</option>
+                  {projects.map(p=><option key={p.id} value={p.id}>{p.parentId?"↳ ":""}{p.name}</option>)}
+                </select>
+                <button onClick={()=>{if(freeTimerDesc.trim()){setTimer({running:true,taskId:null,projectId:freeTimerProject,description:freeTimerDesc.trim(),startTime:Date.now()});setShowTimerStart(false);setFreeTimerDesc("");setFreeTimerProject("");}}} style={{fontSize:11,padding:"4px 10px",background:"#1D9E75",border:"none",color:"#fff",borderRadius:6,cursor:"pointer"}}>Start</button>
+                <button onClick={()=>{setShowTimerStart(false);setFreeTimerDesc("");setFreeTimerProject("");}} style={{fontSize:11,padding:"4px 8px",background:"none",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer"}}>✕</button>
+              </div>
+            ):(
+              <button onClick={()=>setShowTimerStart(true)} style={{padding:"5px 10px",borderRadius:6,background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:12}} title="Start timer">⏱️</button>
+            )}
+            <button onClick={syncToSupabase} disabled={!sbUrl||syncing} style={{...ab(sbUrl?"#D85A30":"rgba(255,255,255,0.08)"),opacity:!sbUrl?0.4:1}}>{syncing?"Syncing…":"Sync"}</button>
+          </div>
         </div>
       </div>
       {syncStatus&&<div className="sbar">{syncStatus}</div>}
 
-      <div style={{flex:1,padding:"10px 20px",maxWidth:1000,width:"100%",margin:"0 auto"}}>
+      <div style={{flex:1,padding:"10px 16px",maxWidth:1000,width:"100%",margin:"0 auto"}}>
         {(tab!=="dashboard"||selected)&&(
           <button onClick={goBack} style={{marginBottom:12,padding:"4px 14px",borderRadius:8,background:"rgba(255,255,255,0.1)",border:"none",color:"rgba(255,255,255,0.8)",fontSize:13,cursor:"pointer"}}>← Back</button>
         )}
@@ -478,8 +947,8 @@ function App(){
         {/* DASHBOARD */}
         {tab==="dashboard"&&!selected&&(
           <div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:12}}>
-              {[{n:contacts.length,l:"Contacts"},{n:groups.length,l:"Groups"},{n:interactions.length,l:"Interactions"}].map((s,i)=>(
+            <div className="mob-stats" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:12}}>
+              {[{n:contacts.length,l:"Contacts"},{n:groups.length,l:"Groups"},{n:interactions.length,l:"Interactions"},{n:tasks.filter(t=>t.status!=="done").length,l:"Open tasks"}].map((s,i)=>(
                 <div key={i} className="card" style={{padding:"18px 16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
                   <div style={{fontSize:34,fontWeight:700,color:"#0a1628",lineHeight:1}}>{s.n}</div>
                   <div style={{fontSize:11,color:"#999",marginTop:5}}>{s.l}</div>
@@ -537,9 +1006,9 @@ function App(){
               </div>
             )}
 
-            <QuickAdd contacts={contacts} onAdd={handleQuickAdd}/>
+            <QuickAdd contacts={contacts} onAdd={handleQuickAdd} onAddContact={(cf)=>{const nc={...cf,id:"c_"+Date.now(),groupIds:cf.groups||[],dateMet:"",company:cf.company||"",role:cf.role||"",location:cf.location||""};setContacts(cs=>[nc,...cs]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts","POST",[{id:nc.id,name:nc.name,email:nc.email||"",phone:nc.phone||"",notes:nc.notes||"",date_met:"",company:nc.company,role:nc.role,location:nc.location,group_ids:(nc.groupIds||[]).join(",")}]).catch(()=>{});}} allGroupNames={allGroupNames} groups={groups}/>
 
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,alignItems:"start"}}>
+            <div className="mob-grid-1" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,alignItems:"start"}}>
               <div className="card">
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
                   <span style={{fontWeight:600,fontSize:14}}>{MONTHS[dcm]} {dcy}</span>
@@ -605,7 +1074,7 @@ function App(){
         {/* CONTACTS LIST */}
         {tab==="contacts"&&!selected&&(
           <div>
-            <div style={{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap",alignItems:"center"}}>
+            <div className="mob-filter-row" style={{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap",alignItems:"center"}}>
               <input placeholder="Search name, email…" value={search} onChange={e=>setSearch(e.target.value)} style={{flex:1,minWidth:180,background:"#fff"}}/>
               <select value={filterGroup} onChange={e=>setFilterGroup(e.target.value)} style={{width:"auto",background:"#fff"}}>
                 <option value="All">All groups</option>{allGroupNames.map(g=><option key={g}>{g}</option>)}
@@ -618,13 +1087,13 @@ function App(){
             <div style={{fontSize:12,color:"rgba(255,255,255,0.45)",marginBottom:8}}>{overlapping?filteredContacts.length+" contacts in both \""+filterGroup+"\" and \""+filterGroup2+"\"":filteredContacts.length+" of "+contacts.length+" shown"}</div>
             <div style={{display:"flex",flexDirection:"column",gap:6}}>
               {filteredContacts.slice(0,100).map(c=>{const cg=contactGroups(c);const li=lastInteraction(c.id);return(
-                <div key={c.id} onClick={()=>setSelected(c)} className="card" style={{cursor:"pointer",display:"flex",alignItems:"center",gap:12,padding:"10px 14px"}}>
+                <div key={c.id} onClick={()=>setSelected(c)} className="card mob-contact-row" style={{cursor:"pointer",display:"flex",alignItems:"center",gap:12,padding:"10px 14px"}}>
                   <div style={{width:34,height:34,borderRadius:"50%",background:avatarColor(c.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(c.name)}</div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontWeight:500,fontSize:13}}>{c.name}</div>
                     {c.email&&<div style={{fontSize:11,color:"#999",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.email}</div>}
                   </div>
-                  <div style={{display:"flex",gap:3,flexWrap:"wrap",justifyContent:"flex-end",maxWidth:220}}>
+                  <div className="mob-tags" style={{display:"flex",gap:3,flexWrap:"wrap",justifyContent:"flex-end",maxWidth:220}}>
                     {cg.slice(0,3).map(g=><span key={g} className="tag">{g}</span>)}
                     {cg.length>3&&<span style={{fontSize:10,color:"#999"}}>+{cg.length-3}</span>}
                   </div>
@@ -681,6 +1150,20 @@ function App(){
               </div>
               {aiSummary&&<div style={{fontSize:13,color:"#333",lineHeight:1.6,background:"#f8f9ff",padding:12,borderRadius:8,marginTop:8}}>{aiSummary}</div>}
             </div>
+
+            {/* Linked tasks */}
+            {contactTasks(selected.id).length>0&&(
+              <div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}>
+                <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:6}}>Open tasks</div>
+                {contactTasks(selected.id).map(t=>(
+                  <div key={t.id} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 0",fontSize:13}}>
+                    <div style={{width:14,height:14,borderRadius:"50%",border:"1.5px solid #ccc",flexShrink:0}}/>
+                    <span>{t.title}</span>
+                    {t.dueDate&&<span style={{fontSize:11,color:"#999",marginLeft:"auto"}}>{fmtDate(t.dueDate)}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
 
             {selected.notes&&<div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}><div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:4}}>Notes</div><div style={{fontSize:13,whiteSpace:"pre-wrap",lineHeight:1.6,color:"#333"}}>{selected.notes}</div></div>}
             <div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}>
@@ -740,6 +1223,11 @@ function App(){
               {interactions.length>200&&<p style={{fontSize:12,color:"rgba(255,255,255,0.4)",textAlign:"center"}}>Showing 200 most recent.</p>}
             </div>
           </div>
+        )}
+
+        {/* PROJECTS */}
+        {tab==="projects"&&(
+          <ProjectsTab contacts={contacts} projects={projects} setProjects={setProjects} tasks={tasks} setTasks={setTasks} timeEntries={timeEntries} setTimeEntries={setTimeEntries} timer={timer} setTimer={setTimer} sbUrl={sbUrl} sbKey={sbKey} sbFetch={sbFetch}/>
         )}
 
         {/* GROUPS */}
