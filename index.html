@@ -7,8 +7,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <title>Collective</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a1628'/%3E%3Ctext x='16' y='22.5' text-anchor='middle' font-family='Inter,system-ui,sans-serif' font-size='22' font-weight='600' fill='white'%3EC%3C/text%3E%3C/svg%3E"/>
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230a1628'/%3E%3Ctext x='90' y='125' text-anchor='middle' font-family='Inter,system-ui,sans-serif' font-size='120' font-weight='600' fill='white'%3EC%3C/text%3E%3C/svg%3E"/>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231a3a2a'/%3E%3Ctext x='16' y='22.5' text-anchor='middle' font-family='Inter,system-ui,sans-serif' font-size='22' font-weight='600' fill='white'%3EC%3C/text%3E%3C/svg%3E"/>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%231a3a2a'/%3E%3Ctext x='90' y='125' text-anchor='middle' font-family='Inter,system-ui,sans-serif' font-size='120' font-weight='600' fill='white'%3EC%3C/text%3E%3C/svg%3E"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Collective"/>
@@ -20,7 +20,7 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif!important;}
-body{background:#0a1628;color:#1a1a1a;font-size:14px;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;}
+body{background:#1a3a2a;color:#1a1a1a;font-size:14px;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;}
 input,select,textarea{background:#f3f3f0;border:0.5px solid #ddd;border-radius:8px;padding:8px 12px;color:#1a1a1a;outline:none;width:100%;font-size:16px;}
 input:focus,select:focus,textarea:focus{border-color:#4f6ef7;}
 button{cursor:pointer;border-radius:8px;padding:6px 14px;border:0.5px solid #ddd;background:#f3f3f0;color:#1a1a1a;}
@@ -29,7 +29,7 @@ button:hover{background:#e8e8e8;}
 .tag{font-size:10px;background:#eef0ff;border-radius:20px;padding:2px 8px;color:#4f6ef7;white-space:nowrap;display:inline-block;font-weight:500;}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px;}
 .modal{background:#fff;border-radius:4px;padding:20px;width:440px;max-width:100%;max-height:90vh;overflow-y:auto;}
-.sbar{font-size:11px;padding:3px 20px;background:#0d1e36;color:#8899bb;}
+.sbar{font-size:11px;padding:3px 20px;background:#152e22;color:#7a9a86;}
 @media(max-width:700px){
   .mob-header{flex-direction:column!important;align-items:flex-start!important;gap:8px!important;}
   .mob-header>span{font-size:22px!important;}
@@ -690,9 +690,10 @@ function App(){
   const sbFetch=useCallback(async(url,key,path,method="GET",body=null)=>{
     const h={"apikey":key,"Authorization":"Bearer "+key,"Content-Type":"application/json"};
     if(method==="POST")h["Prefer"]="resolution=merge-duplicates";
+    if(method==="GET")h["Range"]="0-9999";
     const opts={method,headers:h};if(body)opts.body=JSON.stringify(body);
     const r=await fetch(url+"/rest/v1/"+path,opts);
-    if(!r.ok){const e=await r.text();throw new Error(e);}
+    if(!r.ok&&r.status!==416){const e=await r.text();throw new Error(e);}
     return method==="GET"?r.json():null;
   },[]);
 
@@ -876,10 +877,10 @@ function App(){
 
   const overlapping=filterGroup!=="All"&&filterGroup2!=="All"&&filterGroup!==filterGroup2;
   const nb=active=>({cursor:"pointer",borderRadius:6,padding:"4px 10px",border:"none",background:active?"rgba(255,255,255,0.15)":"transparent",color:active?"#fff":"rgba(255,255,255,0.55)",fontSize:13,fontWeight:active?500:400});
-  const ab=bg=>({padding:"4px 12px",borderRadius:6,background:bg,border:"none",color:"#0a1628",fontSize:13,fontWeight:500,cursor:"pointer"});
+  const ab=bg=>({padding:"4px 12px",borderRadius:6,background:bg,border:"none",color:"#1a3a2a",fontSize:13,fontWeight:500,cursor:"pointer"});
 
   if(showSettings)return(
-    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#0a1628"}}>
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#1a3a2a"}}>
       <div className="card" style={{maxWidth:460,width:"100%"}}>
         <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>Supabase connection</div>
         <p style={{fontSize:12,color:"#666",marginBottom:20,lineHeight:1.6}}>Credentials saved in your browser only.</p>
@@ -902,7 +903,7 @@ function App(){
   );
 
   if(!imported)return(
-    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#0a1628"}}>
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#1a3a2a"}}>
       <div className="card" style={{maxWidth:480,width:"100%",textAlign:"center"}}>
         <div style={{fontSize:22,fontWeight:700,marginBottom:6}}>Collective</div>
         <p style={{fontSize:13,color:"#666",marginBottom:20,lineHeight:1.6}}>Import your Mogul CSVs, or connect Supabase if you've synced before.</p>
@@ -917,7 +918,7 @@ function App(){
   );
 
   return(
-    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",background:"#0a1628"}}>
+    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",background:"#1a3a2a"}}>
       <div style={{padding:"10px 20px 6px"}}>
         <div className="mob-header" style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
           <span style={{fontSize:26,fontWeight:700,color:"#fff",letterSpacing:"-0.5px",cursor:"pointer"}} onClick={()=>goTab("dashboard")}>Collective</span>
@@ -958,7 +959,8 @@ function App(){
           </div>
         </div>
       </div>
-      {syncStatus&&<div className="sbar">{syncStatus}</div>}
+      {syncStatus&&syncStatus.includes("Synced")&&<div className="sbar">{syncStatus}</div>}
+      {syncStatus&&syncStatus.includes("failed")&&<div className="sbar" style={{color:"#ff6b6b"}}>{syncStatus}</div>}
 
       <div style={{flex:1,padding:"10px 16px",maxWidth:1000,width:"100%",margin:"0 auto"}}>
         {(tab!=="dashboard"||selected)&&(
@@ -968,95 +970,64 @@ function App(){
         {/* DASHBOARD */}
         {tab==="dashboard"&&!selected&&(
           <div>
-            <div className="mob-stats" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:12}}>
-              {[{n:contacts.length,l:"Contacts"},{n:groups.length,l:"Groups"},{n:interactions.length,l:"Interactions"},{n:tasks.filter(t=>t.status!=="done").length,l:"Open tasks"}].map((s,i)=>(
-                <div key={i} className="card" style={{padding:"18px 16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
-                  <div style={{fontSize:34,fontWeight:700,color:"#0a1628",lineHeight:1}}>{fmtNum(s.n)}</div>
-                  <div style={{fontSize:11,color:"#999",marginTop:5}}>{s.l}</div>
-                </div>
-              ))}
+            {/* Greeting + stats row */}
+            <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:16}}>
+              <div style={{fontSize:20,fontWeight:600,color:"#fff"}}>{(()=>{const h=new Date().getHours();return h<12?"Good Morning":h<17?"Good Afternoon":"Good Evening";})()}, Rose</div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.35)"}}>{fmtNum(contacts.length)} contacts · {fmtNum(interactions.length)} interactions · {tasks.filter(t=>t.status!=="done").length} tasks</div>
             </div>
 
-            {/* This week: priority tasks + reminders */}
-            {(()=>{const nw=new Date();nw.setDate(nw.getDate()+7);const nws=nw.toISOString().slice(0,10);const pt=tasks.filter(t=>t.status!=="done"&&(t.priority==="high"||t.priority==="med")&&t.dueDate&&t.dueDate<=nws).sort((a,b)=>(a.dueDate||"").localeCompare(b.dueDate||"")).slice(0,6);const weekReminders=reminders.filter(r=>r.date>=today()&&r.date<=nws).sort((a,b)=>a.date.localeCompare(b.date));return(pt.length>0||weekReminders.length>0)?(
-              <div className="card" style={{padding:"14px 20px",marginBottom:12}}>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-                  <div style={{fontSize:12,fontWeight:500,color:"#999"}}>This week</div>
-                  <span onClick={()=>goTab("projects")} style={{fontSize:11,color:"#4f6ef7",cursor:"pointer"}}>View all</span>
-                </div>
-                {pt.map(t=>{const ps=t.priority==="high"?{background:"rgba(220,60,60,0.08)",color:"#b91c1c"}:{background:"rgba(180,130,20,0.08)",color:"#92400e"};const contact=contacts.find(c=>c.id===t.contactId);const isOverdue=t.dueDate<today();return(
-                  <div key={t.id} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:"0.5px solid #f5f5f5"}}>
-                    <div style={{width:16,height:16,borderRadius:"50%",border:"1.5px solid #ccc",flexShrink:0}}/>
-                    <span style={{flex:1,fontSize:13,color:"#1a1a1a"}}>{t.title}</span>
-                    {contact&&<span style={{fontSize:10,color:"#4f6ef7",background:"#eef0ff",padding:"2px 7px",borderRadius:10}}>{contact.name}</span>}
-                    <span style={{fontSize:9,padding:"2px 6px",borderRadius:10,fontWeight:500,...ps}}>{t.priority==="high"?"High":"Med"}</span>
-                    <span style={{fontSize:11,color:isOverdue?"#b91c1c":"#999",whiteSpace:"nowrap"}}>{fmtDate(t.dueDate)}{isOverdue?" !":""}</span>
-                  </div>
-                );})}
-                {weekReminders.map(r=>(
-                  <div key={r.id} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:"0.5px solid #f5f5f5"}}>
-                    <span style={{fontSize:13,flexShrink:0}}>⏰</span>
-                    <span style={{flex:1,fontSize:13,color:"#1a1a1a",cursor:"pointer"}} onClick={()=>{const c=contacts.find(x=>x.id===r.contactId);if(c){setSelected(c);setTab("contacts");}}}>{r.contactName}{r.note?" — "+r.note:""}</span>
-                    <span style={{fontSize:11,color:"#92400e",whiteSpace:"nowrap"}}>{fmtDate(r.date)}</span>
-                  </div>
-                ))}
-              </div>
-            ):null;})()}
-
-            {/* Recent 3 */}
-            <div className="card" style={{padding:"14px 20px",marginBottom:12}}>
-              <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:10}}>Most recent interactions</div>
-              {recent3.map((item,idx)=>{
-                const col=intColor(item.type);
-                return(
-                  <div key={item.id+"_"+idx} onClick={()=>{if(item.contactObj){setSelected(item.contactObj);setTab("contacts");}}} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0",borderBottom:idx<recent3.length-1?"0.5px solid #f5f5f5":"none",cursor:"pointer"}}>
-                    <div style={{width:32,height:32,borderRadius:"50%",background:avatarColor(item.cName),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(item.cName)}</div>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontWeight:600,fontSize:13,color:"#0a1628"}}>{item.cName}</div>
-                      <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:2}}>{item.cGroups.slice(0,2).map(g=><span key={g} className="tag">{g}</span>)}</div>
-                    </div>
-                    <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:3,flexShrink:0}}>
-                      <span style={{fontSize:11,color:"#666"}}>{fmtDate(item.date)}</span>
-                      {item.type&&item.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 7px",fontWeight:500}}>{item.type}</span>}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Reminders */}
-            {(upcomingReminders.length>0||overdueReminders.length>0)&&(
-              <div className="card" style={{padding:"14px 20px",marginBottom:12,border:"0.5px solid #fde68a"}}>
-                <div style={{fontSize:12,fontWeight:500,color:"#92400e",marginBottom:10}}>⏰ Follow-up reminders</div>
-                {overdueReminders.map(r=>(
-                  <div key={r.id} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 0",borderBottom:"0.5px solid #fef3c7"}}>
-                    <div style={{width:6,height:6,borderRadius:"50%",background:"#dc2626",flexShrink:0}}/>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontWeight:600,fontSize:13,color:"#0a1628",cursor:"pointer"}} onClick={()=>{const c=contacts.find(x=>x.id===r.contactId);if(c){setSelected(c);setTab("contacts");}}}>{r.contactName}</div>
-                      {r.note&&<div style={{fontSize:11,color:"#666"}}>{r.note}</div>}
-                      <div style={{fontSize:10,color:"#dc2626"}}>Overdue · {fmtDate(r.date)}</div>
-                    </div>
-                    <button onClick={()=>dismissReminder(r.id)} style={{fontSize:11,color:"#999",border:"none",background:"none",cursor:"pointer"}}>✕</button>
-                  </div>
-                ))}
-                {upcomingReminders.map(r=>(
-                  <div key={r.id} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 0",borderBottom:"0.5px solid #fef3c7"}}>
-                    <div style={{width:6,height:6,borderRadius:"50%",background:"#f59e0b",flexShrink:0}}/>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontWeight:600,fontSize:13,color:"#0a1628",cursor:"pointer"}} onClick={()=>{const c=contacts.find(x=>x.id===r.contactId);if(c){setSelected(c);setTab("contacts");}}}>{r.contactName}</div>
-                      {r.note&&<div style={{fontSize:11,color:"#666"}}>{r.note}</div>}
-                      <div style={{fontSize:10,color:"#92400e"}}>{fmtDate(r.date)}</div>
-                    </div>
-                    <button onClick={()=>dismissReminder(r.id)} style={{fontSize:11,color:"#999",border:"none",background:"none",cursor:"pointer"}}>✕</button>
-                  </div>
-                ))}
-              </div>
-            )}
-
+            {/* Quick add */}
             <QuickAdd contacts={contacts} onAdd={handleQuickAdd} onAddContact={(cf)=>{const nc={...cf,id:"c_"+Date.now(),groupIds:cf.groups||[],dateMet:"",company:cf.company||"",role:cf.role||"",location:cf.location||""};setContacts(cs=>[nc,...cs]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts","POST",[{id:nc.id,name:nc.name,email:nc.email||"",phone:nc.phone||"",notes:nc.notes||"",date_met:"",company:nc.company,role:nc.role,location:nc.location,group_ids:(nc.groupIds||[]).join(",")}]).catch(()=>{});}} allGroupNames={allGroupNames} groups={groups}/>
 
-            <div className="mob-grid-1" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,alignItems:"start"}}>
-              <div className="card">
+            {/* Row 1: Recent interactions + Reminders */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+              {/* Recent interactions */}
+              <div className="card" style={{padding:"16px 20px"}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+                  <span style={{fontSize:12,fontWeight:500,color:"#999"}}>Recent interactions</span>
+                  <span onClick={()=>goTab("interactions")} style={{fontSize:11,color:"#4f6ef7",cursor:"pointer"}}>View all</span>
+                </div>
+                {recent3.map((item,idx)=>{
+                  const col=intColor(item.type);
+                  return(
+                    <div key={item.id+"_"+idx} onClick={()=>{if(item.contactObj){setSelected(item.contactObj);setTab("contacts");}}} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 0",borderBottom:idx<recent3.length-1?"0.5px solid #f5f5f5":"none",cursor:"pointer"}}>
+                      <div style={{width:28,height:28,borderRadius:"50%",background:avatarColor(item.cName),display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(item.cName)}</div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontWeight:500,fontSize:12,color:"#1a1a1a"}}>{item.cName}</div>
+                        <div style={{fontSize:10,color:"#999"}}>{item.note?item.note.slice(0,60)+(item.note.length>60?"…":""):""}</div>
+                      </div>
+                      <div style={{textAlign:"right",flexShrink:0}}>
+                        <div style={{fontSize:10,color:"#999"}}>{fmtDate(item.date)}</div>
+                        {item.type&&item.type!=="Manual"&&<span style={{fontSize:9,background:col.bg,color:col.text,borderRadius:10,padding:"1px 6px",fontWeight:500}}>{item.type}</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Follow-up reminders */}
+              <div className="card" style={{padding:"16px 20px"}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+                  <span style={{fontSize:12,fontWeight:500,color:"#999"}}>Follow-up reminders</span>
+                </div>
+                {(()=>{const allR=[...reminders.filter(r=>r.date<today()).map(r=>({...r,overdue:true})),...reminders.filter(r=>r.date>=today())].slice(0,5);return allR.length>0?allR.map(r=>(
+                  <div key={r.id} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0",borderBottom:"0.5px solid #f5f5f5"}}>
+                    <div style={{width:6,height:6,borderRadius:"50%",background:r.overdue?"#dc2626":"#f59e0b",flexShrink:0}}/>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:12,fontWeight:500,color:"#1a1a1a",cursor:"pointer"}} onClick={()=>{const c=contacts.find(x=>x.id===r.contactId);if(c){setSelected(c);setTab("contacts");}}}>{r.contactName}</div>
+                      {r.note&&<div style={{fontSize:10,color:"#999"}}>{r.note}</div>}
+                    </div>
+                    <span style={{fontSize:10,color:r.overdue?"#dc2626":"#92400e",whiteSpace:"nowrap"}}>{fmtDate(r.date)}</span>
+                    <button onClick={()=>dismissReminder(r.id)} style={{fontSize:10,color:"#ccc",border:"none",background:"none",cursor:"pointer"}}>✕</button>
+                  </div>
+                )):<div style={{fontSize:12,color:"#999",padding:"10px 0"}}>No reminders</div>;})()}
+              </div>
+            </div>
+
+            {/* Row 2: Calendar + Groups */}
+            <div className="mob-grid-1" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14,alignItems:"start"}}>
+              {/* Calendar */}
+              <div className="card" style={{padding:"16px 20px"}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
                   <span style={{fontWeight:600,fontSize:14}}>{MONTHS[dcm]} {dcy}</span>
                   <div style={{display:"flex",gap:4}}>
@@ -1072,7 +1043,7 @@ function App(){
                     const hits=intsOnDate(ds);const cnt=hits.length;
                     const isToday=new Date().toDateString()===new Date(ds+"T00:00:00").toDateString();
                     const op=cnt===0?0:cnt===1?0.25:cnt<=3?0.55:0.9;
-                    return(<div key={i} onClick={()=>cnt>0&&setDashPopup({date:ds,hits})} style={{aspectRatio:"1",borderRadius:4,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:cnt>0?"rgba(79,110,247,"+op+")":"#f5f5f3",border:isToday?"1.5px solid #4f6ef7":"none",cursor:cnt>0?"pointer":"default"}}>
+                    return(<div key={i} onClick={()=>cnt>0&&setDashPopup({date:ds,hits})} style={{aspectRatio:"1",borderRadius:2,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:cnt>0?"rgba(79,110,247,"+op+")":"#f5f5f3",border:isToday?"1.5px solid #4f6ef7":"none",cursor:cnt>0?"pointer":"default"}}>
                       <span style={{fontSize:10,color:cnt>0&&op>0.4?"#fff":isToday?"#4f6ef7":"#999",fontWeight:isToday?600:400}}>{d}</span>
                       {cnt>0&&<span style={{fontSize:8,color:op>0.4?"rgba(255,255,255,0.8)":"#4f6ef7"}}>{cnt}</span>}
                     </div>);
@@ -1084,19 +1055,25 @@ function App(){
                   <span style={{fontSize:10,color:"#bbb"}}>More</span>
                 </div>
               </div>
-              <div className="card">
-                <div style={{fontWeight:600,fontSize:14,marginBottom:10}}>Groups</div>
-                <div style={{display:"flex",flexDirection:"column",gap:0,maxHeight:280,overflowY:"auto"}}>
-                  {sortedGroups.map(g=>{const cnt=groupMemberCount(g.name);return(
-                    <div key={g.id} onClick={()=>{setFilterGroup(g.name);setFilterGroup2("All");goTab("contacts");}} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 0",borderBottom:"0.5px solid #f0f0ee",cursor:"pointer"}}>
+
+              {/* Groups */}
+              <div className="card" style={{padding:"16px 20px"}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+                  <span style={{fontWeight:600,fontSize:14}}>Groups</span>
+                  <span onClick={()=>goTab("groups")} style={{fontSize:11,color:"#4f6ef7",cursor:"pointer"}}>View all</span>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:0}}>
+                  {sortedGroups.slice(0,8).map(g=>{const cnt=groupMemberCount(g.name);return(
+                    <div key={g.id} onClick={()=>{setFilterGroup(g.name);setFilterGroup2("All");goTab("contacts");}} style={{display:"flex",alignItems:"center",gap:10,padding:"5px 0",borderBottom:"0.5px solid #f0f0ee",cursor:"pointer"}}>
                       <span style={{width:22,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><GIcon name={g.name} size={16}/></span>
                       <span style={{flex:1,fontSize:13}}>{g.name}</span>
-                      <span style={{fontSize:12,color:"#999",fontWeight:500}}>{cnt}</span>
+                      <span style={{fontSize:12,color:"#999"}}>{cnt}</span>
                     </div>
                   );})}
                 </div>
               </div>
             </div>
+
 
             {dashPopup&&(
               <div className="overlay" onClick={()=>setDashPopup(null)}>
