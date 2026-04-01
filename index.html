@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,10 +25,10 @@ input,select,textarea{background:#f3f3f0;border:0.5px solid #ddd;border-radius:8
 input:focus,select:focus,textarea:focus{border-color:#4f6ef7;}
 button{cursor:pointer;border-radius:8px;padding:6px 14px;border:0.5px solid #ddd;background:#f3f3f0;color:#1a1a1a;}
 button:hover{background:#e8e8e8;}
-.card{background:#fff;border:none;border-radius:14px;padding:16px 20px;}
+.card{background:#fff;border:none;border-radius:4px;padding:16px 20px;}
 .tag{font-size:10px;background:#eef0ff;border-radius:20px;padding:2px 8px;color:#4f6ef7;white-space:nowrap;display:inline-block;font-weight:500;}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px;}
-.modal{background:#fff;border-radius:14px;padding:20px;width:440px;max-width:100%;max-height:90vh;overflow-y:auto;}
+.modal{background:#fff;border-radius:4px;padding:20px;width:440px;max-width:100%;max-height:90vh;overflow-y:auto;}
 .sbar{font-size:11px;padding:3px 20px;background:#0d1e36;color:#8899bb;}
 @media(max-width:700px){
   .mob-header{flex-direction:column!important;align-items:flex-start!important;gap:8px!important;}
@@ -35,7 +36,7 @@ button:hover{background:#e8e8e8;}
   .mob-header-right{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;display:flex!important;gap:6px!important;}
   .mob-header-right::-webkit-scrollbar{display:none;}
   .mob-header-right>*{flex-shrink:0;}
-  .card{padding:12px 14px;border-radius:12px;}
+  .card{padding:12px 14px;border-radius:4px;}
   .mob-stats{grid-template-columns:repeat(2,1fr)!important;}
   .mob-grid-1{grid-template-columns:1fr!important;}
   .mob-sidebar-layout{grid-template-columns:1fr!important;min-height:auto!important;}
@@ -55,6 +56,7 @@ const {useState,useMemo,useRef,useCallback,useEffect}=React;
 
 const initials=n=>(n||"").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
 const avatarColor=n=>{const h=[...(n||"")].reduce((a,c)=>a+c.charCodeAt(0),0);return["#4f6ef7","#1D9E75","#D85A30","#7F77DD","#D4537E","#639922","#BA7517"][h%7];};
+const fmtNum=n=>n.toLocaleString();
 const fmtDate=d=>{if(!d)return"";const dt=new Date(d+"T00:00:00");return isNaN(dt)?d:dt.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});};
 const daysAgo=d=>{if(!d)return"";const n=Math.floor((Date.now()-new Date(d+"T00:00:00"))/86400000);return n===0?"Today":n===1?"Yesterday":`${n}d ago`;};
 const toIso=d=>{if(!d)return"";const t=new Date(d);if(!isNaN(t))return t.toISOString().slice(0,10);const t2=new Date(d.replace(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+/i,""));return isNaN(t2)?"":t2.toISOString().slice(0,10);};
@@ -168,11 +170,17 @@ function IntCard({i,contacts,contactName,deleteInteraction,saveEditInt,setSelect
           </div>
         </div>
       )}
-      <div style={{marginTop:6,display:"flex",justifyContent:"flex-end",alignItems:"center",gap:10}}>
-        {showDel&&<button onClick={()=>deleteInteraction(i)} style={{background:"none",border:"none",color:"#c00",fontSize:11,cursor:"pointer"}}>Confirm delete</button>}
-        <button onClick={()=>setShowReminder(s=>!s)} style={{fontSize:11,color:"#f59e0b",border:"none",background:"none",padding:0,cursor:"pointer"}}>⏰</button>
-        <button onClick={()=>{setDraft({...i});setEditing(true);setShowDel(false);}} style={{fontSize:11,color:"#4f6ef7",border:"none",background:"none",padding:0,cursor:"pointer"}}>✏️ edit</button>
-        <button onClick={()=>setShowDel(s=>!s)} style={{fontSize:14,color:"#ccc",border:"none",background:"none",padding:0,cursor:"pointer"}}>{showDel?"✕":"⋯"}</button>
+      <div style={{marginTop:6,display:"flex",justifyContent:"flex-end",alignItems:"center"}}>
+        {showDel?(
+          <div style={{display:"flex",alignItems:"center",gap:8,background:"#fff",border:"0.5px solid #ddd",borderRadius:8,padding:"4px 10px",boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
+            <button onClick={()=>{setDraft({...i});setEditing(true);setShowDel(false);}} style={{fontSize:11,color:"#4f6ef7",border:"none",background:"none",padding:"2px 0",cursor:"pointer"}}>Edit</button>
+            <button onClick={()=>setShowReminder(s=>!s)} style={{fontSize:11,color:"#f59e0b",border:"none",background:"none",padding:"2px 0",cursor:"pointer"}}>Remind</button>
+            <button onClick={()=>deleteInteraction(i)} style={{fontSize:11,color:"#c00",border:"none",background:"none",padding:"2px 0",cursor:"pointer"}}>Delete</button>
+            <button onClick={()=>setShowDel(false)} style={{fontSize:12,color:"#999",border:"none",background:"none",padding:"2px 0",cursor:"pointer"}}>✕</button>
+          </div>
+        ):(
+          <button onClick={()=>setShowDel(true)} style={{fontSize:16,color:"#ccc",border:"none",background:"none",padding:"2px 6px",cursor:"pointer",lineHeight:1}}>⋯</button>
+        )}
       </div>
     </div>
   );
@@ -708,6 +716,17 @@ function App(){
       setContacts(c.map(r=>({...r,groupIds:(r.group_ids||"").split(",").filter(Boolean)})));
       setInteractions(i.map(r=>({...r,personId:r.person_id,note:r.note||r.notes||""})));
       setGroups(g);setImported(true);
+      // Load projects, tasks, time entries
+      try{
+        const [p,t,te]=await Promise.all([
+          sbFetch(url,key,"projects?select=*&order=name&limit=500"),
+          sbFetch(url,key,"tasks?select=*&order=created_at.desc&limit=5000"),
+          sbFetch(url,key,"time_entries?select=*&order=date.desc&limit=5000")
+        ]);
+        if(p&&p.length>0)setProjects(p.map(r=>({id:r.id,name:r.name,parentId:r.parent_id||null,createdAt:r.created_at||""})));
+        if(t&&t.length>0)setTasks(t.map(r=>({id:r.id,title:r.title,projectId:r.project_id||"",contactId:r.contact_id||"",dueDate:r.due_date||"",priority:r.priority||"",status:r.status||"todo",notes:r.notes||"",createdAt:r.created_at||""})));
+        if(te&&te.length>0)setTimeEntries(te.map(r=>({id:r.id,taskId:r.task_id||"",projectId:r.project_id||"",description:r.description||"",startTime:r.start_time,endTime:r.end_time,duration:r.duration||0,date:r.date||""})));
+      }catch(e2){/* tables may not exist yet — that's fine, keep localStorage data */}
       setSyncStatus("Loaded "+c.length+" contacts · "+i.length+" interactions · "+g.length+" groups ✓");
     }catch(e){setSyncStatus("Load failed: "+e.message);}
     setLoadingDB(false);
@@ -732,7 +751,10 @@ function App(){
       await upsert("groups",groups.map(g=>({id:g.id,name:g.name,description:g.description||"",icon:g.icon||"",people_ids:(g.peopleIds||[]).join(",")})));
       await upsert("contacts",contacts.map(c=>({id:c.id,name:c.name,email:c.email||"",phone:c.phone||"",notes:c.notes||"",date_met:c.dateMet||"",company:c.company||"",role:c.role||"",location:c.location||"",group_ids:(c.groupIds||c.groups||[]).join(",")})));
       await upsert("interactions",interactions.map(i=>({id:i.id,person_id:i.personId||i.person_id||"",type:i.type||"",date:i.date||"",note:i.note||""})));
-      setSyncStatus("Synced "+contacts.length+" contacts · "+interactions.length+" interactions ✓");
+      await upsert("projects",projects.map(p=>({id:p.id,name:p.name,parent_id:p.parentId||"",created_at:p.createdAt||""})));
+      await upsert("tasks",tasks.map(t=>({id:t.id,title:t.title,project_id:t.projectId||"",contact_id:t.contactId||"",due_date:t.dueDate||"",priority:t.priority||"",status:t.status||"todo",notes:t.notes||"",created_at:t.createdAt||""})));
+      await upsert("time_entries",timeEntries.map(e=>({id:e.id,task_id:e.taskId||"",project_id:e.projectId||"",description:e.description||"",start_time:e.startTime||0,end_time:e.endTime||0,duration:e.duration||0,date:e.date||""})));
+      setSyncStatus("Synced "+contacts.length+" contacts · "+interactions.length+" interactions · "+projects.length+" projects · "+tasks.length+" tasks ✓");
     }catch(e){setSyncStatus("Sync failed: "+e.message);}
     setSyncing(false);
   };
@@ -949,11 +971,37 @@ function App(){
             <div className="mob-stats" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:12}}>
               {[{n:contacts.length,l:"Contacts"},{n:groups.length,l:"Groups"},{n:interactions.length,l:"Interactions"},{n:tasks.filter(t=>t.status!=="done").length,l:"Open tasks"}].map((s,i)=>(
                 <div key={i} className="card" style={{padding:"18px 16px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
-                  <div style={{fontSize:34,fontWeight:700,color:"#0a1628",lineHeight:1}}>{s.n}</div>
+                  <div style={{fontSize:34,fontWeight:700,color:"#0a1628",lineHeight:1}}>{fmtNum(s.n)}</div>
                   <div style={{fontSize:11,color:"#999",marginTop:5}}>{s.l}</div>
                 </div>
               ))}
             </div>
+
+            {/* This week: priority tasks + reminders */}
+            {(()=>{const nw=new Date();nw.setDate(nw.getDate()+7);const nws=nw.toISOString().slice(0,10);const pt=tasks.filter(t=>t.status!=="done"&&(t.priority==="high"||t.priority==="med")&&t.dueDate&&t.dueDate<=nws).sort((a,b)=>(a.dueDate||"").localeCompare(b.dueDate||"")).slice(0,6);const weekReminders=reminders.filter(r=>r.date>=today()&&r.date<=nws).sort((a,b)=>a.date.localeCompare(b.date));return(pt.length>0||weekReminders.length>0)?(
+              <div className="card" style={{padding:"14px 20px",marginBottom:12}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+                  <div style={{fontSize:12,fontWeight:500,color:"#999"}}>This week</div>
+                  <span onClick={()=>goTab("projects")} style={{fontSize:11,color:"#4f6ef7",cursor:"pointer"}}>View all</span>
+                </div>
+                {pt.map(t=>{const ps=t.priority==="high"?{background:"rgba(220,60,60,0.08)",color:"#b91c1c"}:{background:"rgba(180,130,20,0.08)",color:"#92400e"};const contact=contacts.find(c=>c.id===t.contactId);const isOverdue=t.dueDate<today();return(
+                  <div key={t.id} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:"0.5px solid #f5f5f5"}}>
+                    <div style={{width:16,height:16,borderRadius:"50%",border:"1.5px solid #ccc",flexShrink:0}}/>
+                    <span style={{flex:1,fontSize:13,color:"#1a1a1a"}}>{t.title}</span>
+                    {contact&&<span style={{fontSize:10,color:"#4f6ef7",background:"#eef0ff",padding:"2px 7px",borderRadius:10}}>{contact.name}</span>}
+                    <span style={{fontSize:9,padding:"2px 6px",borderRadius:10,fontWeight:500,...ps}}>{t.priority==="high"?"High":"Med"}</span>
+                    <span style={{fontSize:11,color:isOverdue?"#b91c1c":"#999",whiteSpace:"nowrap"}}>{fmtDate(t.dueDate)}{isOverdue?" !":""}</span>
+                  </div>
+                );})}
+                {weekReminders.map(r=>(
+                  <div key={r.id} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:"0.5px solid #f5f5f5"}}>
+                    <span style={{fontSize:13,flexShrink:0}}>⏰</span>
+                    <span style={{flex:1,fontSize:13,color:"#1a1a1a",cursor:"pointer"}} onClick={()=>{const c=contacts.find(x=>x.id===r.contactId);if(c){setSelected(c);setTab("contacts");}}}>{r.contactName}{r.note?" — "+r.note:""}</span>
+                    <span style={{fontSize:11,color:"#92400e",whiteSpace:"nowrap"}}>{fmtDate(r.date)}</span>
+                  </div>
+                ))}
+              </div>
+            ):null;})()}
 
             {/* Recent 3 */}
             <div className="card" style={{padding:"14px 20px",marginBottom:12}}>
@@ -1232,8 +1280,20 @@ function App(){
         {/* GROUPS */}
         {tab==="groups"&&(
           <div>
-            <div style={{fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:12}}>{groups.length} groups</div>
-            <div style={{background:"#fff",borderRadius:14,overflow:"hidden"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+              <span style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>{groups.length} groups</span>
+              <button onClick={()=>setShowAddGroup(true)} style={{fontSize:12,padding:"5px 14px",background:"#4f6ef7",border:"none",color:"#fff",borderRadius:8,cursor:"pointer",fontWeight:500}}>+ Group</button>
+            </div>
+            {showAddGroup&&(
+              <div className="card" style={{marginBottom:12,padding:"14px 18px"}}>
+                <div style={{display:"flex",gap:8}}>
+                  <input placeholder="Group name" value={newGroup} onChange={e=>setNewGroup(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&newGroup.trim()){setGroups(g=>[...g,{id:"g_"+Date.now(),name:newGroup.trim(),peopleIds:[]}]);setNewGroup("");setShowAddGroup(false);}}} style={{flex:1,fontSize:13}}/>
+                  <button onClick={()=>{if(newGroup.trim()){setGroups(g=>[...g,{id:"g_"+Date.now(),name:newGroup.trim(),peopleIds:[]}]);setNewGroup("");setShowAddGroup(false);}}} style={{background:"#4f6ef7",border:"none",color:"#fff",padding:"6px 14px",borderRadius:8,cursor:"pointer",fontSize:12}}>Add</button>
+                  <button onClick={()=>{setShowAddGroup(false);setNewGroup("");}} style={{fontSize:12}}>Cancel</button>
+                </div>
+              </div>
+            )}
+            <div style={{background:"#fff",borderRadius:4,overflow:"hidden"}}>
               {sortedGroups.map((g,idx)=>{const cnt=groupMemberCount(g.name);return(
                 <div key={g.id} onClick={()=>{setFilterGroup(g.name);setFilterGroup2("All");goTab("contacts");}} style={{display:"flex",alignItems:"center",gap:14,padding:"13px 18px",borderBottom:idx<sortedGroups.length-1?"0.5px solid #f0f0ee":"none",cursor:"pointer"}}>
                   <span style={{width:28,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><GIcon name={g.name} size={22}/></span>
@@ -1269,7 +1329,7 @@ function App(){
                     const ds=cy+"-"+String(cm+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
                     const hits=intsOnDate(ds);
                     const isToday=new Date().toDateString()===new Date(ds+"T00:00:00").toDateString();
-                    return(<div key={i} style={{minHeight:68,background:"#fff",borderRadius:10,padding:"5px 6px",border:isToday?"2px solid #4f6ef7":"none"}}>
+                    return(<div key={i} style={{minHeight:68,background:"#fff",borderRadius:2,padding:"5px 6px",border:isToday?"2px solid #4f6ef7":"none"}}>
                       <div style={{fontSize:11,fontWeight:isToday?700:400,color:isToday?"#4f6ef7":"#999",marginBottom:3}}>{d}</div>
                       {hits.slice(0,3).map(h=>{const col=intColor(h.type);return<div key={h.id} style={{fontSize:9,background:col.bg,color:col.text,borderRadius:3,padding:"1px 4px",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:500}}>{contactName(h.personId||h.person_id)}</div>;})}
                       {hits.length>3&&<div style={{fontSize:9,color:"#999"}}>+{hits.length-3}</div>}
