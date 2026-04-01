@@ -664,6 +664,11 @@ function App(){
   const [freeTimerProject,setFreeTimerProject]=useState("");
   const [anthropicKey,setAnthropicKey]=useState(()=>localStorage.getItem("anthropic_key")||"");
   const [anthropicKeyInput,setAnthropicKeyInput]=useState("");
+  const [authToken,setAuthToken]=useState(()=>localStorage.getItem("sb_auth_token")||"");
+  const [authEmail,setAuthEmail]=useState("");
+  const [authPass,setAuthPass]=useState("");
+  const [authLoading,setAuthLoading]=useState(false);
+  const [authError,setAuthError]=useState("");
   const fileRef=useRef();
   const cardRef=useRef();
   const [cf,setCf]=useState({name:"",company:"",role:"",location:"",email:"",phone:"",groups:[],notes:""});
@@ -681,14 +686,22 @@ function App(){
     return()=>clearInterval(iv);
   },[timer.running,timer.startTime]);
 
-  useEffect(()=>{if(sbUrl&&sbKey)loadFromSupabase(sbUrl,sbKey);},[]);
+  useEffect(()=>{
+    if(sbUrl&&sbKey&&authToken){
+      // Try to refresh token on load, then load data
+      refreshToken().then(ok=>{
+        loadFromSupabase(sbUrl,sbKey);
+      });
+    }
+  },[]);
   useEffect(()=>{localStorage.setItem("reminders",JSON.stringify(reminders));},[reminders]);
 
   const goTab=t=>{setPrevTab(tab);setTab(t);setSelected(null);setShowEditGroups(false);setAiSummary("");};
   const goBack=()=>{if(selected){setSelected(null);setDetailNote("");setShowEditGroups(false);setAiSummary("");}else if(prevTab){setTab(prevTab);setPrevTab(null);}else setTab("dashboard");};
 
   const sbFetch=useCallback(async(url,key,path,method="GET",body=null)=>{
-    const h={"apikey":key,"Authorization":"Bearer "+key,"Content-Type":"application/json"};
+    const token=localStorage.getItem("sb_auth_token")||key;
+    const h={"apikey":key,"Authorization":"Bearer "+token,"Content-Type":"application/json"};
     if(method==="POST")h["Prefer"]="resolution=merge-duplicates";
     if(method==="GET")h["Range"]="0-9999";
     const opts={method,headers:h};if(body)opts.body=JSON.stringify(body);
@@ -696,6 +709,35 @@ function App(){
     if(!r.ok&&r.status!==416){const e=await r.text();throw new Error(e);}
     return method==="GET"?r.json():null;
   },[]);
+
+  const loginSupabase=async()=>{
+    if(!sbUrl||!sbKey||!authEmail||!authPass)return;
+    setAuthLoading(true);setAuthError("");
+    try{
+      const r=await fetch(sbUrl+"/auth/v1/token?grant_type=password",{method:"POST",headers:{"apikey":sbKey,"Content-Type":"application/json"},body:JSON.stringify({email:authEmail,password:authPass})});
+      const data=await r.json();
+      if(data.error)throw new Error(data.error_description||data.error.message||data.msg||"Login failed");
+      if(!data.access_token)throw new Error("No token received");
+      localStorage.setItem("sb_auth_token",data.access_token);
+      if(data.refresh_token)localStorage.setItem("sb_refresh_token",data.refresh_token);
+      setAuthToken(data.access_token);
+      await loadFromSupabase(sbUrl,sbKey);
+    }catch(e){setAuthError(e.message);}
+    setAuthLoading(false);
+  };
+
+  const refreshToken=async()=>{
+    const rt=localStorage.getItem("sb_refresh_token");
+    if(!rt||!sbUrl||!sbKey)return false;
+    try{
+      const r=await fetch(sbUrl+"/auth/v1/token?grant_type=refresh_token",{method:"POST",headers:{"apikey":sbKey,"Content-Type":"application/json"},body:JSON.stringify({refresh_token:rt})});
+      const data=await r.json();
+      if(data.access_token){localStorage.setItem("sb_auth_token",data.access_token);if(data.refresh_token)localStorage.setItem("sb_refresh_token",data.refresh_token);setAuthToken(data.access_token);return true;}
+    }catch(e){}
+    return false;
+  };
+
+  const logout=()=>{localStorage.removeItem("sb_auth_token");localStorage.removeItem("sb_refresh_token");setAuthToken("");setImported(false);setContacts([]);setInteractions([]);setGroups([]);};
 
   const callClaude=async(prompt)=>{
     const key=localStorage.getItem("anthropic_key")||anthropicKey||sbKey;
@@ -896,8 +938,23 @@ function App(){
         <div style={{display:"flex",gap:8}}>
           <button style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"7px 18px",borderRadius:8,cursor:"pointer"}} onClick={connectSupabase} disabled={loadingDB||!sbUrlInput||!sbKeyInput}>{loadingDB?"Connecting…":"Connect & load"}</button>
           <button onClick={()=>setShowSettings(false)}>Cancel</button>
+          <button onClick={logout} style={{background:"none",border:"0.5px solid #ddd",color:"#c00",fontSize:12,padding:"7px 14px",borderRadius:8,cursor:"pointer",marginLeft:"auto"}}>Log out</button>
         </div>
         {syncStatus&&<p style={{fontSize:12,marginTop:12,color:syncStatus.includes("failed")?"#c00":"#1D9E75"}}>{syncStatus}</p>}
+      </div>
+    </div>
+  );
+
+  // Login gate — if Supabase is configured but no auth token, show login
+  if(sbUrl&&sbKey&&!authToken)return(
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#1a3a2a"}}>
+      <div className="card" style={{maxWidth:380,width:"100%",textAlign:"center"}}>
+        <div style={{fontSize:22,fontWeight:700,marginBottom:4}}>Collective</div>
+        <p style={{fontSize:13,color:"#666",marginBottom:20,lineHeight:1.6}}>Sign in to access your data.</p>
+        <input type="email" placeholder="Email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} style={{marginBottom:8,textAlign:"left"}}/>
+        <input type="password" placeholder="Password" value={authPass} onChange={e=>setAuthPass(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")loginSupabase();}} style={{marginBottom:14,textAlign:"left"}}/>
+        <button onClick={loginSupabase} disabled={authLoading||!authEmail||!authPass} style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"9px 28px",borderRadius:8,cursor:"pointer",fontSize:14,width:"100%",opacity:(!authEmail||!authPass)?0.5:1}}>{authLoading?"Signing in…":"Sign in"}</button>
+        {authError&&<p style={{fontSize:12,color:"#c00",marginTop:10}}>{authError}</p>}
       </div>
     </div>
   );
