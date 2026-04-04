@@ -122,7 +122,7 @@ return(
 </div>
 );
 }
-function IntCard({i,contacts,contactName,deleteInteraction,saveEditInt,setSelected,setTab,onAddReminder}){
+function IntCard({i,contacts,contactName,intPersonIds,intContactNames,deleteInteraction,saveEditInt,setSelected,setTab,onAddReminder}){
 const [showDel,setShowDel]=useState(false);
 const [editing,setEditing]=useState(false);
 const [draft,setDraft]=useState(null);
@@ -131,7 +131,10 @@ const [showReminder,setShowReminder]=useState(false);
 const [reminderDate,setReminderDate]=useState("");
 const [reminderNote,setReminderNote]=useState("");
 const col=intColor(i.type);
+const iIds=intPersonIds(i);
 if(editing&&draft){
+const draftIds=draft.personIds||[draft.personId||draft.person_id].filter(Boolean);
+const toggleContact=cId=>{const has=draftIds.includes(cId);const newIds=has?draftIds.filter(x=>x!==cId):[...draftIds,cId];setDraft(d=>({...d,personIds:newIds}));};
 return(
 <div className="card" style={{padding:"14px 16px"}}>
 <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:10}}>Edit interaction</div>
@@ -139,17 +142,18 @@ return(
 <option value="">No type</option><option>Video Chat</option><option>Phone</option><option>In Person</option><option>Email</option><option>Note</option>
 </select>
 <div style={{marginBottom:8,position:"relative"}}><DatePicker value={draft.date} onChange={v=>setDraft(d=>({...d,date:v}))}/></div>
-<input placeholder="Filter person…" value={cs} onChange={e=>setCs(e.target.value)} style={{marginBottom:6}}/>
-<div style={{maxHeight:100,overflowY:"auto",border:"0.5px solid #ddd",borderRadius:8,padding:6,marginBottom:8}}>
+<div style={{fontSize:12,color:"#666",marginBottom:4}}>People</div>
+<input placeholder="Filter contacts…" value={cs} onChange={e=>setCs(e.target.value)} style={{marginBottom:6}}/>
+<div style={{maxHeight:120,overflowY:"auto",border:"0.5px solid #ddd",borderRadius:8,padding:6,marginBottom:8}}>
 {contacts.filter(c=>!cs||c.name.toLowerCase().includes(cs.toLowerCase())).slice(0,30).map(c=>(
 <label key={c.id} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,padding:"2px 0"}}>
-<input type="radio" checked={(draft.personId||draft.person_id)===c.id} onChange={()=>setDraft(d=>({...d,personId:c.id,person_id:c.id}))} style={{width:"auto"}}/>{c.name}
+<input type="checkbox" checked={draftIds.includes(c.id)} onChange={()=>toggleContact(c.id)} style={{width:"auto"}}/>{c.name}
 </label>
 ))}
 </div>
 <textarea value={draft.note||""} onChange={e=>setDraft(d=>({...d,note:e.target.value}))} rows={3} style={{resize:"vertical",marginBottom:8}}/>
 <div style={{display:"flex",gap:8}}>
-<button onClick={()=>{saveEditInt(draft);setEditing(false);setDraft(null);}} style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"6px 16px",borderRadius:8,cursor:"pointer"}}>Save</button>
+<button onClick={()=>{saveEditInt(draft);setEditing(false);setDraft(null);}} disabled={draftIds.length===0} style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"6px 16px",borderRadius:8,cursor:"pointer"}}>Save</button>
 <button onClick={()=>{setEditing(false);setDraft(null);}}>Cancel</button>
 </div>
 </div>
@@ -162,8 +166,8 @@ return(
 {i.type&&i.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 8px",fontWeight:500}}>{i.type}</span>}
 {i.reminderDate&&<span style={{fontSize:10,background:"#fef3c7",color:"#92400e",borderRadius:20,padding:"1px 8px",fontWeight:500}}>⏰ {fmtDate(i.reminderDate)}</span>}
 </div>
-<div style={{fontWeight:500,fontSize:14,cursor:"pointer",marginBottom:i.note?5:0,color:"#1a1a1a"}} onClick={()=>{const c=contacts.find(c=>c.id===(i.personId||i.person_id));if(c){setSelected(c);setTab("contacts");}}}>
-{contactName(i.personId||i.person_id)}
+<div style={{fontWeight:500,fontSize:14,marginBottom:i.note?5:0,color:"#1a1a1a",display:"flex",flexWrap:"wrap",gap:4,alignItems:"center"}}>
+{iIds.map((pid,idx)=>{const c=contacts.find(c=>c.id===pid);return(<React.Fragment key={pid}>{idx>0&&<span style={{color:"#ccc",fontWeight:400}}>&</span>}<span style={{cursor:"pointer"}} onClick={()=>{if(c){setSelected(c);setTab("contacts");}}}>{c?.name||"Unknown"}</span></React.Fragment>);})}
 </div>
 {i.note&&<div style={{fontSize:13,color:"#444",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{i.note}</div>}
 {showReminder&&(
@@ -759,7 +763,7 @@ sbFetch(url,key,"interactions?select=*&order=date.desc&limit=9999"),
 sbFetch(url,key,"groups?select=*&order=name&limit=200")
 ]);
 setContacts(c.map(r=>({...r,groupIds:(r.group_ids||"").split(",").filter(Boolean)})));
-setInteractions(i.map(r=>({...r,personId:r.person_id,note:r.note||r.notes||""})));
+setInteractions(i.map(r=>({...r,personIds:(r.person_ids||r.person_id||"").split(",").filter(Boolean),note:r.note||r.notes||""})));
 setGroups(g);setImported(true);
 // Load projects, tasks, time entries
 try{
@@ -793,7 +797,7 @@ const dedupe=rows=>{const seen=new Set();return rows.filter(r=>{if(!r.id||seen.h
 const upsert=async(table,rows)=>{const u=dedupe(rows);for(let i=0;i<u.length;i+=BATCH)await sbFetch(sbUrl,sbKey,table,"POST",u.slice(i,i+BATCH));};
 await upsert("groups",groups.map(g=>({id:g.id,name:g.name,description:g.description||"",icon:g.icon||"",people_ids:(g.peopleIds||[]).join(",")})));
 await upsert("contacts",contacts.map(c=>({id:c.id,name:c.name,email:c.email||"",phone:c.phone||"",notes:c.notes||"",date_met:c.dateMet||"",company:c.company||"",role:c.role||"",location:c.location||"",group_ids:(c.groupIds||c.groups||[]).join(",")})));
-await upsert("interactions",interactions.map(i=>({id:i.id,person_id:i.personId||i.person_id||"",type:i.type||"",date:i.date||"",note:i.note||""})));
+await upsert("interactions",interactions.map(i=>({id:i.id,person_id:(i.personIds||[i.personId||i.person_id]).filter(Boolean)[0]||"",person_ids:(i.personIds||[i.personId||i.person_id]).filter(Boolean).join(","),type:i.type||"",date:i.date||"",note:i.note||""})));
 await upsert("projects",projects.map(p=>({id:p.id,name:p.name,parent_id:p.parentId||"",created_at:p.createdAt||""})));
 await upsert("tasks",tasks.map(t=>({id:t.id,title:t.title,project_id:t.projectId||"",contact_id:t.contactId||"",due_date:t.dueDate||"",priority:t.priority||"",status:t.status||"todo",notes:t.notes||"",created_at:t.createdAt||""})));
 await upsert("time_entries",timeEntries.map(e=>({id:e.id,task_id:e.taskId||"",project_id:e.projectId||"",description:e.description||"",start_time:e.startTime||0,end_time:e.endTime||0,duration:e.duration||0,date:e.date||""})));
@@ -809,7 +813,7 @@ let pf=null,intf=null,gf=null;
 files.forEach(f=>{const n=f.name.toLowerCase();if(n.includes("people"))pf=f;else if(n.includes("interaction"))intf=f;else if(n.includes("group"))gf=f;});
 if(gf){const rows=parseCSV(await read(gf));const gl=rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name,description:r.Description||"",icon:r.Icon||"",peopleIds:(r.People||"").split(",").map(s=>s.trim()).filter(Boolean)})).filter(g=>g.name);setGroups(gl);}
 if(pf){const rows=parseCSV(await read(pf));setContacts(rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name||"",email:r.Email||r.email||"",phone:r.Phone||r.phone||"",notes:r.Notes||r.notes||"",dateMet:toIso(r["Date Met"]||""),groupIds:(r.Groups||r.groups||"").split(",").map(s=>s.trim()).filter(Boolean),company:"",role:"",location:""})).filter(c=>c.name));}
-if(intf){const rows=parseCSV(await read(intf));setInteractions(rows.map(r=>({id:r["Id"]||r["id"],personId:r["Person Id"]||r["person_id"]||"",type:r["Type"]||r["type"]||"",date:toIso(r["Date"]||r["date"]||""),note:r["Notes"]||r["notes"]||""})).filter(i=>i.personId&&i.id));}
+if(intf){const rows=parseCSV(await read(intf));setInteractions(rows.map(r=>({id:r["Id"]||r["id"],personIds:(r["Person Ids"]||r["person_ids"]||r["Person Id"]||r["person_id"]||"").split(",").filter(Boolean),type:r["Type"]||r["type"]||"",date:toIso(r["Date"]||r["date"]||""),note:r["Notes"]||r["notes"]||""})).filter(i=>i.personIds.length>0&&i.id));}
 setImported(true);setSyncStatus("CSVs imported ✓ — hit Sync to save");
 }catch(e){alert("Import failed: "+e.message);}
 e.target.value="";
@@ -837,9 +841,9 @@ try{
 const result=await callClaude(`This is a WhatsApp chat export. The contact is: ${contacts.find(c=>c.id===waContact)?.name||"Unknown"}. Extract the key points from this conversation as a concise interaction note (2-4 sentences). Also identify the most recent date mentioned or use today. Respond as JSON: {"note":"","date":"YYYY-MM-DD"}\n\nChat:\n${waText.slice(0,3000)}`);
 const clean=result.replace(/```json|```/g,"").trim();
 const parsed=JSON.parse(clean);
-const ni={id:"i_"+Date.now(),personId:waContact,person_id:waContact,type:"Note",date:parsed.date||today(),note:parsed.note||waText.slice(0,500)};
+const ni={id:"i_"+Date.now(),personIds:[waContact],type:"Note",date:parsed.date||today(),note:parsed.note||waText.slice(0,500)};
 setInteractions(is=>[ni,...is]);
-if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:waContact,type:"Note",date:ni.date,note:ni.note}]).catch(()=>{});
+if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:waContact,person_ids:waContact,type:"Note",date:ni.date,note:ni.note}]).catch(()=>{});
 setShowWhatsApp(false);setWaText("");setWaContact("");
 setSyncStatus("WhatsApp conversation imported as interaction ✓");
 }catch(err){alert("Could not parse conversation.");}
@@ -849,7 +853,7 @@ const generateSummary=async()=>{
 if(!selected||!sbKey)return;
 setSummaryLoading(true);setAiSummary("");
 try{
-const ints=interactions.filter(i=>(i.personId||i.person_id)===selected.id).slice(0,20);
+const ints=interactions.filter(i=>intPersonIds(i).includes(selected.id)).slice(0,20);
 const intText=ints.map(i=>`${i.date} (${i.type||"interaction"}): ${i.note||"no notes"}`).join("\n");
 const prompt=`Write a concise relationship summary (3-4 sentences) for ${selected.name}. Include: who they are, how we know each other, key topics discussed, and what to remember for next interaction.\n\nContact notes: ${selected.notes||"none"}\n\nInteraction history:\n${intText||"No interactions recorded"}`;
 const result=await callClaude(prompt);
@@ -860,30 +864,32 @@ setSummaryLoading(false);
 const contactGroups=useCallback(c=>{if(!c)return[];return(c.groupIds||c.groups||[]).map(gid=>{const g=groups.find(g=>g.id===gid||g.name===gid);return g?g.name:gid;}).filter(Boolean);},[groups]);
 const allGroupNames=useMemo(()=>[...new Set(groups.map(g=>g.name))],[groups]);
 const filteredContacts=useMemo(()=>contacts.filter(c=>{const q=search.toLowerCase();const cg=contactGroups(c);const mq=!q||c.name.toLowerCase().includes(q)||(c.email||"").toLowerCase().includes(q)||(c.company||"").toLowerCase().includes(q);return mq&&(filterGroup==="All"||cg.includes(filterGroup))&&(filterGroup2==="All"||cg.includes(filterGroup2));}),[contacts,search,filterGroup,filterGroup2,contactGroups]);
-const contactInts=useCallback(cId=>interactions.filter(i=>(i.personId||i.person_id)===cId).sort((a,b)=>b.date.localeCompare(a.date)),[interactions]);
-const lastInteraction=useCallback(cId=>{const hits=interactions.filter(i=>(i.personId||i.person_id)===cId).map(i=>i.date).filter(Boolean);return hits.length?hits.sort().reverse()[0]:null;},[interactions]);
+const intPersonIds=useCallback(i=>{if(i.personIds&&i.personIds.length)return i.personIds;if(i.personId)return[i.personId];if(i.person_id)return[i.person_id];return[];},[]);
+const contactInts=useCallback(cId=>interactions.filter(i=>intPersonIds(i).includes(cId)).sort((a,b)=>b.date.localeCompare(a.date)),[interactions,intPersonIds]);
+const lastInteraction=useCallback(cId=>{const hits=interactions.filter(i=>intPersonIds(i).includes(cId)).map(i=>i.date).filter(Boolean);return hits.length?hits.sort().reverse()[0]:null;},[interactions,intPersonIds]);
 const contactName=useCallback(id=>contacts.find(c=>c.id===id)?.name||"Unknown",[contacts]);
+const intContactNames=useCallback(i=>{const ids=intPersonIds(i);return ids.map(id=>contactName(id)).join(", ");},[intPersonIds,contactName]);
 const intsOnDate=useCallback(d=>interactions.filter(i=>i.date===d),[interactions]);
 const groupMemberCount=useCallback(name=>contacts.filter(c=>contactGroups(c).includes(name)).length,[contacts,contactGroups]);
 const sortedGroups=useMemo(()=>[...groups].sort((a,b)=>groupMemberCount(b.name)-groupMemberCount(a.name)),[groups,groupMemberCount]);
-const recent3=useMemo(()=>[...interactions].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3).map(i=>{const c=contacts.find(c=>c.id===(i.personId||i.person_id));return{...i,contactObj:c,cName:c?.name||"Unknown",cGroups:c?contactGroups(c):[]};}),[interactions,contacts,contactGroups]);
+const recent3=useMemo(()=>[...interactions].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3).map(i=>{const ids=intPersonIds(i);const c=contacts.find(c=>c.id===ids[0]);return{...i,contactObj:c,cName:ids.map(id=>contacts.find(c=>c.id===id)?.name||"Unknown").join(", "),cGroups:c?contactGroups(c):[]};}),[interactions,contacts,contactGroups,intPersonIds]);
 const upcomingReminders=useMemo(()=>reminders.filter(r=>r.date>=today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5),[reminders]);
 const overdueReminders=useMemo(()=>reminders.filter(r=>r.date<today()).sort((a,b)=>b.date.localeCompare(a.date)),[reminders]);
 // Tasks linked to a contact
 const contactTasks=useCallback(cId=>tasks.filter(t=>t.contactId===cId&&t.status!=="done"),[tasks]);
 const deleteContact=c=>{if(!window.confirm("Delete "+c.name+"?"))return;setContacts(cs=>cs.filter(x=>x.id!==c.id));setSelected(null);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+c.id,"DELETE").catch(()=>{});};
 const deleteInteraction=i=>{setInteractions(is=>is.filter(x=>x.id!==i.id));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+i.id,"DELETE").catch(()=>{});};
-const saveEditInt=draft=>{setInteractions(is=>is.map(i=>i.id===draft.id?{...draft}:i));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+draft.id,"PATCH",{person_id:draft.personId||draft.person_id,type:draft.type||"",date:draft.date||"",note:draft.note||""}).catch(()=>{});};
-const addReminderToInt=(i,date,note)=>{const r={id:"r_"+Date.now(),intId:i.id,contactId:i.personId||i.person_id,contactName:contactName(i.personId||i.person_id),date,note,intNote:i.note||""};setReminders(rs=>[...rs,r]);setInteractions(is=>is.map(x=>x.id===i.id?{...x,reminderDate:date}:x));};
+const saveEditInt=draft=>{const pIds=draft.personIds||[draft.personId||draft.person_id].filter(Boolean);const updated={...draft,personIds:pIds};setInteractions(is=>is.map(i=>i.id===draft.id?updated:i));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+draft.id,"PATCH",{person_id:pIds[0]||"",person_ids:pIds.join(","),type:draft.type||"",date:draft.date||"",note:draft.note||""}).catch(()=>{});};
+const addReminderToInt=(i,date,note)=>{const ids=intPersonIds(i);const r={id:"r_"+Date.now(),intId:i.id,contactId:ids[0],contactName:ids.map(id=>contactName(id)).join(", "),date,note,intNote:i.note||""};setReminders(rs=>[...rs,r]);setInteractions(is=>is.map(x=>x.id===i.id?{...x,reminderDate:date}:x));};
 const dismissReminder=id=>setReminders(rs=>rs.filter(r=>r.id!==id));
-const handleQuickAdd=({contactId,type,date,note})=>{const ni={id:"i_"+Date.now(),personId:contactId,person_id:contactId,type:type||"Manual",date,note};setInteractions(is=>[ni,...is]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:contactId,type:ni.type,date,note}]).catch(()=>{});};
+const handleQuickAdd=({contactId,type,date,note})=>{const ni={id:"i_"+Date.now(),personIds:[contactId],type:type||"Manual",date,note};setInteractions(is=>[ni,...is]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:contactId,person_ids:contactId,type:ni.type,date,note}]).catch(()=>{});};
 const addContact=()=>{if(!cf.name.trim())return;const nc={...cf,id:"c_"+Date.now(),groupIds:cf.groups,dateMet:"",company:cf.company||"",role:cf.role||"",location:cf.location||""};setContacts(cs=>[nc,...cs]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts","POST",[{id:nc.id,name:nc.name,email:nc.email||"",phone:nc.phone||"",notes:nc.notes||"",date_met:"",company:nc.company,role:nc.role,location:nc.location,group_ids:nc.groupIds.join(",")}]).catch(()=>{});setCf({name:"",company:"",role:"",location:"",email:"",phone:"",groups:[],notes:""});setShowAddContact(false);};
 const saveEditContact=()=>{if(!editingContact)return;setContacts(cs=>cs.map(c=>c.id===editingContact.id?{...editingContact}:c));setSelected({...editingContact});if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+editingContact.id,"PATCH",{name:editingContact.name,email:editingContact.email||"",phone:editingContact.phone||"",company:editingContact.company||"",role:editingContact.role||"",location:editingContact.location||"",notes:editingContact.notes||"",group_ids:(editingContact.groupIds||[]).join(",")}).catch(()=>{});setEditingContact(null);};
 const renameGroup=(gId,newName)=>{if(!newName.trim())return;setGroups(gs=>gs.map(g=>g.id===gId?{...g,name:newName.trim()}:g));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"groups?id=eq."+gId,"PATCH",{name:newName.trim()}).catch(()=>{});setEditingGroupId(null);};
 const updateGroupIcon=(gId,icon)=>{setGroups(gs=>gs.map(g=>g.id===gId?{...g,icon}:g));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"groups?id=eq."+gId,"PATCH",{icon}).catch(()=>{});setShowEmojiPicker(null);};
 const deleteGroup=(gId)=>{if(!window.confirm("Delete this group?"))return;setGroups(gs=>gs.filter(x=>x.id!==gId));setContacts(cs=>cs.map(c=>{const ids=(c.groupIds||[]).filter(id=>id!==gId);return{...c,groupIds:ids};}));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"groups?id=eq."+gId,"DELETE").catch(()=>{});};
 const bulkAddToGroup=()=>{if(!bulkAddGroupId||bulkSelected.length===0)return;setContacts(cs=>cs.map(c=>{if(!bulkSelected.includes(c.id))return c;const ids=c.groupIds||[];if(ids.includes(bulkAddGroupId))return c;const newIds=[...ids,bulkAddGroupId];if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+c.id,"PATCH",{group_ids:newIds.join(",")}).catch(()=>{});return{...c,groupIds:newIds};}));setBulkAddGroupId(null);setBulkSelected([]);setBulkSearch("");};
-const addInteraction=()=>{if(!inf.date||inf.contactIds.length===0)return;const newInts=[];inf.contactIds.forEach(cId=>{const ni={id:"i_"+Date.now()+"_"+cId,personId:cId,person_id:cId,type:inf.type||"Manual",date:inf.date,note:inf.note};newInts.push(ni);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:cId,type:ni.type,date:inf.date,note:inf.note}]).catch(()=>{});});setInteractions(is=>[...newInts,...is]);setInf({contactIds:[],date:"",note:"",type:""});setShowAddInteraction(false);};
+const addInteraction=()=>{if(!inf.date||inf.contactIds.length===0)return;const ni={id:"i_"+Date.now(),personIds:inf.contactIds,type:inf.type||"Manual",date:inf.date,note:inf.note};setInteractions(is=>[ni,...is]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:inf.contactIds[0],person_ids:inf.contactIds.join(","),type:ni.type,date:inf.date,note:inf.note}]).catch(()=>{});setInf({contactIds:[],date:"",note:"",type:""});setShowAddInteraction(false);};
 const saveDetailNote=()=>{if(!detailNote.trim()||!selected)return;const date=today();const nn=(selected.notes?selected.notes+"\n\n":"")+date+": "+detailNote;setContacts(cs=>cs.map(c=>c.id===selected.id?{...c,notes:nn}:c));setSelected(s=>({...s,notes:nn}));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+selected.id,"PATCH",{notes:nn}).catch(()=>{});setDetailNote("");};
 const handleImageNote=async e=>{const file=e.target.files[0];if(!file)return;setAiLoading(true);const toB64=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(f);});try{const b64=await toB64(file);const resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":sbKey,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:file.type||"image/jpeg",data:b64}},{type:"text",text:"Transcribe any text in this image. Return only the transcribed text."}]}]})});const data=await resp.json();setDetailNote(n=>{const t=(data.content||[]).map(b=>b.text||"").join("");return n?n+"\n"+t:t;});}catch(err){setDetailNote(n=>n+"\n[Could not read image]");}setAiLoading(false);e.target.value="";};
 const startRecording=async()=>{try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});const mr=new MediaRecorder(stream);const chunks=[];mr.ondataavailable=e=>chunks.push(e.data);mr.onstop=()=>{stream.getTracks().forEach(t=>t.stop());setRecording(false);setDetailNote(n=>n?n+"\n[Voice note]":"[Voice note]");};mr.start();setMediaRec(mr);setRecording(true);}catch(err){alert("Microphone access denied.");}};
@@ -1229,11 +1235,12 @@ return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",bo
 </div>
 <div style={{borderTop:"0.5px solid #eee",paddingTop:12}}>
 <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:8}}>Interactions ({contactInts(selected.id).length})</div>
-{contactInts(selected.id).slice(0,30).map(i=>{const col=intColor(i.type);return(
+{contactInts(selected.id).slice(0,30).map(i=>{const col=intColor(i.type);const otherIds=intPersonIds(i).filter(pid=>pid!==selected.id);return(
 <div key={i.id} style={{marginBottom:10,paddingBottom:10,borderBottom:"0.5px solid #f5f5f5"}}>
 <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
 <span style={{fontSize:11,color:"#999"}}>{fmtDate(i.date)}</span>
 {i.type&&i.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 7px",fontWeight:500}}>{i.type}</span>}
+{otherIds.length>0&&<span style={{fontSize:10,color:"#999"}}>with {otherIds.map(id=>contactName(id)).join(", ")}</span>}
 </div>
 {i.note&&<div style={{fontSize:13,lineHeight:1.5,color:"#333"}}>{i.note}</div>}
 </div>
@@ -1270,7 +1277,7 @@ return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",bo
 <div style={{fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:12}}>{interactions.length} total interactions</div>
 <div style={{display:"flex",flexDirection:"column",gap:8}}>
 {interactions.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,200).map(i=>(
-<IntCard key={i.id} i={i} contacts={contacts} contactName={contactName} deleteInteraction={deleteInteraction} saveEditInt={saveEditInt} setSelected={setSelected} setTab={setTab} onAddReminder={addReminderToInt}/>
+<IntCard key={i.id} i={i} contacts={contacts} contactName={contactName} intPersonIds={intPersonIds} intContactNames={intContactNames} deleteInteraction={deleteInteraction} saveEditInt={saveEditInt} setSelected={setSelected} setTab={setTab} onAddReminder={addReminderToInt}/>
 ))}
 {interactions.length>200&&<p style={{fontSize:12,color:"rgba(255,255,255,0.4)",textAlign:"center"}}>Showing 200 most recent.</p>}
 </div>
