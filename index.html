@@ -77,6 +77,11 @@ const EMOJI_CATEGORIES=[
 {name:"Flags",emojis:["🏁","🚩","🎌","🏴","🏳️","🏳️‍🌈","🏳️‍⚧️","🏴‍☠️","🇦🇫","🇦🇱","🇩🇿","🇦🇸","🇦🇩","🇦🇴","🇦🇬","🇦🇷","🇦🇲","🇦🇺","🇦🇹","🇦🇿","🇧🇸","🇧🇭","🇧🇩","🇧🇧","🇧🇾","🇧🇪","🇧🇿","🇧🇯","🇧🇹","🇧🇴","🇧🇦","🇧🇼","🇧🇷","🇧🇳","🇧🇬","🇧🇫","🇧🇮","🇰🇭","🇨🇲","🇨🇦","🇨🇻","🇨🇫","🇹🇩","🇨🇱","🇨🇳","🇨🇴","🇰🇲","🇨🇬","🇨🇩","🇨🇷","🇭🇷","🇨🇺","🇨🇾","🇨🇿","🇩🇰","🇩🇯","🇩🇲","🇩🇴","🇪🇨","🇪🇬","🇸🇻","🇬🇶","🇪🇷","🇪🇪","🇸🇿","🇪🇹","🇫🇯","🇫🇮","🇫🇷","🇬🇦","🇬🇲","🇬🇪","🇩🇪","🇬🇭","🇬🇷","🇬🇩","🇬🇹","🇬🇳","🇬🇼","🇬🇾","🇭🇹","🇭🇳","🇭🇰","🇭🇺","🇮🇸","🇮🇳","🇮🇩","🇮🇷","🇮🇶","🇮🇪","🇮🇱","🇮🇹","🇯🇲","🇯🇵","🇯🇴","🇰🇿","🇰🇪","🇰🇮","🇽🇰","🇰🇼","🇰🇬","🇱🇦","🇱🇻","🇱🇧","🇱🇸","🇱🇷","🇱🇾","🇱🇮","🇱🇹","🇱🇺","🇲🇴","🇲🇬","🇲🇼","🇲🇾","🇲🇻","🇲🇱","🇲🇹","🇲🇭","🇲🇷","🇲🇺","🇲🇽","🇫🇲","🇲🇩","🇲🇨","🇲🇳","🇲🇪","🇲🇦","🇲🇿","🇲🇲","🇳🇦","🇳🇷","🇳🇵","🇳🇱","🇳🇿","🇳🇮","🇳🇪","🇳🇬","🇰🇵","🇲🇰","🇳🇴","🇴🇲","🇵🇰","🇵🇼","🇵🇸","🇵🇦","🇵🇬","🇵🇾","🇵🇪","🇵🇭","🇵🇱","🇵🇹","🇵🇷","🇶🇦","🇷🇴","🇷🇺","🇷🇼","🇼🇸","🇸🇲","🇸🇹","🇸🇦","🇸🇳","🇷🇸","🇸🇨","🇸🇱","🇸🇬","🇸🇰","🇸🇮","🇸🇧","🇸🇴","🇿🇦","🇰🇷","🇸🇸","🇪🇸","🇱🇰","🇸🇩","🇸🇷","🇸🇪","🇨🇭","🇸🇾","🇹🇼","🇹🇯","🇹🇿","🇹🇭","🇹🇱","🇹🇬","🇹🇴","🇹🇹","🇹🇳","🇹🇷","🇹🇲","🇹🇻","🇺🇬","🇺🇦","🇦🇪","🇬🇧","🇺🇸","🇺🇾","🇺🇿","🇻🇺","🇻🇪","🇻🇳","🇾🇪","🇿🇲","🇿🇼"]}
 ];
 const GIcon=({name,icon,size=20})=>React.createElement("span",{style:{fontSize:size,lineHeight:1}},icon||DEFAULT_GROUP_ICONS[name]||"🏷️");
+/* ===== Rich text helpers ===== */
+const renderMd=text=>{if(!text)return"";const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");return text.split("\n").map(line=>{const el=esc(line);const bul=/^[-•]\s+(.*)/.exec(el);const num=/^(\d+)\.\s+(.*)/.exec(el);const fmt=s=>{let r=s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');r=r.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g,'<em>$1</em>');return r;};if(bul)return'<div style="display:flex;gap:6px;padding:1px 0;margin-left:4px"><span style="color:#999">•</span><span>'+fmt(bul[1])+'</span></div>';if(num)return'<div style="display:flex;gap:6px;padding:1px 0;margin-left:4px"><span style="color:#999;min-width:16px;text-align:right">'+num[1]+'.</span><span>'+fmt(num[2])+'</span></div>';return'<div>'+fmt(el||"&nbsp;")+'</div>';}).join("");};
+const RichNote=({text,style={}})=>React.createElement("div",{dangerouslySetInnerHTML:{__html:renderMd(text)},style:{fontSize:13,color:"#444",lineHeight:1.6,...style}});
+const FormatBar=({id,value,onChange})=>{const [open,setOpen]=useState(false);const ins=(before,after)=>{const el=document.getElementById(id);const s=el?el.selectionStart:value.length;const e=el?el.selectionEnd:value.length;const nv=value.substring(0,s)+before+value.substring(s,e)+after+value.substring(e);onChange(nv);setTimeout(()=>{if(el){el.focus();el.selectionStart=s+before.length;el.selectionEnd=e+before.length;}},0);setOpen(false);};const line=prefix=>{const el=document.getElementById(id);const s=el?el.selectionStart:value.length;const before=value.substring(0,s);const lineStart=before.lastIndexOf("\n")+1;const nv=value.substring(0,lineStart)+prefix+value.substring(lineStart);onChange(nv);setTimeout(()=>{if(el)el.focus();},0);setOpen(false);};const ms={fontSize:13,padding:"7px 14px",background:"none",border:"none",cursor:"pointer",color:"#444",display:"block",width:"100%",textAlign:"left",borderRadius:0};return React.createElement("div",{style:{position:"relative",display:"inline-block"}},React.createElement("button",{type:"button",onClick:e=>{e.preventDefault();setOpen(o=>!o);},style:{background:"none",border:"none",cursor:"pointer",color:"#bbb",fontSize:14,padding:"4px 2px",lineHeight:1,letterSpacing:2}},"⋯"),open&&React.createElement(React.Fragment,null,React.createElement("div",{onClick:()=>setOpen(false),style:{position:"fixed",inset:0,zIndex:98}}),React.createElement("div",{style:{position:"absolute",bottom:"calc(100% + 6px)",left:-4,background:"#fff",borderRadius:10,boxShadow:"0 2px 16px rgba(0,0,0,0.12)",border:"0.5px solid rgba(0,0,0,0.06)",zIndex:99,overflow:"hidden",minWidth:140}},React.createElement("button",{type:"button",onClick:()=>ins("**","**"),style:{...ms,fontWeight:600,borderBottom:"0.5px solid #f0f0ee"},onMouseOver:e=>e.currentTarget.style.background="#f5f5f3",onMouseOut:e=>e.currentTarget.style.background="none"},"Bold"),React.createElement("button",{type:"button",onClick:()=>ins("*","*"),style:{...ms,fontStyle:"italic",borderBottom:"0.5px solid #f0f0ee"},onMouseOver:e=>e.currentTarget.style.background="#f5f5f3",onMouseOut:e=>e.currentTarget.style.background="none"},"Italic"),React.createElement("button",{type:"button",onClick:()=>line("- "),style:{...ms,borderBottom:"0.5px solid #f0f0ee"},onMouseOver:e=>e.currentTarget.style.background="#f5f5f3",onMouseOut:e=>e.currentTarget.style.background="none"},"Bullet"),React.createElement("button",{type:"button",onClick:()=>line("1. "),style:ms,onMouseOver:e=>e.currentTarget.style.background="#f5f5f3",onMouseOut:e=>e.currentTarget.style.background="none"},"Numbered"))));};
+/* ===== End rich text helpers ===== */
 const fmtDur=s=>{if(!s||s<0)return"0m";const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);const sec=Math.floor(s%60);if(h>0)return h+"h "+String(m).padStart(2,"0")+"m";if(m>0)return m+"m "+String(sec).padStart(2,"0")+"s";return sec+"s";};
 const fmtDurShort=s=>{if(!s||s<0)return"0m";const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);if(h>0)return h+"h "+m+"m";return m+"m";};
 const fmtTimer=s=>{const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);const sec=Math.floor(s%60);return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(sec).padStart(2,"0");};
@@ -132,6 +137,7 @@ const [reminderDate,setReminderDate]=useState("");
 const [reminderNote,setReminderNote]=useState("");
 const col=intColor(i.type);
 const iIds=intPersonIds(i);
+const editNoteId="edit_note_"+i.id;
 if(editing&&draft){
 const draftIds=draft.personIds||[draft.personId||draft.person_id].filter(Boolean);
 const toggleContact=cId=>{const has=draftIds.includes(cId);const newIds=has?draftIds.filter(x=>x!==cId):[...draftIds,cId];setDraft(d=>({...d,personIds:newIds}));};
@@ -151,7 +157,8 @@ return(
 </label>
 ))}
 </div>
-<textarea value={draft.note||""} onChange={e=>setDraft(d=>({...d,note:e.target.value}))} rows={3} style={{resize:"vertical",marginBottom:8}}/>
+<textarea id={editNoteId} value={draft.note||""} onChange={e=>setDraft(d=>({...d,note:e.target.value}))} rows={3} style={{resize:"vertical",marginBottom:0}}/>
+<div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}><FormatBar id={editNoteId} value={draft.note||""} onChange={v=>setDraft(d=>({...d,note:v}))}/></div>
 <div style={{display:"flex",gap:8}}>
 <button onClick={()=>{saveEditInt(draft);setEditing(false);setDraft(null);}} disabled={draftIds.length===0} style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"6px 16px",borderRadius:8,cursor:"pointer"}}>Save</button>
 <button onClick={()=>{setEditing(false);setDraft(null);}}>Cancel</button>
@@ -169,7 +176,7 @@ return(
 <div style={{fontWeight:500,fontSize:14,marginBottom:i.note?5:0,color:"#1a1a1a",display:"flex",flexWrap:"wrap",gap:4,alignItems:"center"}}>
 {iIds.map((pid,idx)=>{const c=contacts.find(c=>c.id===pid);return(<React.Fragment key={pid}>{idx>0&&<span style={{color:"#ccc",fontWeight:400}}>&</span>}<span style={{cursor:"pointer"}} onClick={()=>{if(c){setSelected(c);setTab("contacts");}}}>{c?.name||"Unknown"}</span></React.Fragment>);})}
 </div>
-{i.note&&<div style={{fontSize:13,color:"#444",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{i.note}</div>}
+{i.note&&<RichNote text={i.note}/>}
 {showReminder&&(
 <div style={{marginTop:8,padding:10,background:"#fffbeb",borderRadius:8,border:"0.5px solid #fde68a"}}>
 <div style={{fontSize:12,color:"#92400e",marginBottom:6,fontWeight:500}}>Set follow-up reminder</div>
@@ -238,7 +245,8 @@ onMouseEnter={e=>e.currentTarget.style.background="#f5f5f3"} onMouseLeave={e=>e.
 </select>
 </div>
 <div style={{marginBottom:8,position:"relative"}}><DatePicker value={date} onChange={v=>setDate(v)}/></div>
-<textarea placeholder="Notes…" value={note} onChange={e=>setNote(e.target.value)} rows={3} style={{resize:"vertical",marginBottom:10,fontSize:13}}/>
+<textarea id="quickadd_note" placeholder="Notes…" value={note} onChange={e=>setNote(e.target.value)} rows={3} style={{resize:"vertical",marginBottom:0,fontSize:13}}/>
+<div style={{display:"flex",justifyContent:"flex-end",marginBottom:10}}><FormatBar id="quickadd_note" value={note} onChange={v=>setNote(v)}/></div>
 <button onClick={submitInt} disabled={!contactId||!date} style={{background:"#1a1a1a",border:"none",color:"#fff",fontWeight:500,padding:"7px 20px",borderRadius:8,cursor:"pointer",opacity:(!contactId||!date)?0.4:1}}>Add interaction</button>
 </div>
 ):(
@@ -975,7 +983,7 @@ return(
 <div style={{width:28,height:28,borderRadius:"50%",background:avatarColor(item.cName),display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(item.cName)}</div>
 <div style={{flex:1,minWidth:0}}>
 <div style={{fontWeight:500,fontSize:12,color:"#1a1a1a"}}>{item.cName}</div>
-<div style={{fontSize:10,color:"#999"}}>{item.note?item.note.slice(0,60)+(item.note.length>60?"…":""):""}</div>
+<div style={{fontSize:10,color:"#999"}}>{item.note?(item.note.replace(/\*+/g,"")).slice(0,60)+(item.note.length>60?"…":""):""}</div>
 </div>
 <div style={{textAlign:"right",flexShrink:0}}>
 <div style={{fontSize:10,color:"#999"}}>{fmtDate(item.date)}</div>
@@ -1062,7 +1070,7 @@ return(<div key={i} onClick={()=>cnt>0&&setDashPopup({date:ds,hits})} style={{as
 <div key={h.id} style={{borderBottom:"0.5px solid #f0f0ee",paddingBottom:10,marginBottom:10}}>
 <div style={{fontWeight:500,fontSize:13,color:"#4f6ef7",cursor:"pointer",marginBottom:4}} onClick={()=>{const c=contacts.find(c=>c.id===(h.personId||h.person_id));if(c){setSelected(c);setTab("contacts");setDashPopup(null);}}}>{contactName(h.personId||h.person_id)}</div>
 {h.type&&h.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 8px",fontWeight:500,display:"inline-block",marginBottom:4}}>{h.type}</span>}
-{h.note&&<div style={{fontSize:12,color:"#555",lineHeight:1.5}}>{h.note}</div>}
+{h.note&&<RichNote text={h.note} style={{fontSize:12,color:"#555"}}/>}
 </div>
 );})}
 </div>
@@ -1160,10 +1168,11 @@ return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",bo
 ))}
 </div>
 )}
-{selected.notes&&<div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}><div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:4}}>Notes</div><div style={{fontSize:13,whiteSpace:"pre-wrap",lineHeight:1.6,color:"#333"}}>{selected.notes}</div></div>}
+{selected.notes&&<div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}><div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:4}}>Notes</div><RichNote text={selected.notes} style={{color:"#333"}}/></div>}
 <div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}>
 <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:6}}>Add note</div>
-<textarea value={detailNote} onChange={e=>setDetailNote(e.target.value)} placeholder="Type, upload image, or record…" rows={3} style={{resize:"vertical",marginBottom:8}}/>
+<textarea id="detail_note_ta" value={detailNote} onChange={e=>setDetailNote(e.target.value)} placeholder="Notes…" rows={3} style={{resize:"vertical",marginBottom:0}}/>
+<div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}><FormatBar id="detail_note_ta" value={detailNote} onChange={v=>setDetailNote(v)}/></div>
 <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
 <button onClick={saveDetailNote} disabled={!detailNote.trim()} style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"6px 14px",borderRadius:8,cursor:"pointer"}}>Save</button>
 <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={handleImageNote}/>
@@ -1181,7 +1190,7 @@ return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",bo
 {i.type&&i.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 7px",fontWeight:500}}>{i.type}</span>}
 {otherIds.length>0&&<span style={{fontSize:10,color:"#999"}}>with {otherIds.map(id=>contactName(id)).join(", ")}</span>}
 </div>
-{i.note&&<div style={{fontSize:13,lineHeight:1.5,color:"#333"}}>{i.note}</div>}
+{i.note&&<RichNote text={i.note}/>}
 </div>
 );})}
 {contactInts(selected.id).length===0&&<p style={{fontSize:13,color:"#999"}}>No interactions yet.</p>}
@@ -1354,7 +1363,7 @@ return(<div style={{display:"flex",flexDirection:"column",gap:6}}>
 <span style={{fontWeight:500,fontSize:13,cursor:"pointer"}} onClick={()=>{const ids=intPersonIds(h);const c=contacts.find(c=>c.id===ids[0]);if(c){setSelected(c);setTab("contacts");}}}>{intPersonIds(h).map(id=>contactName(id)).join(", ")}</span>
 {h.type&&h.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 7px",fontWeight:500}}>{h.type}</span>}
 </div>
-{h.note&&<div style={{fontSize:12,color:"#666",lineHeight:1.5}}>{h.note}</div>}
+{h.note&&<RichNote text={h.note} style={{fontSize:12,color:"#666"}}/>}
 </div>
 );})}
 </div>
@@ -1408,7 +1417,8 @@ return(<div style={{display:"flex",flexDirection:"column",gap:6}}>
 ))}
 </div>
 <div style={{fontSize:12,color:"#666",marginBottom:4}}>Notes</div>
-<textarea placeholder="Add notes…" value={inf.note} onChange={e=>setInf(f=>({...f,note:e.target.value}))} rows={4} style={{resize:"vertical",marginBottom:12}}/>
+<textarea id="modal_int_note" placeholder="Notes…" value={inf.note} onChange={e=>setInf(f=>({...f,note:e.target.value}))} rows={4} style={{resize:"vertical",marginBottom:0}}/>
+<div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}><FormatBar id="modal_int_note" value={inf.note} onChange={v=>setInf(f=>({...f,note:v}))}/></div>
 <div style={{display:"flex",gap:8}}>
 <button onClick={addInteraction} disabled={!inf.date||inf.contactIds.length===0} style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"7px 18px",borderRadius:8,cursor:"pointer"}}>Save</button>
 <button onClick={()=>setShowAddInteraction(false)}>Cancel</button>
