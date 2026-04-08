@@ -152,7 +152,7 @@ return(
 );
 }
 
-function IntCard({i,contacts,contactName,intPersonIds,intContactNames,deleteInteraction,saveEditInt,setSelected,setTab,onAddReminder,projects,onAddContact}){
+function IntCard({i,contacts,contactName,intPersonIds,intContactNames,deleteInteraction,saveEditInt,setSelected,setTab,onAddReminder,projects,onAddContact,onAttach}){
 const [showDel,setShowDel]=useState(false);
 const [editing,setEditing]=useState(false);
 const [draft,setDraft]=useState(null);
@@ -161,10 +161,16 @@ const [showReminder,setShowReminder]=useState(false);
 const [reminderDate,setReminderDate]=useState("");
 const [reminderNote,setReminderNote]=useState("");
 const [showInlineAdd,setShowInlineAdd]=useState(false);
+const attachRef=useRef();
 const col=intColor(i.type);
 const iIds=intPersonIds(i);
 const editNoteId="edit_note_"+i.id;
 const proj=i.projectId?projects.find(p=>p.id===i.projectId):null;
+const attachments=i.attachments||[];
+const handleFile=e=>{const file=e.target.files[0];if(!file||!onAttach)return;if(file.size>5*1024*1024){alert("File too large (max 5 MB).");e.target.value="";return;}const reader=new FileReader();reader.onload=()=>{onAttach(i.id,{name:file.name,type:file.type,size:file.size,data:reader.result});};reader.readAsDataURL(file);e.target.value="";};
+const removeAttachment=(idx)=>{if(!onAttach)return;const newAtts=[...attachments];newAtts.splice(idx,1);saveEditInt({...i,attachments:newAtts});};
+const fmtSize=b=>{if(b<1024)return b+"B";if(b<1048576)return(b/1024).toFixed(0)+"KB";return(b/1048576).toFixed(1)+"MB";};
+const fileIcon=type=>{if(!type)return"📎";if(type.startsWith("image/"))return"🖼️";if(type.includes("pdf"))return"📄";if(type.includes("sheet")||type.includes("excel")||type.includes("csv"))return"📊";if(type.includes("presentation")||type.includes("powerpoint"))return"📑";if(type.includes("word")||type.includes("document"))return"📝";return"📎";};
 if(editing&&draft){
 const draftIds=draft.personIds||[draft.personId||draft.person_id].filter(Boolean);
 const toggleContact=cId=>{const has=draftIds.includes(cId);const newIds=has?draftIds.filter(x=>x!==cId):[...draftIds,cId];setDraft(d=>({...d,personIds:newIds}));};
@@ -208,7 +214,8 @@ return(
 );
 }
 return(
-<div className="card" style={{padding:"12px 16px"}}>
+<div className="card" style={{padding:"12px 16px",position:"relative"}}>
+<input ref={attachRef} type="file" style={{display:"none"}} onChange={handleFile}/>
 <div style={{fontSize:11,color:"#999",marginBottom:3,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
 {fmtDate(i.date)}
 {i.type&&i.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 8px",fontWeight:500}}>{i.type}</span>}
@@ -219,6 +226,18 @@ return(
 {iIds.map((pid,idx)=>{const c=contacts.find(c=>c.id===pid);return(<React.Fragment key={pid}>{idx>0&&<span style={{color:"#ccc",fontWeight:400}}>&</span>}<span style={{cursor:"pointer"}} onClick={()=>{if(c){setSelected(c);setTab("contacts");}}}>{c?.name||"Unknown"}</span></React.Fragment>);})}
 </div>
 {i.note&&<RichNote text={i.note}/>}
+{attachments.length>0&&(
+<div style={{marginTop:6,display:"flex",gap:6,flexWrap:"wrap"}}>
+{attachments.map((a,idx)=>(
+<div key={idx} style={{display:"inline-flex",alignItems:"center",gap:4,fontSize:11,background:"#f5f5f3",borderRadius:6,padding:"3px 8px",color:"#555",border:"0.5px solid #e8e8e6"}}>
+<span>{fileIcon(a.type)}</span>
+<a href={a.data} download={a.name} style={{color:"#4f6ef7",textDecoration:"none",maxWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={a.name}>{a.name}</a>
+<span style={{color:"#bbb"}}>{fmtSize(a.size)}</span>
+{showDel&&<button onClick={e=>{e.stopPropagation();removeAttachment(idx);}} style={{fontSize:10,color:"#c00",background:"none",border:"none",cursor:"pointer",padding:0,lineHeight:1}}>✕</button>}
+</div>
+))}
+</div>
+)}
 {showReminder&&(
 <div style={{marginTop:8,padding:10,background:"#fffbeb",borderRadius:8,border:"0.5px solid #fde68a"}}>
 <div style={{fontSize:12,color:"#92400e",marginBottom:6,fontWeight:500}}>Set follow-up reminder</div>
@@ -230,16 +249,20 @@ return(
 </div>
 </div>
 )}
-<div style={{marginTop:6,display:"flex",justifyContent:"flex-end",alignItems:"center"}}>
+<div style={{marginTop:6,display:"flex",justifyContent:"flex-end",alignItems:"center",gap:2}}>
 {showDel?(
 <div style={{display:"flex",alignItems:"center",gap:8,background:"#fff",border:"0.5px solid #ddd",borderRadius:8,padding:"4px 10px",boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
 <button onClick={()=>{setDraft({...i});setEditing(true);setShowDel(false);}} style={{fontSize:11,color:"#4f6ef7",border:"none",background:"none",padding:"2px 0",cursor:"pointer"}}>Edit</button>
+<button onClick={()=>attachRef.current?.click()} style={{fontSize:11,color:"#666",border:"none",background:"none",padding:"2px 0",cursor:"pointer"}}>Attach</button>
 <button onClick={()=>setShowReminder(s=>!s)} style={{fontSize:11,color:"#f59e0b",border:"none",background:"none",padding:"2px 0",cursor:"pointer"}}>Remind</button>
 <button onClick={()=>deleteInteraction(i)} style={{fontSize:11,color:"#c00",border:"none",background:"none",padding:"2px 0",cursor:"pointer"}}>Delete</button>
 <button onClick={()=>setShowDel(false)} style={{fontSize:12,color:"#999",border:"none",background:"none",padding:"2px 0",cursor:"pointer"}}>✕</button>
 </div>
 ):(
+<React.Fragment>
+<button onClick={()=>attachRef.current?.click()} style={{fontSize:15,color:"#ccc",border:"none",background:"none",padding:"2px 6px",cursor:"pointer",lineHeight:1,fontWeight:300}} title="Attach file">+</button>
 <button onClick={()=>setShowDel(true)} style={{fontSize:16,color:"#ccc",border:"none",background:"none",padding:"2px 6px",cursor:"pointer",lineHeight:1}}>⋯</button>
+</React.Fragment>
 )}
 </div>
 </div>
@@ -757,7 +780,7 @@ sbFetch(url,key,"interactions?select=*&order=date.desc&limit=9999"),
 sbFetch(url,key,"groups?select=*&order=name&limit=200")
 ]);
 setContacts(c.map(r=>({...r,groupIds:(r.group_ids||"").split(",").filter(Boolean)})));
-setInteractions(i.map(r=>({...r,personIds:(r.person_ids||r.person_id||"").split(",").filter(Boolean),note:r.note||r.notes||"",projectId:r.project_id||""})));
+setInteractions(i.map(r=>{let atts=[];try{if(r.attachments)atts=JSON.parse(r.attachments);}catch(e){}return{...r,personIds:(r.person_ids||r.person_id||"").split(",").filter(Boolean),note:r.note||r.notes||"",projectId:r.project_id||"",attachments:atts};}));
 setGroups(g);setImported(true);
 try{
 const [p,t,te]=await Promise.all([
@@ -788,14 +811,33 @@ try{
 const BATCH=50;
 const dedupe=rows=>{const seen=new Set();return rows.filter(r=>{if(!r.id||seen.has(r.id))return false;seen.add(r.id);return true;});};
 const upsert=async(table,rows)=>{const u=dedupe(rows);for(let i=0;i<u.length;i+=BATCH)await sbFetch(sbUrl,sbKey,table,"POST",u.slice(i,i+BATCH));};
+/* Try adding missing columns via rpc — ignore errors if rpc not available */
+const tryAddCol=async(table,col,type)=>{try{const token=localStorage.getItem("sb_auth_token")||sbKey;await fetch(sbUrl+"/rest/v1/rpc/run_sql",{method:"POST",headers:{"apikey":sbKey,"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({query:`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${col} ${type} DEFAULT ''`})});}catch(e){}};
+await Promise.all([tryAddCol("interactions","project_id","text"),tryAddCol("interactions","attachments","text")]);
 await upsert("groups",groups.map(g=>({id:g.id,name:g.name,description:g.description||"",icon:g.icon||"",people_ids:(g.peopleIds||[]).join(",")})));
 await upsert("contacts",contacts.map(c=>({id:c.id,name:c.name,email:c.email||"",phone:c.phone||"",notes:c.notes||"",date_met:c.dateMet||"",company:c.company||"",role:c.role||"",location:c.location||"",group_ids:(c.groupIds||c.groups||[]).join(",")})));
-await upsert("interactions",interactions.map(i=>({id:i.id,person_id:(i.personIds||[i.personId||i.person_id]).filter(Boolean)[0]||"",person_ids:(i.personIds||[i.personId||i.person_id]).filter(Boolean).join(","),type:i.type||"",date:i.date||"",note:i.note||"",project_id:i.projectId||""})));
+/* Try full interaction sync first; if project_id column missing, fall back without it */
+const intRows=interactions.map(i=>({id:i.id,person_id:(i.personIds||[i.personId||i.person_id]).filter(Boolean)[0]||"",person_ids:(i.personIds||[i.personId||i.person_id]).filter(Boolean).join(","),type:i.type||"",date:i.date||"",note:i.note||"",project_id:i.projectId||"",attachments:JSON.stringify(i.attachments||[])}));
+try{await upsert("interactions",intRows);}catch(e){
+if(e.message&&e.message.includes("project_id")){
+/* Retry without project_id and attachments */
+const fallback=interactions.map(i=>({id:i.id,person_id:(i.personIds||[i.personId||i.person_id]).filter(Boolean)[0]||"",person_ids:(i.personIds||[i.personId||i.person_id]).filter(Boolean).join(","),type:i.type||"",date:i.date||"",note:i.note||""}));
+await upsert("interactions",fallback);
+setSyncStatus("Synced (note: run SQL below in Supabase to enable project tagging & attachments)");
+setSyncing(false);
+return;
+}else throw e;
+}
 await upsert("projects",projects.map(p=>({id:p.id,name:p.name,icon:p.icon||"",parent_id:p.parentId||"",created_at:p.createdAt||""})));
 await upsert("tasks",tasks.map(t=>({id:t.id,title:t.title,project_id:t.projectId||"",contact_id:t.contactId||"",due_date:t.dueDate||"",priority:t.priority||"",status:t.status||"todo",notes:t.notes||"",created_at:t.createdAt||""})));
 await upsert("time_entries",timeEntries.map(e=>({id:e.id,task_id:e.taskId||"",project_id:e.projectId||"",description:e.description||"",start_time:e.startTime||0,end_time:e.endTime||0,duration:e.duration||0,date:e.date||""})));
 setSyncStatus("Synced "+contacts.length+" contacts · "+interactions.length+" interactions · "+projects.length+" projects · "+tasks.length+" tasks ✓");
-}catch(e){setSyncStatus("Sync failed: "+e.message);}
+}catch(e){
+let msg=e.message||"";
+if(msg.includes("project_id")||msg.includes("attachments")){
+setSyncStatus("Sync partial — add missing columns in Supabase SQL Editor: ALTER TABLE interactions ADD COLUMN IF NOT EXISTS project_id text DEFAULT ''; ALTER TABLE interactions ADD COLUMN IF NOT EXISTS attachments text DEFAULT '';");
+}else{setSyncStatus("Sync failed: "+msg);}
+}
 setSyncing(false);
 };
 const handleImportFiles=async e=>{
@@ -885,8 +927,9 @@ return nc;
 };
 const deleteContact=c=>{if(!window.confirm("Delete "+c.name+"?"))return;setContacts(cs=>cs.filter(x=>x.id!==c.id));setSelected(null);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+c.id,"DELETE").catch(()=>{});};
 const deleteInteraction=i=>{setInteractions(is=>is.filter(x=>x.id!==i.id));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+i.id,"DELETE").catch(()=>{});};
-const saveEditInt=draft=>{const pIds=draft.personIds||[draft.personId||draft.person_id].filter(Boolean);const updated={...draft,personIds:pIds};setInteractions(is=>is.map(i=>i.id===draft.id?updated:i));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+draft.id,"PATCH",{person_id:pIds[0]||"",person_ids:pIds.join(","),type:draft.type||"",date:draft.date||"",note:draft.note||"",project_id:draft.projectId||""}).catch(()=>{});};
+const saveEditInt=draft=>{const pIds=draft.personIds||[draft.personId||draft.person_id].filter(Boolean);const updated={...draft,personIds:pIds};setInteractions(is=>is.map(i=>i.id===draft.id?updated:i));if(sbUrl&&sbKey){const patch={person_id:pIds[0]||"",person_ids:pIds.join(","),type:draft.type||"",date:draft.date||"",note:draft.note||"",project_id:draft.projectId||""};if(draft.attachments)patch.attachments=JSON.stringify(draft.attachments);sbFetch(sbUrl,sbKey,"interactions?id=eq."+draft.id,"PATCH",patch).catch(()=>{});}};
 const addReminderToInt=(i,date,note)=>{const ids=intPersonIds(i);const r={id:"r_"+Date.now(),intId:i.id,contactId:ids[0],contactName:ids.map(id=>contactName(id)).join(", "),date,note,intNote:i.note||""};setReminders(rs=>[...rs,r]);setInteractions(is=>is.map(x=>x.id===i.id?{...x,reminderDate:date}:x));};
+const addAttachment=(intId,att)=>{setInteractions(is=>is.map(x=>{if(x.id!==intId)return x;const atts=[...(x.attachments||[]),att];const updated={...x,attachments:atts};if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+intId,"PATCH",{attachments:JSON.stringify(atts)}).catch(()=>{});return updated;}));};
 const dismissReminder=id=>setReminders(rs=>rs.filter(r=>r.id!==id));
 const handleQuickAdd=({contactId,type,date,note,projectId})=>{const ni={id:"i_"+Date.now(),personIds:[contactId],type:type||"Manual",date,note,projectId:projectId||""};setInteractions(is=>[ni,...is]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:contactId,person_ids:contactId,type:ni.type,date,note,project_id:projectId||""}]).catch(()=>{});};
 const addContact=()=>{if(!cf.name.trim())return;const nc=createContact({...cf,groups:cf.groups});setCf({name:"",company:"",role:"",location:"",email:"",phone:"",groups:[],notes:""});setShowAddContact(false);};
@@ -1310,7 +1353,7 @@ return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",bo
 </div>
 )}
 <div style={{flex:1,minWidth:0}}>
-<IntCard i={i} contacts={contacts} contactName={contactName} intPersonIds={intPersonIds} intContactNames={intContactNames} deleteInteraction={deleteInteraction} saveEditInt={saveEditInt} setSelected={setSelected} setTab={setTab} onAddReminder={addReminderToInt} projects={projects} onAddContact={cf=>createContact(cf)}/>
+<IntCard i={i} contacts={contacts} contactName={contactName} intPersonIds={intPersonIds} intContactNames={intContactNames} deleteInteraction={deleteInteraction} saveEditInt={saveEditInt} setSelected={setSelected} setTab={setTab} onAddReminder={addReminderToInt} projects={projects} onAddContact={cf=>createContact(cf)} onAttach={addAttachment}/>
 </div>
 </div>
 ))}
