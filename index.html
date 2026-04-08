@@ -1114,7 +1114,7 @@ return(
 </div>
 {syncStatus&&syncStatus.includes("Synced")&&<div className="sbar">{syncStatus}</div>}
 {syncStatus&&syncStatus.includes("failed")&&<div className="sbar" style={{color:"#ff6b6b"}}>{syncStatus}</div>}
-<div style={{flex:1,padding:"10px 16px",maxWidth:tab==="projects"?1400:1000,width:"100%",margin:"0 auto"}}>
+<div style={{flex:1,padding:"10px 16px",maxWidth:1000,width:"100%",margin:"0 auto"}}>
 {(tab!=="dashboard"||selected)&&(
 <button onClick={goBack} style={{marginBottom:12,padding:"4px 14px",borderRadius:8,background:"rgba(255,255,255,0.1)",border:"none",color:"rgba(255,255,255,0.8)",fontSize:13,cursor:"pointer"}}>← Back</button>
 )}
@@ -1126,7 +1126,7 @@ return(
 <div style={{fontSize:11,color:"rgba(255,255,255,0.35)"}}>{fmtNum(contacts.length)} contacts · {fmtNum(interactions.length)} interactions · {tasks.filter(t=>t.status!=="done").length} tasks</div>
 </div>
 <QuickAdd contacts={contacts} onAdd={handleQuickAdd} onAddContact={(cf,returnOnly)=>{return createContact(cf);}} allGroupNames={allGroupNames} groups={groups} projects={projects}/>
-<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+<div className="mob-grid-1" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
 <div className="card" style={{padding:"16px 20px"}}>
 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
 <span style={{fontSize:12,fontWeight:500,color:"#999"}}>Recent interactions</span>
@@ -1140,7 +1140,7 @@ return(
 <div style={{width:28,height:28,borderRadius:"50%",background:avatarColor(item.cName),display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(item.cName)}</div>
 <div style={{flex:1,minWidth:0}}>
 <div style={{fontWeight:500,fontSize:12,color:"#1a1a1a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.cName}</div>
-<div style={{fontSize:10,color:"#999"}}>{item.note?(item.note.replace(/\*+/g,"")).slice(0,60)+(item.note.length>60?"…":""):""}</div>
+<div style={{fontSize:10,color:"#999",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.note?(item.note.replace(/\*+/g,"").replace(/\n/g," ")).slice(0,80)+(item.note.length>80?"…":""):""}</div>
 </div>
 <div style={{textAlign:"right",flexShrink:0}}>
 <div style={{fontSize:10,color:"#999"}}>{fmtDate(item.date)}</div>
@@ -1169,8 +1169,6 @@ return(
 </div>
 )):<div style={{fontSize:12,color:"#999",padding:"10px 0"}}>No reminders</div>;})()}
 </div>
-</div>
-<div className="mob-grid-1" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14,alignItems:"start"}}>
 <div className="card" style={{padding:"16px 20px"}}>
 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
 <span style={{fontWeight:600,fontSize:14}}>{MONTHS[dcm]} {dcy}</span>
