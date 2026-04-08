@@ -27,6 +27,7 @@ button{cursor:pointer;border-radius:8px;padding:6px 14px;border:0.5px solid #ddd
 button:hover{background:#e8e8e8;}
 .card{background:#fff;border:none;border-radius:4px;padding:16px 20px;}
 .tag{font-size:10px;background:#eef0ff;border-radius:20px;padding:2px 8px;color:#4f6ef7;white-space:nowrap;display:inline-block;font-weight:500;}
+.proj-tag{font-size:10px;background:#fef3c7;border-radius:20px;padding:2px 8px;color:#92400e;white-space:nowrap;display:inline-block;font-weight:500;}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px;}
 .modal{background:#fff;border-radius:4px;padding:20px;width:440px;max-width:100%;max-height:90vh;overflow-y:auto;}
 .sbar{font-size:11px;padding:3px 20px;background:#152e22;color:#7a9a86;}
@@ -63,18 +64,14 @@ const today=()=>new Date().toISOString().slice(0,10);
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DAYS=["Mo","Tu","We","Th","Fr","Sa","Su"];
 const intColor=type=>{const t=(type||"").toLowerCase();if(t.includes("video")||t.includes("phone")||t.includes("call"))return{bg:"#dbeafe",text:"#1d4ed8"};if(t.includes("email")||t.includes("note"))return{bg:"#dcfce7",text:"#15803d"};if(t.includes("person")||t.includes("coffee")||t.includes("lunch")||t.includes("dinner")||t.includes("meeting"))return{bg:"#ede9fe",text:"#7c3aed"};return{bg:"#f3f4f6",text:"#6b7280"};};
-const DEFAULT_GROUP_ICONS={"Beirut":"🌲","Boston":"⚾","Bridgespan":"🌉","California":"🌴","Climate":"☀️","Colombia":"☕","CrossBoundary":"🌐","Dubai":"✈️","Duke":"🔵","Egypt":"🐪","Gems":"💎","Goldman Sachs":"♠️","HBS":"📕","India":"🕌","Infrastructure":"🏗️","Investment Banking":"🤝","Investors":"📈","Jusoor":"❤️","London":"👑","Morgan Stanley":"💙","New York":"🗽","Paris":"🍷","Philanthropy and Nonprofits":"🤍","Private Equity":"💼","Sacred Heart":"🌹","Saudi Arabia":"🌙","Singapore":"🌴","Syria":"💚","Venture":"🚀","Washington DC":"🏛️"};
+const DEFAULT_GROUP_ICONS={"Beirut":"🌲","Boston":"⚾","Bridgespan":"🌉","California":"🌴","Climate":"☀️","Colombia":"☕","CrossBoundary":"🌐","Dubai":"✈️","Duke":"🔵","Egypt":"🐪","Gems":"💎","Goldman Sachs":"♠️","HBS":"📕","India":"🕌","Infrastructure":"🏗️","Investors":"📈","Jusoor":"❤️","London":"👑","Morgan Stanley":"💙","New York":"🗽","Paris":"🍷","Philanthropy and Nonprofits":"🤍","Private Equity":"💼","Sacred Heart":"🌹","Saudi Arabia":"🌙","Singapore":"🌴","Syria":"💚","Venture":"🚀","Washington DC":"🏛️"};
 const EMOJI_CATEGORIES=[
 {name:"Smileys",emojis:["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","😊","😇","🥰","😍","🤩","😘","😋","😛","😜","🤪","😎","🤓","🧐","😏","😒","😞","😔","😟","😕","🙁","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","😈","👿","💀","☠️","💩","🤡","👹","👺","👻","👽","👾","🤖"]},
-{name:"People",emojis:["👋","🤚","🖐️","✋","🖖","👌","🤌","🤏","✌️","🤞","🤟","🤘","🤙","👈","👉","👆","👇","☝️","👍","👎","✊","👊","🤛","🤜","👏","🙌","👐","🤲","🤝","🙏","✍️","💪","🦾","🦿","🦵","🦶","👂","🦻","👃","🧠","👀","👁️","👅","👄","👶","🧒","👦","👧","🧑","👱","👨","🧔","👩","🧓","👴","👵","🙍","🙎","🙅","🙆","💁","🙋","🧏","🙇","🤦","🤷","👮","🕵️","💂","🥷","👷","🤴","👸","👳","👲","🧕","🤵","👰","🤰","🫄","🫃","🤱","👼","🎅","🤶","🦸","🦹","🧙","🧚","🧛","🧜","🧝","🧞","🧟","💆","💇","🚶","🧍","🧎","🏃","💃","🕺","👯","🧖","🧗","🤺","🏇","⛷️","🏂","🏋️","🤼","🤸","⛹️","🤾","🏄","🚣","🏊","🚴","🚵","🤹","🧘","👫","👬","👭","💏","💑","👪","👨‍👩‍👦","👨‍👩‍👧","👨‍👩‍👧‍👦","👨‍👩‍👦‍👦","👨‍👩‍👧‍👧","👨‍👦","👨‍👧","👩‍👦","👩‍👧","👨‍💼","👩‍💼","👨‍🔬","👩‍🔬","👨‍💻","👩‍💻","👨‍🎤","👩‍🎤","👨‍🎨","👩‍🎨","👨‍✈️","👩‍✈️","👨‍🚀","👩‍🚀","👨‍🚒","👩‍🚒","👨‍⚕️","👩‍⚕️","👨‍🎓","👩‍🎓","👨‍🍳","👩‍🍳","👨‍🔧","👩‍🔧","👨‍🏭","👩‍🏭","👨‍🌾","👩‍🌾","👥","👤","🗣️","🫂"]},
-{name:"Animals",emojis:["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐻‍❄️","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🙈","🙉","🙊","🐒","🐔","🐧","🐦","🐤","🐣","🐥","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🪱","🐛","🦋","🐌","🐞","🐜","🪰","🪲","🪳","🦟","🦗","🕷️","🦂","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🦐","🦞","🦀","🐡","🐠","🐟","🐬","🐳","🐋","🦈","🦭","🐊","🐅","🐆","🦓","🦍","🦧","🐘","🦛","🦏","🐪","🐫","🦒","🦘","🦬","🐃","🐂","🐄","🐎","🐖","🐏","🐑","🦙","🐐","🦌","🐕","🐩","🦮","🐈","🐈‍⬛","🪶","🐓","🦃","🦤","🦚","🦜","🦢","🦩","🕊️","🐇","🦝","🦨","🦡","🦫","🦦","🦥","🐁","🐀","🐿️","🦔"]},
-{name:"Nature",emojis:["🌵","🎄","🌲","🌳","🌴","🪵","🌱","🌿","☘️","🍀","🎍","🪴","🎋","🍃","🍂","🍁","🍄","🌾","💐","🌷","🌹","🥀","🌺","🌸","🌼","🌻","🌞","🌝","🌛","🌜","🌚","🌕","🌖","🌗","🌘","🌑","🌒","🌓","🌔","🌙","🌎","🌍","🌏","🪐","💫","⭐","🌟","✨","⚡","☄️","💥","🔥","🌪️","🌈","☀️","🌤️","⛅","🌥️","☁️","🌦️","🌧️","⛈️","🌩️","🌨️","❄️","☃️","⛄","🌬️","💨","💧","💦","🌊","🏔️","⛰️","🌋","🗻"]},
-{name:"Food",emojis:["🍏","🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🫐","🍈","🍒","🍑","🥭","🍍","🥥","🥝","🍅","🍆","🥑","🥦","🥬","🥒","🌶️","🫑","🌽","🥕","🧄","🧅","🥔","🍠","🥐","🥯","🍞","🥖","🥨","🧀","🥚","🍳","🧈","🥞","🧇","🥓","🥩","🍗","🍖","🦴","🌭","🍔","🍟","🍕","🫓","🥪","🥙","🧆","🌮","🌯","🫔","🥗","🥘","🫕","🥫","🍝","🍜","🍲","🍛","🍣","🍱","🥟","🦪","🍤","🍙","🍚","🍘","🍥","🥠","🥮","🍢","🍡","🍧","🍨","🍦","🥧","🧁","🍰","🎂","🍮","🍭","🍬","🍫","🍿","🍩","🍪","🌰","🥜","🍯","🥛","🍼","🫖","☕","🍵","🧃","🥤","🧋","🍶","🍺","🍻","🥂","🍷","🥃","🍸","🍹","🧉","🍾","🧊"]},
-{name:"Activities",emojis:["⚽","🏀","🏈","⚾","🥎","🎾","🏐","🏉","🥏","🎱","🪀","🏓","🏸","🏒","🏑","🥍","🏏","🪃","🥅","⛳","🪁","🏹","🎣","🤿","🥊","🥋","🎽","🛹","🛼","🛷","⛸️","🥌","🎿","⛷️","🏂","🪂","🏋️","🤼","🤸","⛹️","🤺","🤾","🏌️","🏇","🧘","🏄","🏊","🤽","🚣","🧗","🚵","🚴","🏆","🥇","🥈","🥉","🏅","🎖️","🏵️","🎗️","🎫","🎟️","🎪","🎭","🎨","🎬","🎤","🎧","🎼","🎹","🥁","🪘","🎷","🎺","🪗","🎸","🪕","🎻","🎲","♟️","🎯","🎳","🎮","🕹️","🧩","🪅","🪆","🪩"]},
-{name:"Travel",emojis:["🚗","🚕","🚙","🚌","🚎","🏎️","🚓","🚑","🚒","🚐","🛻","🚚","🚛","🚜","🛵","🏍️","🛺","🚲","🛴","🚨","🚔","🚍","🚘","🚖","🛞","🚡","🚠","🚟","🚃","🚋","🚞","🚝","🚄","🚅","🚈","🚂","🚆","🚇","🚊","🚉","✈️","🛫","🛬","🛩️","💺","🛰️","🚀","🛸","🚁","🛶","⛵","🚤","🛥️","🛳️","⛴️","🚢","⚓","🗺️","🗿","🗽","🗼","🏰","🏯","🏟️","🎡","🎢","🎠","⛲","⛱️","🏖️","🏝️","🏜️","🌋","⛰️","🏔️","🗻","🏕️","⛺","🏠","🏡","🏘️","🏚️","🏗️","🏭","🏢","🏬","🏣","🏤","🏥","🏦","🏨","🏪","🏫","🏩","💒","🏛️","⛪","🕌","🕍","🛕","🕋","⛩️","🛤️","🛣️","🗾","🎑","🏞️","🌅","🌄","🌠","🎇","🎆","🌇","🌆","🏙️","🌃","🌌","🌉","🌁"]},
-{name:"Objects",emojis:["⌚","📱","📲","💻","⌨️","🖥️","🖨️","🖱️","🖲️","💽","💾","💿","📀","🧮","🎥","🎞️","📽️","📺","📷","📸","📹","📼","🔍","🔎","🕯️","💡","🔦","🏮","🪔","📔","📕","📖","📗","📘","📙","📚","📓","📒","📃","📜","📄","📰","🗞️","📑","🔖","🏷️","💰","🪙","💴","💵","💶","💷","💸","💳","🧾","💹","✉️","📧","📨","📩","📤","📥","📦","📫","📪","📬","📭","📮","🗳️","✏️","✒️","🖋️","🖊️","🖌️","🖍️","📝","💼","📁","📂","🗂️","📅","📆","🗒️","🗓️","📇","📈","📉","📊","📋","📌","📍","📎","🖇️","📏","📐","✂️","🗃️","🗄️","🗑️","🔒","🔓","🔏","🔐","🔑","🗝️","🔨","🪓","⛏️","⚒️","🛠️","🗡️","⚔️","🔫","🪃","🏹","🛡️","🪚","🔧","🪛","🔩","⚙️","🗜️","⚖️","🦯","🔗","⛓️","🪝","🧰","🧲","🪜","💊","💉","🩸","🩹","🩺","🩻","🔬","🔭","📡","🧪","🧫","🧬","🪞","🪟","🛋️","🪑","🚪","🪄","🪣","🧹","🧻","🪠","🧯","🛒","🚬","⚰️","🪦","⚱️","🗺️","🧭","🧱","🔮","🧿","🪬","🏧","🚮","🚰","♿","🚹","🚺","🚻","🚼","🚾","🛂","🛃","🛄","🛅","⚠️","🚸","⛔","🚫","🚳","🚭","🚯","🚱","🚷","📵","🔞","☢️","☣️"]},
-{name:"Symbols",emojis:["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","☮️","✝️","☪️","🕉️","☸️","✡️","🔯","🕎","☯️","☦️","🛐","⛎","♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓","🆔","⚛️","🉑","☢️","☣️","📴","📳","🈶","🈚","🈸","🈺","🈷️","✴️","🆚","💮","🉐","㊙️","㊗️","🈴","🈵","🈹","🈲","🅰️","🅱️","🆎","🆑","🅾️","🆘","❌","⭕","🛑","⛔","📛","🚫","💯","💢","♨️","🚷","🚯","🚳","🚱","🔞","📵","🚭","❗","❕","❓","❔","‼️","⁉️","🔅","🔆","〽️","⚠️","🚸","🔱","⚜️","🔰","♻️","✅","🈯","💹","❇️","✳️","❎","🌐","💠","Ⓜ️","🌀","💤","🏧","🚾","♿","🅿️","🛗","🈳","🈂️","🛂","🛃","🛄","🛅","🚹","🚺","🚻","🚮","🎦","📶","🈁","🔣","ℹ️","🔤","🔡","🔠","🆖","🆗","🆙","🆒","🆕","🆓","0️⃣","1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣","🔟","🔢","#️⃣","*️⃣","⏏️","▶️","⏸️","⏯️","⏹️","⏺️","⏭️","⏮️","⏩","⏪","⏫","⏬","◀️","🔼","🔽","➡️","⬅️","⬆️","⬇️","↗️","↘️","↙️","↖️","↕️","↔️","↪️","↩️","⤴️","⤵️","🔀","🔁","🔂","🔄","🔃","🎵","🎶","➕","➖","➗","✖️","🟰","♾️","💲","💱","™️","©️","®️","〰️","➰","➿","🔚","🔙","🔛","🔝","🔜","✔️","☑️","🔘","🔴","🟠","🟡","🟢","🔵","🟣","⚫","⚪","🟤","🔺","🔻","🔸","🔹","🔶","🔷","🔳","🔲","▪️","▫️","◾","◽","◼️","◻️","🟥","🟧","🟨","🟩","🟦","🟪","⬛","⬜","🟫","🔈","🔇","🔉","🔊","🔔","🔕","📣","📢","💬","💭","🗯️","♠️","♣️","♥️","♦️","🃏","🎴","🀄","🕐","🕑","🕒","🕓","🕔","🕕","🕖","🕗","🕘","🕙","🕚","🕛"]},
-{name:"Flags",emojis:["🏁","🚩","🎌","🏴","🏳️","🏳️‍🌈","🏳️‍⚧️","🏴‍☠️","🇦🇫","🇦🇱","🇩🇿","🇦🇸","🇦🇩","🇦🇴","🇦🇬","🇦🇷","🇦🇲","🇦🇺","🇦🇹","🇦🇿","🇧🇸","🇧🇭","🇧🇩","🇧🇧","🇧🇾","🇧🇪","🇧🇿","🇧🇯","🇧🇹","🇧🇴","🇧🇦","🇧🇼","🇧🇷","🇧🇳","🇧🇬","🇧🇫","🇧🇮","🇰🇭","🇨🇲","🇨🇦","🇨🇻","🇨🇫","🇹🇩","🇨🇱","🇨🇳","🇨🇴","🇰🇲","🇨🇬","🇨🇩","🇨🇷","🇭🇷","🇨🇺","🇨🇾","🇨🇿","🇩🇰","🇩🇯","🇩🇲","🇩🇴","🇪🇨","🇪🇬","🇸🇻","🇬🇶","🇪🇷","🇪🇪","🇸🇿","🇪🇹","🇫🇯","🇫🇮","🇫🇷","🇬🇦","🇬🇲","🇬🇪","🇩🇪","🇬🇭","🇬🇷","🇬🇩","🇬🇹","🇬🇳","🇬🇼","🇬🇾","🇭🇹","🇭🇳","🇭🇰","🇭🇺","🇮🇸","🇮🇳","🇮🇩","🇮🇷","🇮🇶","🇮🇪","🇮🇱","🇮🇹","🇯🇲","🇯🇵","🇯🇴","🇰🇿","🇰🇪","🇰🇮","🇽🇰","🇰🇼","🇰🇬","🇱🇦","🇱🇻","🇱🇧","🇱🇸","🇱🇷","🇱🇾","🇱🇮","🇱🇹","🇱🇺","🇲🇴","🇲🇬","🇲🇼","🇲🇾","🇲🇻","🇲🇱","🇲🇹","🇲🇭","🇲🇷","🇲🇺","🇲🇽","🇫🇲","🇲🇩","🇲🇨","🇲🇳","🇲🇪","🇲🇦","🇲🇿","🇲🇲","🇳🇦","🇳🇷","🇳🇵","🇳🇱","🇳🇿","🇳🇮","🇳🇪","🇳🇬","🇰🇵","🇲🇰","🇳🇴","🇴🇲","🇵🇰","🇵🇼","🇵🇸","🇵🇦","🇵🇬","🇵🇾","🇵🇪","🇵🇭","🇵🇱","🇵🇹","🇵🇷","🇶🇦","🇷🇴","🇷🇺","🇷🇼","🇼🇸","🇸🇲","🇸🇹","🇸🇦","🇸🇳","🇷🇸","🇸🇨","🇸🇱","🇸🇬","🇸🇰","🇸🇮","🇸🇧","🇸🇴","🇿🇦","🇰🇷","🇸🇸","🇪🇸","🇱🇰","🇸🇩","🇸🇷","🇸🇪","🇨🇭","🇸🇾","🇹🇼","🇹🇯","🇹🇿","🇹🇭","🇹🇱","🇹🇬","🇹🇴","🇹🇹","🇹🇳","🇹🇷","🇹🇲","🇹🇻","🇺🇬","🇺🇦","🇦🇪","🇬🇧","🇺🇸","🇺🇾","🇺🇿","🇻🇺","🇻🇪","🇻🇳","🇾🇪","🇿🇲","🇿🇼"]}
+{name:"People",emojis:["👋","🤚","🖐️","✋","🖖","👌","🤌","🤏","✌️","🤞","🤟","🤘","🤙","👈","👉","👆","👇","☝️","👍","👎","✊","👊","🤛","🤜","👏","🙌","👐","🤲","🤝","🙏","✍️","💪","🦾","🦿","🦵","🦶","👂","🦻","👃","🧠","👀","👁️","👅","👄"]},
+{name:"Nature",emojis:["🌵","🎄","🌲","🌳","🌴","🪵","🌱","🌿","☘️","🍀","🎍","🪴","🎋","🍃","🍂","🍁","🍄","🌾","💐","🌷","🌹","🥀","🌺","🌸","🌼","🌻","🌞","🌝","🌛","🌜","🌚","🌕","🌖","🌗","🌘","🌑","🌒","🌓","🌔","🌙","🌎","🌍","🌏","🪐","💫","⭐","🌟","✨","⚡","☄️","💥","🔥","🌪️","🌈","☀️"]},
+{name:"Objects",emojis:["⌚","📱","💻","⌨️","🖥️","💼","📁","📂","📅","📆","📇","📈","📉","📊","📋","📌","📍","📎","✂️","🔒","🔓","🔑","🔨","🔧","🔩","⚙️","💡","🔦","📔","📕","📖","📗","📘","📙","📚","✏️","✒️","🖋️","🖊️","📝"]},
+{name:"Symbols",emojis:["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","☮️","✝️","☪️","🕉️","☸️","✡️","⭕","✅","❌","❗","❓","💯","🔴","🟠","🟡","🟢","🔵","🟣","⚫","⚪"]},
+{name:"Flags",emojis:["🏁","🚩","🎌","🏴","🏳️","🏳️‍🌈","🇦🇷","🇦🇺","🇧🇷","🇨🇦","🇨🇳","🇨🇴","🇩🇪","🇪🇬","🇪🇸","🇫🇷","🇬🇧","🇮🇳","🇮🇹","🇯🇵","🇰🇷","🇱🇧","🇲🇽","🇳🇱","🇵🇸","🇷🇺","🇸🇦","🇸🇬","🇸🇾","🇹🇷","🇺🇦","🇦🇪","🇺🇸"]}
 ];
 const GIcon=({name,icon,size=20})=>React.createElement("span",{style:{fontSize:size,lineHeight:1}},icon||DEFAULT_GROUP_ICONS[name]||"🏷️");
 /* ===== Rich text helpers ===== */
@@ -127,7 +124,35 @@ return(
 </div>
 );
 }
-function IntCard({i,contacts,contactName,intPersonIds,intContactNames,deleteInteraction,saveEditInt,setSelected,setTab,onAddReminder}){
+
+/* ===== Inline Add Contact Widget ===== */
+function InlineAddContact({initialName,onSave,onCancel}){
+const [name,setName]=useState(initialName||"");
+const [email,setEmail]=useState("");
+const [company,setCompany]=useState("");
+const [phone,setPhone]=useState("");
+return(
+<div style={{background:"#f0f7ff",border:"1px solid #c7d9f0",borderRadius:8,padding:12,marginTop:6,marginBottom:6}}>
+<div style={{fontSize:12,fontWeight:600,color:"#4f6ef7",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
+<span>✚</span> New contact
+</div>
+<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:6}}>
+<input placeholder="Name *" value={name} onChange={e=>setName(e.target.value)} autoFocus style={{fontSize:13}}/>
+<input placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} style={{fontSize:13}}/>
+</div>
+<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:8}}>
+<input placeholder="Company" value={company} onChange={e=>setCompany(e.target.value)} style={{fontSize:13}}/>
+<input placeholder="Phone" value={phone} onChange={e=>setPhone(e.target.value)} style={{fontSize:13}}/>
+</div>
+<div style={{display:"flex",gap:6}}>
+<button onClick={()=>{if(!name.trim())return;onSave({name:name.trim(),email,company,phone});}} disabled={!name.trim()} style={{fontSize:12,padding:"5px 14px",background:"#4f6ef7",border:"none",color:"#fff",borderRadius:6,cursor:"pointer",opacity:name.trim()?1:0.4}}>Create & select</button>
+<button onClick={onCancel} style={{fontSize:12,padding:"5px 10px"}}>Cancel</button>
+</div>
+</div>
+);
+}
+
+function IntCard({i,contacts,contactName,intPersonIds,intContactNames,deleteInteraction,saveEditInt,setSelected,setTab,onAddReminder,projects,onAddContact}){
 const [showDel,setShowDel]=useState(false);
 const [editing,setEditing]=useState(false);
 const [draft,setDraft]=useState(null);
@@ -135,12 +160,15 @@ const [cs,setCs]=useState("");
 const [showReminder,setShowReminder]=useState(false);
 const [reminderDate,setReminderDate]=useState("");
 const [reminderNote,setReminderNote]=useState("");
+const [showInlineAdd,setShowInlineAdd]=useState(false);
 const col=intColor(i.type);
 const iIds=intPersonIds(i);
 const editNoteId="edit_note_"+i.id;
+const proj=i.projectId?projects.find(p=>p.id===i.projectId):null;
 if(editing&&draft){
 const draftIds=draft.personIds||[draft.personId||draft.person_id].filter(Boolean);
 const toggleContact=cId=>{const has=draftIds.includes(cId);const newIds=has?draftIds.filter(x=>x!==cId):[...draftIds,cId];setDraft(d=>({...d,personIds:newIds}));};
+const filteredEdit=contacts.filter(c=>!cs||c.name.toLowerCase().includes(cs.toLowerCase())).slice(0,30);
 return(
 <div className="card" style={{padding:"14px 16px"}}>
 <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:10}}>Edit interaction</div>
@@ -148,16 +176,29 @@ return(
 <option value="">No type</option><option>Video Chat</option><option>Phone</option><option>In Person</option><option>Email</option><option>Note</option>
 </select>
 <div style={{marginBottom:8,position:"relative"}}><DatePicker value={draft.date} onChange={v=>setDraft(d=>({...d,date:v}))}/></div>
+<div style={{fontSize:12,color:"#666",marginBottom:4}}>Project</div>
+<select value={draft.projectId||""} onChange={e=>setDraft(d=>({...d,projectId:e.target.value}))} style={{marginBottom:8,fontSize:13}}>
+<option value="">No project</option>
+{projects.map(p=><option key={p.id} value={p.id}>{p.parentId?"  ↳ ":""}{p.name}</option>)}
+</select>
 <div style={{fontSize:12,color:"#666",marginBottom:4}}>People</div>
 <input placeholder="Filter contacts…" value={cs} onChange={e=>setCs(e.target.value)} style={{marginBottom:6}}/>
-<div style={{maxHeight:120,overflowY:"auto",border:"0.5px solid #ddd",borderRadius:8,padding:6,marginBottom:8}}>
-{contacts.filter(c=>!cs||c.name.toLowerCase().includes(cs.toLowerCase())).slice(0,30).map(c=>(
+<div style={{maxHeight:120,overflowY:"auto",border:"0.5px solid #ddd",borderRadius:8,padding:6,marginBottom:4}}>
+{filteredEdit.map(c=>(
 <label key={c.id} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,padding:"2px 0"}}>
 <input type="checkbox" checked={draftIds.includes(c.id)} onChange={()=>toggleContact(c.id)} style={{width:"auto"}}/>{c.name}
 </label>
 ))}
+{cs&&filteredEdit.length===0&&!showInlineAdd&&(
+<div onClick={()=>setShowInlineAdd(true)} style={{padding:"8px 4px",fontSize:12,color:"#4f6ef7",cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
+<span style={{fontSize:14,fontWeight:600}}>+</span> Add "{cs}" as new contact
 </div>
-<textarea id={editNoteId} value={draft.note||""} onChange={e=>setDraft(d=>({...d,note:e.target.value}))} rows={3} style={{resize:"vertical",marginBottom:0}}/>
+)}
+</div>
+{showInlineAdd&&(
+<InlineAddContact initialName={cs} onSave={cf=>{const nc=onAddContact(cf);setDraft(d=>({...d,personIds:[...(d.personIds||[]),nc.id]}));setShowInlineAdd(false);setCs("");}} onCancel={()=>setShowInlineAdd(false)}/>
+)}
+<textarea id={editNoteId} value={draft.note||""} onChange={e=>setDraft(d=>({...d,note:e.target.value}))} rows={3} style={{resize:"vertical",marginBottom:0,marginTop:4}}/>
 <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}><FormatBar id={editNoteId} value={draft.note||""} onChange={v=>setDraft(d=>({...d,note:v}))}/></div>
 <div style={{display:"flex",gap:8}}>
 <button onClick={()=>{saveEditInt(draft);setEditing(false);setDraft(null);}} disabled={draftIds.length===0} style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"6px 16px",borderRadius:8,cursor:"pointer"}}>Save</button>
@@ -168,9 +209,10 @@ return(
 }
 return(
 <div className="card" style={{padding:"12px 16px"}}>
-<div style={{fontSize:11,color:"#999",marginBottom:3,display:"flex",alignItems:"center",gap:6}}>
+<div style={{fontSize:11,color:"#999",marginBottom:3,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
 {fmtDate(i.date)}
 {i.type&&i.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 8px",fontWeight:500}}>{i.type}</span>}
+{proj&&<span className="proj-tag">{proj.icon||"📁"} {proj.name}</span>}
 {i.reminderDate&&<span style={{fontSize:10,background:"#fef3c7",color:"#92400e",borderRadius:20,padding:"1px 8px",fontWeight:500}}>⏰ {fmtDate(i.reminderDate)}</span>}
 </div>
 <div style={{fontWeight:500,fontSize:14,marginBottom:i.note?5:0,color:"#1a1a1a",display:"flex",flexWrap:"wrap",gap:4,alignItems:"center"}}>
@@ -203,17 +245,20 @@ return(
 </div>
 );
 }
-function QuickAdd({contacts,onAdd,onAddContact,allGroupNames,groups}){
+
+function QuickAdd({contacts,onAdd,onAddContact,allGroupNames,groups,projects}){
 const [mode,setMode]=useState("interaction");
 const [contactId,setContactId]=useState("");
 const [type,setType]=useState("");
 const [date,setDate]=useState(today());
 const [note,setNote]=useState("");
+const [projectId,setProjectId]=useState("");
 const [search,setSearch]=useState("");
 const [showPicker,setShowPicker]=useState(false);
+const [showInlineAdd,setShowInlineAdd]=useState(false);
 const filtered=contacts.filter(c=>search&&c.name.toLowerCase().includes(search.toLowerCase())).slice(0,6);
 const selC=contacts.find(c=>c.id===contactId);
-const submitInt=()=>{if(!contactId||!date)return;onAdd({contactId,type,date,note});setContactId("");setType("");setDate(today());setNote("");setSearch("");};
+const submitInt=()=>{if(!contactId||!date)return;onAdd({contactId,type,date,note,projectId});setContactId("");setType("");setDate(today());setNote("");setProjectId("");setSearch("");};
 const [cf,setCf]=useState({name:"",email:"",phone:"",company:"",role:"",location:"",groups:[],notes:""});
 const submitContact=()=>{if(!cf.name.trim())return;onAddContact(cf);setCf({name:"",email:"",phone:"",company:"",role:"",location:"",groups:[],notes:""});};
 return(
@@ -227,15 +272,21 @@ return(
 <div>
 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
 <div style={{position:"relative"}}>
-<input placeholder="Search contact…" value={selC?selC.name:search} onChange={e=>{setSearch(e.target.value);setContactId("");setShowPicker(true);}} onFocus={()=>setShowPicker(true)} style={{fontSize:13}}/>
-{showPicker&&search&&!selC&&filtered.length>0&&(
-<div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,background:"#fff",border:"0.5px solid #ddd",borderRadius:8,boxShadow:"0 4px 16px rgba(0,0,0,0.1)",zIndex:20,maxHeight:160,overflowY:"auto"}}>
+<input placeholder="Search contact…" value={selC?selC.name:search} onChange={e=>{setSearch(e.target.value);setContactId("");setShowPicker(true);setShowInlineAdd(false);}} onFocus={()=>setShowPicker(true)} style={{fontSize:13}}/>
+{showPicker&&search&&!selC&&(
+<div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,background:"#fff",border:"0.5px solid #ddd",borderRadius:8,boxShadow:"0 4px 16px rgba(0,0,0,0.1)",zIndex:20,maxHeight:200,overflowY:"auto"}}>
 {filtered.map(c=>(
 <div key={c.id} onClick={()=>{setContactId(c.id);setSearch(c.name);setShowPicker(false);}} style={{padding:"8px 12px",fontSize:13,cursor:"pointer",borderBottom:"0.5px solid #f5f5f5"}}
 onMouseEnter={e=>e.currentTarget.style.background="#f5f5f3"} onMouseLeave={e=>e.currentTarget.style.background="#fff"}>
 {c.name}
 </div>
 ))}
+{filtered.length===0&&(
+<div onClick={()=>{setShowPicker(false);setShowInlineAdd(true);}} style={{padding:"10px 12px",fontSize:13,cursor:"pointer",color:"#4f6ef7",display:"flex",alignItems:"center",gap:6,borderTop:filtered.length>0?"0.5px solid #eee":"none"}}
+onMouseEnter={e=>e.currentTarget.style.background="#f0f4ff"} onMouseLeave={e=>e.currentTarget.style.background="#fff"}>
+<span style={{fontSize:16,fontWeight:700,lineHeight:1}}>+</span> Add "{search}" as new contact
+</div>
+)}
 </div>
 )}
 </div>
@@ -244,7 +295,16 @@ onMouseEnter={e=>e.currentTarget.style.background="#f5f5f3"} onMouseLeave={e=>e.
 <option>Video Chat</option><option>Phone</option><option>In Person</option><option>Email</option><option>Note</option>
 </select>
 </div>
-<div style={{marginBottom:8,position:"relative"}}><DatePicker value={date} onChange={v=>setDate(v)}/></div>
+{showInlineAdd&&(
+<InlineAddContact initialName={search} onSave={cf=>{const nc=onAddContact(cf,true);setContactId(nc.id);setSearch(nc.name);setShowInlineAdd(false);}} onCancel={()=>setShowInlineAdd(false)}/>
+)}
+<div style={{display:"flex",gap:8,marginBottom:8,alignItems:"center",flexWrap:"wrap"}}>
+<div style={{position:"relative"}}><DatePicker value={date} onChange={v=>setDate(v)}/></div>
+<select value={projectId} onChange={e=>setProjectId(e.target.value)} style={{fontSize:13,width:"auto",flex:1,minWidth:120}}>
+<option value="">No project</option>
+{projects.map(p=><option key={p.id} value={p.id}>{p.parentId?"  ↳ ":""}{p.name}</option>)}
+</select>
+</div>
 <textarea id="quickadd_note" placeholder="Notes…" value={note} onChange={e=>setNote(e.target.value)} rows={3} style={{resize:"vertical",marginBottom:0,fontSize:13}}/>
 <div style={{display:"flex",justifyContent:"flex-end",marginBottom:10}}><FormatBar id="quickadd_note" value={note} onChange={v=>setNote(v)}/></div>
 <button onClick={submitInt} disabled={!contactId||!date} style={{background:"#1a1a1a",border:"none",color:"#fff",fontWeight:500,padding:"7px 20px",borderRadius:8,cursor:"pointer",opacity:(!contactId||!date)?0.4:1}}>Add interaction</button>
@@ -298,7 +358,6 @@ const updateProjectIcon=(pid,icon)=>{setProjects(ps=>ps.map(p=>p.id===pid?{...p,
 const addQuickTask=projId=>{if(!quickTitle.trim())return;const maxOrder=colTasks(projId).reduce((m,t)=>Math.max(m,t.order||0),0);setTasks(ts=>[...ts,{id:"task_"+Date.now(),title:quickTitle.trim(),projectId:projId,contactId:"",dueDate:"",priority:"",notes:"",status:"todo",order:maxOrder+1,createdAt:today()}]);setQuickTitle("");setAddTaskCol(null);};
 const triggerFireworks=id=>{setFirework(id);setTimeout(()=>setFirework(null),1400);};
 const toggleTask=id=>{const t=tasks.find(x=>x.id===id);if(t&&t.status!=="done")triggerFireworks(id);setTasks(ts=>ts.map(t=>t.id===id?{...t,status:t.status==="done"?"todo":"done",completedAt:t.status==="done"?null:today()}:t));};
-/* Auto-clear completed tasks older than 30 days */
 useEffect(()=>{const cutoff=new Date();cutoff.setDate(cutoff.getDate()-30);const cutoffStr=cutoff.toISOString().slice(0,10);const old=tasks.filter(t=>t.status==="done"&&t.completedAt&&t.completedAt<cutoffStr);if(old.length>0)setTasks(ts=>ts.filter(t=>!(t.status==="done"&&t.completedAt&&t.completedAt<cutoffStr)));},[]);
 const upcomingTasks=useMemo(()=>tasks.filter(t=>t.status!=="done").sort((a,b)=>{if(a.dueDate&&b.dueDate)return a.dueDate.localeCompare(b.dueDate);if(a.dueDate)return -1;if(b.dueDate)return 1;return 0;}),[tasks]);
 const completedTasks=useMemo(()=>tasks.filter(t=>t.status==="done").sort((a,b)=>(b.completedAt||"").localeCompare(a.completedAt||"")),[tasks]);
@@ -309,10 +368,8 @@ if(!dragTaskId)return;
 const task=tasks.find(t=>t.id===dragTaskId);
 if(!task)return;
 let newTasks=[...tasks];
-/* Move to new project */
 const tIdx=newTasks.findIndex(t=>t.id===dragTaskId);
 newTasks[tIdx]={...newTasks[tIdx],projectId:targetProjId};
-/* Reorder within column */
 const colItems=newTasks.filter(t=>{const subs=subProjectsOf(targetProjId).map(s=>s.id);return t.projectId===targetProjId||subs.includes(t.projectId);});
 if(targetTaskId&&targetTaskId!==dragTaskId){
 const ids=colItems.map(t=>t.id).filter(id=>id!==dragTaskId);
@@ -320,7 +377,6 @@ const dropIdx=ids.indexOf(targetTaskId);
 if(dropIdx>=0)ids.splice(dropIdx,0,dragTaskId);else ids.push(dragTaskId);
 ids.forEach((id,i)=>{const idx=newTasks.findIndex(t=>t.id===id);if(idx>=0)newTasks[idx]={...newTasks[idx],order:i};});
 }else{
-/* Dropped on column but not on a specific task — put at end */
 const maxO=colItems.reduce((m,t)=>Math.max(m,t.order||0),0);
 newTasks[tIdx]={...newTasks[tIdx],order:maxO+1};
 }
@@ -331,7 +387,6 @@ const startTimer=taskId=>{const t=tasks.find(x=>x.id===taskId);setTimer({running
 const stopTimer=()=>{if(!timer.running)return;const dur=Math.floor((Date.now()-timer.startTime)/1000);setTimeEntries(es=>[{id:"te_"+Date.now(),taskId:timer.taskId,projectId:timer.projectId,description:timer.description,startTime:timer.startTime,endTime:Date.now(),duration:dur,date:today()},...es]);setTimer({running:false,taskId:null,projectId:"",description:"",startTime:null});};
 const filteredTimeEntries=useMemo(()=>{const td=today();if(timePeriod==="today")return timeEntries.filter(e=>e.date===td);if(timePeriod==="week"){const d=new Date();d.setDate(d.getDate()-7);return timeEntries.filter(e=>e.date>=d.toISOString().slice(0,10));}if(timePeriod==="month"){const d=new Date();d.setDate(d.getDate()-30);return timeEntries.filter(e=>e.date>=d.toISOString().slice(0,10));}return timeEntries;},[timeEntries,timePeriod]);
 const totalTime=filteredTimeEntries.reduce((a,e)=>a+e.duration,0);
-/* Fireworks overlay */
 const Fireworks=()=>{
 if(!firework)return null;
 return React.createElement("div",{style:{position:"fixed",inset:0,pointerEvents:"none",zIndex:9999}},
@@ -341,7 +396,6 @@ return React.createElement("div",{key:i,style:{position:"absolute",left:x+"%",to
 Array.from({length:8}).map((_,i)=>{const x=25+Math.random()*50;const y=30+Math.random()*40;
 return React.createElement("div",{key:"e"+i,style:{position:"absolute",left:x+"%",top:y+"%",fontSize:12+Math.random()*16,animation:`fwr 1.2s ${Math.random()*0.4}s ease-out forwards`}},["✨","⭐","🌟","💫","🎉","🥳","✨","⭐"][i]);})
 );};
-/* Task card */
 const TaskCard=({t,projId})=>{
 const isDone=t.status==="done";
 const isTimer=timer.running&&timer.taskId===t.id;
@@ -380,13 +434,11 @@ style={{background:firework===t.id?"rgba(255,215,0,0.06)":"#f8f8f6",borderRadius
 </div>
 </div>
 );};
-/* Column */
 const Col=({proj,taskList})=>{
 const isOver=dragOverCol===proj.id&&!dragOverTaskId;
 return(
 <div style={{minWidth:260,flex:"1 1 300px",maxWidth:400,display:"flex",flexDirection:"column",background:"#fff",borderRadius:4,overflow:"hidden"}}
 onDragOver={e=>{e.preventDefault();setDragOverCol(proj.id);setDragOverTaskId(null);}} onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget)){setDragOverCol(null);}}} onDrop={e=>{e.preventDefault();handleDrop(proj.id,null);}}>
-{/* Column header */}
 <div style={{display:"flex",alignItems:"center",gap:6,padding:"12px 16px 10px",borderBottom:"0.5px solid #f0f0ee",flexShrink:0}}>
 {editingProjectId===proj.id&&!showProjEmoji?(
 <React.Fragment>
@@ -413,7 +465,6 @@ onDragOver={e=>{e.preventDefault();setDragOverCol(proj.id);setDragOverTaskId(nul
 </React.Fragment>
 )}
 </div>
-{/* Task list — scrollable */}
 <div style={{flex:1,overflowY:"auto",overflowX:"hidden",padding:"8px 12px 8px",minHeight:40,background:isOver?"#f8f9ff":"transparent",transition:"background 0.15s"}}>
 {taskList.map(t=><TaskCard key={t.id} t={t} projId={proj.id}/>)}
 {taskList.length===0&&!addTaskCol&&<div style={{padding:"20px 8px",textAlign:"center",color:"#ccc",fontSize:12}}>No tasks</div>}
@@ -436,7 +487,6 @@ onDragOver={e=>{e.preventDefault();setDragOverCol(proj.id);setDragOverTaskId(nul
 return(
 <div>
 <Fireworks/>
-{/* Top bar */}
 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
 <div style={{display:"flex",gap:0,background:"rgba(255,255,255,0.06)",borderRadius:8,overflow:"hidden"}}>
 {[["projects","By project"],["upcoming","Upcoming"],["completed","Completed"],["timelog","Time log"]].map(([k,l])=>(
@@ -445,7 +495,6 @@ return(
 </div>
 {view==="projects"&&<button onClick={()=>{setShowAddProject(true);setNewProjIcon("📁");}} style={{fontSize:12,padding:"5px 14px",background:"#4f6ef7",border:"none",color:"#fff",borderRadius:8,cursor:"pointer",fontWeight:500}}>+ Project</button>}
 </div>
-{/* Add project */}
 {showAddProject&&(
 <div className="card" style={{marginBottom:12,padding:"14px 18px"}}>
 <div style={{display:"flex",gap:8,alignItems:"center"}}>
@@ -458,7 +507,6 @@ return(
 </div>
 </div>
 )}
-{/* Time log view */}
 {view==="timelog"&&(
 <div className="card" style={{padding:0,overflow:"hidden"}}>
 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 20px",borderBottom:"0.5px solid #eee"}}>
@@ -480,7 +528,6 @@ return(
 {filteredTimeEntries.length===0&&<div style={{padding:"40px 20px",textAlign:"center",color:"#ccc",fontSize:13}}>No time entries for this period.</div>}
 </div>
 )}
-{/* Upcoming view */}
 {view==="upcoming"&&(
 <div className="card" style={{padding:0,overflow:"hidden"}}>
 {upcomingTasks.length===0&&<div style={{padding:"40px 20px",textAlign:"center",color:"#ccc",fontSize:13}}>All caught up.</div>}
@@ -502,7 +549,6 @@ return Object.entries(byProj).map(([pid,tList])=>(
 })()}
 </div>
 )}
-{/* Completed view */}
 {view==="completed"&&(
 <div className="card" style={{padding:0,overflow:"hidden"}}>
 <div style={{padding:"10px 20px",borderBottom:"0.5px solid #eee",fontSize:11,color:"#999"}}>Completed tasks are kept for 30 days</div>
@@ -518,7 +564,6 @@ return Object.entries(byProj).map(([pid,tList])=>(
 </div>);})}
 </div>
 )}
-{/* Projects board view */}
 {view==="projects"&&(
 <div style={{display:"flex",flexWrap:"wrap",gap:16,alignItems:"flex-start"}}>
 {topProjects.map(p=><Col key={p.id} proj={p} taskList={colTasks(p.id)}/>)}
@@ -530,7 +575,6 @@ No projects yet. Click "+ Project" to get started.
 )}
 </div>
 )}
-{/* Timer bar */}
 {timer.running&&(
 <div className="card" style={{marginTop:12,display:"flex",alignItems:"center",gap:12,padding:"10px 16px"}}>
 <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}`}</style>
@@ -632,15 +676,19 @@ const [authEmail,setAuthEmail]=useState("");
 const [authPass,setAuthPass]=useState("");
 const [authLoading,setAuthLoading]=useState(false);
 const [authError,setAuthError]=useState("");
+const [showInlineAddModal,setShowInlineAddModal]=useState(false);
+const [intFilter,setIntFilter]=useState("");
+const [intFilterProject,setIntFilterProject]=useState("");
+const [intBulkMode,setIntBulkMode]=useState(false);
+const [intBulkSelected,setIntBulkSelected]=useState([]);
+const [intBulkProjectId,setIntBulkProjectId]=useState("");
 const fileRef=useRef();
 const cardRef=useRef();
 const [cf,setCf]=useState({name:"",company:"",role:"",location:"",email:"",phone:"",groups:[],notes:""});
-const [inf,setInf]=useState({contactIds:[],date:"",note:"",type:""});
-// Persist projects/tasks/time to localStorage
+const [inf,setInf]=useState({contactIds:[],date:"",note:"",type:"",projectId:""});
 useEffect(()=>{localStorage.setItem("collective_projects",JSON.stringify(projects));},[projects]);
 useEffect(()=>{localStorage.setItem("collective_tasks",JSON.stringify(tasks));},[tasks]);
 useEffect(()=>{localStorage.setItem("collective_time_entries",JSON.stringify(timeEntries));},[timeEntries]);
-// Timer tick
 useEffect(()=>{
 if(!timer.running)return;
 const iv=setInterval(()=>{setTimerDisplay(Math.floor((Date.now()-timer.startTime)/1000));},1000);
@@ -648,7 +696,6 @@ return()=>clearInterval(iv);
 },[timer.running,timer.startTime]);
 useEffect(()=>{
 if(sbUrl&&sbKey&&authToken){
-// Try to refresh token on load, then load data
 refreshToken().then(ok=>{
 loadFromSupabase(sbUrl,sbKey);
 });
@@ -710,9 +757,8 @@ sbFetch(url,key,"interactions?select=*&order=date.desc&limit=9999"),
 sbFetch(url,key,"groups?select=*&order=name&limit=200")
 ]);
 setContacts(c.map(r=>({...r,groupIds:(r.group_ids||"").split(",").filter(Boolean)})));
-setInteractions(i.map(r=>({...r,personIds:(r.person_ids||r.person_id||"").split(",").filter(Boolean),note:r.note||r.notes||""})));
+setInteractions(i.map(r=>({...r,personIds:(r.person_ids||r.person_id||"").split(",").filter(Boolean),note:r.note||r.notes||"",projectId:r.project_id||""})));
 setGroups(g);setImported(true);
-// Load projects, tasks, time entries
 try{
 const [p,t,te]=await Promise.all([
 sbFetch(url,key,"projects?select=*&order=name&limit=500"),
@@ -722,7 +768,7 @@ sbFetch(url,key,"time_entries?select=*&order=date.desc&limit=5000")
 if(p&&p.length>0)setProjects(p.map(r=>({id:r.id,name:r.name,icon:r.icon||"",parentId:r.parent_id||null,createdAt:r.created_at||""})));
 if(t&&t.length>0)setTasks(t.map(r=>({id:r.id,title:r.title,projectId:r.project_id||"",contactId:r.contact_id||"",dueDate:r.due_date||"",priority:r.priority||"",status:r.status||"todo",notes:r.notes||"",createdAt:r.created_at||""})));
 if(te&&te.length>0)setTimeEntries(te.map(r=>({id:r.id,taskId:r.task_id||"",projectId:r.project_id||"",description:r.description||"",startTime:r.start_time,endTime:r.end_time,duration:r.duration||0,date:r.date||""})));
-}catch(e2){/* tables may not exist yet — that's fine, keep localStorage data */}
+}catch(e2){}
 setSyncStatus("Loaded "+c.length+" contacts · "+i.length+" interactions · "+g.length+" groups ✓");
 }catch(e){setSyncStatus("Load failed: "+e.message);}
 setLoadingDB(false);
@@ -744,7 +790,7 @@ const dedupe=rows=>{const seen=new Set();return rows.filter(r=>{if(!r.id||seen.h
 const upsert=async(table,rows)=>{const u=dedupe(rows);for(let i=0;i<u.length;i+=BATCH)await sbFetch(sbUrl,sbKey,table,"POST",u.slice(i,i+BATCH));};
 await upsert("groups",groups.map(g=>({id:g.id,name:g.name,description:g.description||"",icon:g.icon||"",people_ids:(g.peopleIds||[]).join(",")})));
 await upsert("contacts",contacts.map(c=>({id:c.id,name:c.name,email:c.email||"",phone:c.phone||"",notes:c.notes||"",date_met:c.dateMet||"",company:c.company||"",role:c.role||"",location:c.location||"",group_ids:(c.groupIds||c.groups||[]).join(",")})));
-await upsert("interactions",interactions.map(i=>({id:i.id,person_id:(i.personIds||[i.personId||i.person_id]).filter(Boolean)[0]||"",person_ids:(i.personIds||[i.personId||i.person_id]).filter(Boolean).join(","),type:i.type||"",date:i.date||"",note:i.note||""})));
+await upsert("interactions",interactions.map(i=>({id:i.id,person_id:(i.personIds||[i.personId||i.person_id]).filter(Boolean)[0]||"",person_ids:(i.personIds||[i.personId||i.person_id]).filter(Boolean).join(","),type:i.type||"",date:i.date||"",note:i.note||"",project_id:i.projectId||""})));
 await upsert("projects",projects.map(p=>({id:p.id,name:p.name,icon:p.icon||"",parent_id:p.parentId||"",created_at:p.createdAt||""})));
 await upsert("tasks",tasks.map(t=>({id:t.id,title:t.title,project_id:t.projectId||"",contact_id:t.contactId||"",due_date:t.dueDate||"",priority:t.priority||"",status:t.status||"todo",notes:t.notes||"",created_at:t.createdAt||""})));
 await upsert("time_entries",timeEntries.map(e=>({id:e.id,task_id:e.taskId||"",project_id:e.projectId||"",description:e.description||"",start_time:e.startTime||0,end_time:e.endTime||0,duration:e.duration||0,date:e.date||""})));
@@ -760,7 +806,7 @@ let pf=null,intf=null,gf=null;
 files.forEach(f=>{const n=f.name.toLowerCase();if(n.includes("people"))pf=f;else if(n.includes("interaction"))intf=f;else if(n.includes("group"))gf=f;});
 if(gf){const rows=parseCSV(await read(gf));const gl=rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name,description:r.Description||"",icon:r.Icon||"",peopleIds:(r.People||"").split(",").map(s=>s.trim()).filter(Boolean)})).filter(g=>g.name);setGroups(gl);}
 if(pf){const rows=parseCSV(await read(pf));setContacts(rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name||"",email:r.Email||r.email||"",phone:r.Phone||r.phone||"",notes:r.Notes||r.notes||"",dateMet:toIso(r["Date Met"]||""),groupIds:(r.Groups||r.groups||"").split(",").map(s=>s.trim()).filter(Boolean),company:"",role:"",location:""})).filter(c=>c.name));}
-if(intf){const rows=parseCSV(await read(intf));setInteractions(rows.map(r=>({id:r["Id"]||r["id"],personIds:(r["Person Ids"]||r["person_ids"]||r["Person Id"]||r["person_id"]||"").split(",").filter(Boolean),type:r["Type"]||r["type"]||"",date:toIso(r["Date"]||r["date"]||""),note:r["Notes"]||r["notes"]||""})).filter(i=>i.personIds.length>0&&i.id));}
+if(intf){const rows=parseCSV(await read(intf));setInteractions(rows.map(r=>({id:r["Id"]||r["id"],personIds:(r["Person Ids"]||r["person_ids"]||r["Person Id"]||r["person_id"]||"").split(",").filter(Boolean),type:r["Type"]||r["type"]||"",date:toIso(r["Date"]||r["date"]||""),note:r["Notes"]||r["notes"]||"",projectId:r["Project Id"]||r["project_id"]||""})).filter(i=>i.personIds.length>0&&i.id));}
 setImported(true);setSyncStatus("CSVs imported ✓ — hit Sync to save");
 }catch(e){alert("Import failed: "+e.message);}
 e.target.value="";
@@ -788,9 +834,9 @@ try{
 const result=await callClaude(`This is a WhatsApp chat export. The contact is: ${contacts.find(c=>c.id===waContact)?.name||"Unknown"}. Extract the key points from this conversation as a concise interaction note (2-4 sentences). Also identify the most recent date mentioned or use today. Respond as JSON: {"note":"","date":"YYYY-MM-DD"}\n\nChat:\n${waText.slice(0,3000)}`);
 const clean=result.replace(/```json|```/g,"").trim();
 const parsed=JSON.parse(clean);
-const ni={id:"i_"+Date.now(),personIds:[waContact],type:"Note",date:parsed.date||today(),note:parsed.note||waText.slice(0,500)};
+const ni={id:"i_"+Date.now(),personIds:[waContact],type:"Note",date:parsed.date||today(),note:parsed.note||waText.slice(0,500),projectId:""};
 setInteractions(is=>[ni,...is]);
-if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:waContact,person_ids:waContact,type:"Note",date:ni.date,note:ni.note}]).catch(()=>{});
+if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:waContact,person_ids:waContact,type:"Note",date:ni.date,note:ni.note,project_id:""}]).catch(()=>{});
 setShowWhatsApp(false);setWaText("");setWaContact("");
 setSyncStatus("WhatsApp conversation imported as interaction ✓");
 }catch(err){alert("Could not parse conversation.");}
@@ -822,21 +868,34 @@ const sortedGroups=useMemo(()=>[...groups].sort((a,b)=>groupMemberCount(b.name)-
 const recent3=useMemo(()=>[...interactions].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3).map(i=>{const ids=intPersonIds(i);const c=contacts.find(c=>c.id===ids[0]);return{...i,contactObj:c,cName:ids.map(id=>contacts.find(c=>c.id===id)?.name||"Unknown").join(", "),cGroups:c?contactGroups(c):[]};}),[interactions,contacts,contactGroups,intPersonIds]);
 const upcomingReminders=useMemo(()=>reminders.filter(r=>r.date>=today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5),[reminders]);
 const overdueReminders=useMemo(()=>reminders.filter(r=>r.date<today()).sort((a,b)=>b.date.localeCompare(a.date)),[reminders]);
-// Tasks linked to a contact
 const contactTasks=useCallback(cId=>tasks.filter(t=>t.contactId===cId&&t.status!=="done"),[tasks]);
+const filteredInts=useMemo(()=>{
+let list=[...interactions].sort((a,b)=>b.date.localeCompare(a.date));
+if(intFilterProject){list=list.filter(i=>i.projectId===intFilterProject);}
+if(intFilter){const q=intFilter.toLowerCase();list=list.filter(i=>{const ids=intPersonIds(i);const matchPerson=ids.some(id=>{const c=contacts.find(c=>c.id===id);return c&&(c.name.toLowerCase().includes(q)||(c.company||"").toLowerCase().includes(q)||(c.email||"").toLowerCase().includes(q));});const matchNote=(i.note||"").toLowerCase().includes(q);return matchPerson||matchNote;});}
+return list;
+},[interactions,intFilter,intFilterProject,intPersonIds,contacts]);
+const bulkAssignProject=()=>{if(!intBulkProjectId||intBulkSelected.length===0)return;setInteractions(is=>is.map(i=>intBulkSelected.includes(i.id)?{...i,projectId:intBulkProjectId}:i));intBulkSelected.forEach(iId=>{if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+iId,"PATCH",{project_id:intBulkProjectId}).catch(()=>{});});setIntBulkSelected([]);setIntBulkMode(false);setIntBulkProjectId("");};
+/* ===== Helper: create contact and return the new object ===== */
+const createContact=(cf,returnOnly)=>{
+const nc={name:cf.name||"",email:cf.email||"",phone:cf.phone||"",company:cf.company||"",role:cf.role||"",location:cf.location||"",notes:cf.notes||"",id:"c_"+Date.now(),groupIds:cf.groups||[],dateMet:""};
+setContacts(cs=>[nc,...cs]);
+if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts","POST",[{id:nc.id,name:nc.name,email:nc.email,phone:nc.phone,notes:nc.notes,date_met:"",company:nc.company,role:nc.role,location:nc.location,group_ids:(nc.groupIds||[]).join(",")}]).catch(()=>{});
+return nc;
+};
 const deleteContact=c=>{if(!window.confirm("Delete "+c.name+"?"))return;setContacts(cs=>cs.filter(x=>x.id!==c.id));setSelected(null);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+c.id,"DELETE").catch(()=>{});};
 const deleteInteraction=i=>{setInteractions(is=>is.filter(x=>x.id!==i.id));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+i.id,"DELETE").catch(()=>{});};
-const saveEditInt=draft=>{const pIds=draft.personIds||[draft.personId||draft.person_id].filter(Boolean);const updated={...draft,personIds:pIds};setInteractions(is=>is.map(i=>i.id===draft.id?updated:i));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+draft.id,"PATCH",{person_id:pIds[0]||"",person_ids:pIds.join(","),type:draft.type||"",date:draft.date||"",note:draft.note||""}).catch(()=>{});};
+const saveEditInt=draft=>{const pIds=draft.personIds||[draft.personId||draft.person_id].filter(Boolean);const updated={...draft,personIds:pIds};setInteractions(is=>is.map(i=>i.id===draft.id?updated:i));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+draft.id,"PATCH",{person_id:pIds[0]||"",person_ids:pIds.join(","),type:draft.type||"",date:draft.date||"",note:draft.note||"",project_id:draft.projectId||""}).catch(()=>{});};
 const addReminderToInt=(i,date,note)=>{const ids=intPersonIds(i);const r={id:"r_"+Date.now(),intId:i.id,contactId:ids[0],contactName:ids.map(id=>contactName(id)).join(", "),date,note,intNote:i.note||""};setReminders(rs=>[...rs,r]);setInteractions(is=>is.map(x=>x.id===i.id?{...x,reminderDate:date}:x));};
 const dismissReminder=id=>setReminders(rs=>rs.filter(r=>r.id!==id));
-const handleQuickAdd=({contactId,type,date,note})=>{const ni={id:"i_"+Date.now(),personIds:[contactId],type:type||"Manual",date,note};setInteractions(is=>[ni,...is]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:contactId,person_ids:contactId,type:ni.type,date,note}]).catch(()=>{});};
-const addContact=()=>{if(!cf.name.trim())return;const nc={...cf,id:"c_"+Date.now(),groupIds:cf.groups,dateMet:"",company:cf.company||"",role:cf.role||"",location:cf.location||""};setContacts(cs=>[nc,...cs]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts","POST",[{id:nc.id,name:nc.name,email:nc.email||"",phone:nc.phone||"",notes:nc.notes||"",date_met:"",company:nc.company,role:nc.role,location:nc.location,group_ids:nc.groupIds.join(",")}]).catch(()=>{});setCf({name:"",company:"",role:"",location:"",email:"",phone:"",groups:[],notes:""});setShowAddContact(false);};
+const handleQuickAdd=({contactId,type,date,note,projectId})=>{const ni={id:"i_"+Date.now(),personIds:[contactId],type:type||"Manual",date,note,projectId:projectId||""};setInteractions(is=>[ni,...is]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:contactId,person_ids:contactId,type:ni.type,date,note,project_id:projectId||""}]).catch(()=>{});};
+const addContact=()=>{if(!cf.name.trim())return;const nc=createContact({...cf,groups:cf.groups});setCf({name:"",company:"",role:"",location:"",email:"",phone:"",groups:[],notes:""});setShowAddContact(false);};
 const saveEditContact=()=>{if(!editingContact)return;setContacts(cs=>cs.map(c=>c.id===editingContact.id?{...editingContact}:c));setSelected({...editingContact});if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+editingContact.id,"PATCH",{name:editingContact.name,email:editingContact.email||"",phone:editingContact.phone||"",company:editingContact.company||"",role:editingContact.role||"",location:editingContact.location||"",notes:editingContact.notes||"",group_ids:(editingContact.groupIds||[]).join(",")}).catch(()=>{});setEditingContact(null);};
 const renameGroup=(gId,newName)=>{if(!newName.trim())return;setGroups(gs=>gs.map(g=>g.id===gId?{...g,name:newName.trim()}:g));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"groups?id=eq."+gId,"PATCH",{name:newName.trim()}).catch(()=>{});setEditingGroupId(null);};
 const updateGroupIcon=(gId,icon)=>{setGroups(gs=>gs.map(g=>g.id===gId?{...g,icon}:g));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"groups?id=eq."+gId,"PATCH",{icon}).catch(()=>{});setShowEmojiPicker(null);};
 const deleteGroup=(gId)=>{if(!window.confirm("Delete this group?"))return;setGroups(gs=>gs.filter(x=>x.id!==gId));setContacts(cs=>cs.map(c=>{const ids=(c.groupIds||[]).filter(id=>id!==gId);return{...c,groupIds:ids};}));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"groups?id=eq."+gId,"DELETE").catch(()=>{});};
 const bulkAddToGroup=()=>{if(!bulkAddGroupId||bulkSelected.length===0)return;setContacts(cs=>cs.map(c=>{if(!bulkSelected.includes(c.id))return c;const ids=c.groupIds||[];if(ids.includes(bulkAddGroupId))return c;const newIds=[...ids,bulkAddGroupId];if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+c.id,"PATCH",{group_ids:newIds.join(",")}).catch(()=>{});return{...c,groupIds:newIds};}));setBulkAddGroupId(null);setBulkSelected([]);setBulkSearch("");};
-const addInteraction=()=>{if(!inf.date||inf.contactIds.length===0)return;const ni={id:"i_"+Date.now(),personIds:inf.contactIds,type:inf.type||"Manual",date:inf.date,note:inf.note};setInteractions(is=>[ni,...is]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:inf.contactIds[0],person_ids:inf.contactIds.join(","),type:ni.type,date:inf.date,note:inf.note}]).catch(()=>{});setInf({contactIds:[],date:"",note:"",type:""});setShowAddInteraction(false);};
+const addInteraction=()=>{if(!inf.date||inf.contactIds.length===0)return;const ni={id:"i_"+Date.now(),personIds:inf.contactIds,type:inf.type||"Manual",date:inf.date,note:inf.note,projectId:inf.projectId||""};setInteractions(is=>[ni,...is]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:inf.contactIds[0],person_ids:inf.contactIds.join(","),type:ni.type,date:inf.date,note:inf.note,project_id:inf.projectId||""}]).catch(()=>{});setInf({contactIds:[],date:"",note:"",type:"",projectId:""});setShowAddInteraction(false);};
 const saveDetailNote=()=>{if(!detailNote.trim()||!selected)return;const date=today();const nn=(selected.notes?selected.notes+"\n\n":"")+date+": "+detailNote;setContacts(cs=>cs.map(c=>c.id===selected.id?{...c,notes:nn}:c));setSelected(s=>({...s,notes:nn}));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+selected.id,"PATCH",{notes:nn}).catch(()=>{});setDetailNote("");};
 const handleImageNote=async e=>{const file=e.target.files[0];if(!file)return;setAiLoading(true);const toB64=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(f);});try{const b64=await toB64(file);const resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":sbKey,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:file.type||"image/jpeg",data:b64}},{type:"text",text:"Transcribe any text in this image. Return only the transcribed text."}]}]})});const data=await resp.json();setDetailNote(n=>{const t=(data.content||[]).map(b=>b.text||"").join("");return n?n+"\n"+t:t;});}catch(err){setDetailNote(n=>n+"\n[Could not read image]");}setAiLoading(false);e.target.value="";};
 const startRecording=async()=>{try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});const mr=new MediaRecorder(stream);const chunks=[];mr.ondataavailable=e=>chunks.push(e.data);mr.onstop=()=>{stream.getTracks().forEach(t=>t.stop());setRecording(false);setDetailNote(n=>n?n+"\n[Voice note]":"[Voice note]");};mr.start();setMediaRec(mr);setRecording(true);}catch(err){alert("Microphone access denied.");}};
@@ -883,7 +942,6 @@ if(showSettings)return(
 </div>
 </div>
 );
-// Login gate — if Supabase is configured but no auth token, show login
 if(sbUrl&&sbKey&&!authToken)return(
 <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"#1a3a2a"}}>
 <div className="card" style={{maxWidth:380,width:"100%",textAlign:"center"}}>
@@ -927,7 +985,6 @@ return(
 <button onClick={()=>setShowWhatsApp(true)} style={{padding:"5px 10px",borderRadius:6,background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer"}} title="Import WhatsApp chat">💬</button>
 <label style={{padding:"5px 10px",borderRadius:6,background:"rgba(255,255,255,0.08)",cursor:"pointer",fontSize:13,color:"rgba(255,255,255,0.5)"}}>📂<input type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/></label>
 <button onClick={()=>{setSbUrlInput(sbUrl);setSbKeyInput(sbKey);setShowSettings(true);}} style={{padding:"5px 10px",borderRadius:6,background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer"}}>⚙️</button>
-{/* Timer */}
 {timer.running?(
 <div onClick={stopProjectTimer} style={{display:"flex",alignItems:"center",gap:6,background:"rgba(220,60,60,0.15)",borderRadius:6,padding:"4px 12px",cursor:"pointer"}} title="Click to stop timer">
 <div style={{width:6,height:6,borderRadius:"50%",background:"#e24b4a",animation:"pulse 1.5s infinite"}}/>
@@ -961,16 +1018,12 @@ return(
 {/* DASHBOARD */}
 {tab==="dashboard"&&!selected&&(
 <div>
-{/* Greeting + stats row */}
 <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:16}}>
 <div style={{fontSize:20,fontWeight:600,color:"#fff"}}>{(()=>{const h=new Date().getHours();return h<12?"Good Morning":h<17?"Good Afternoon":"Good Evening";})()}, Rose</div>
 <div style={{fontSize:11,color:"rgba(255,255,255,0.35)"}}>{fmtNum(contacts.length)} contacts · {fmtNum(interactions.length)} interactions · {tasks.filter(t=>t.status!=="done").length} tasks</div>
 </div>
-{/* Quick add */}
-<QuickAdd contacts={contacts} onAdd={handleQuickAdd} onAddContact={(cf)=>{const nc={...cf,id:"c_"+Date.now(),groupIds:cf.groups||[],dateMet:"",company:cf.company||"",role:cf.role||"",location:cf.location||""};setContacts(cs=>[nc,...cs]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts","POST",[{id:nc.id,name:nc.name,email:nc.email||"",phone:nc.phone||"",notes:nc.notes||"",date_met:"",company:nc.company,role:nc.role,location:nc.location,group_ids:(nc.groupIds||[]).join(",")}]).catch(()=>{});}} allGroupNames={allGroupNames} groups={groups}/>
-{/* Row 1: Recent interactions + Reminders */}
+<QuickAdd contacts={contacts} onAdd={handleQuickAdd} onAddContact={(cf,returnOnly)=>{return createContact(cf);}} allGroupNames={allGroupNames} groups={groups} projects={projects}/>
 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
-{/* Recent interactions */}
 <div className="card" style={{padding:"16px 20px"}}>
 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
 <span style={{fontSize:12,fontWeight:500,color:"#999"}}>Recent interactions</span>
@@ -978,6 +1031,7 @@ return(
 </div>
 {recent3.map((item,idx)=>{
 const col=intColor(item.type);
+const proj=item.projectId?projects.find(p=>p.id===item.projectId):null;
 return(
 <div key={item.id+"_"+idx} onClick={()=>{if(item.contactObj){setSelected(item.contactObj);setTab("contacts");}}} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 0",borderBottom:idx<recent3.length-1?"0.5px solid #f5f5f5":"none",cursor:"pointer"}}>
 <div style={{width:28,height:28,borderRadius:"50%",background:avatarColor(item.cName),display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(item.cName)}</div>
@@ -987,13 +1041,15 @@ return(
 </div>
 <div style={{textAlign:"right",flexShrink:0}}>
 <div style={{fontSize:10,color:"#999"}}>{fmtDate(item.date)}</div>
+<div style={{display:"flex",gap:3,justifyContent:"flex-end",flexWrap:"wrap"}}>
 {item.type&&item.type!=="Manual"&&<span style={{fontSize:9,background:col.bg,color:col.text,borderRadius:10,padding:"1px 6px",fontWeight:500}}>{item.type}</span>}
+{proj&&<span style={{fontSize:9,background:"#fef3c7",color:"#92400e",borderRadius:10,padding:"1px 6px",fontWeight:500}}>{proj.name}</span>}
+</div>
 </div>
 </div>
 );
 })}
 </div>
-{/* Follow-up reminders */}
 <div className="card" style={{padding:"16px 20px"}}>
 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
 <span style={{fontSize:12,fontWeight:500,color:"#999"}}>Follow-up reminders</span>
@@ -1011,9 +1067,7 @@ return(
 )):<div style={{fontSize:12,color:"#999",padding:"10px 0"}}>No reminders</div>;})()}
 </div>
 </div>
-{/* Row 2: Calendar + Groups */}
 <div className="mob-grid-1" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14,alignItems:"start"}}>
-{/* Calendar */}
 <div className="card" style={{padding:"16px 20px"}}>
 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
 <span style={{fontWeight:600,fontSize:14}}>{MONTHS[dcm]} {dcy}</span>
@@ -1042,7 +1096,6 @@ return(<div key={i} onClick={()=>cnt>0&&setDashPopup({date:ds,hits})} style={{as
 <span style={{fontSize:10,color:"#bbb"}}>More</span>
 </div>
 </div>
-{/* Groups */}
 <div className="card" style={{padding:"16px 20px"}}>
 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
 <span style={{fontWeight:600,fontSize:14}}>Groups</span>
@@ -1147,7 +1200,6 @@ return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",bo
 )}
 </div>
 </div>
-{/* AI Summary */}
 <div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:aiSummary?8:0}}>
 <div style={{fontSize:12,fontWeight:500,color:"#999"}}>AI Relationship Summary</div>
@@ -1155,7 +1207,6 @@ return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",bo
 </div>
 {aiSummary&&<div style={{fontSize:13,color:"#333",lineHeight:1.6,background:"#f8f9ff",padding:12,borderRadius:8,marginTop:8}}>{aiSummary}</div>}
 </div>
-{/* Linked tasks */}
 {contactTasks(selected.id).length>0&&(
 <div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}>
 <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:6}}>Open tasks</div>
@@ -1183,11 +1234,12 @@ return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",bo
 </div>
 <div style={{borderTop:"0.5px solid #eee",paddingTop:12}}>
 <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:8}}>Interactions ({contactInts(selected.id).length})</div>
-{contactInts(selected.id).slice(0,30).map(i=>{const col=intColor(i.type);const otherIds=intPersonIds(i).filter(pid=>pid!==selected.id);return(
+{contactInts(selected.id).slice(0,30).map(i=>{const col=intColor(i.type);const otherIds=intPersonIds(i).filter(pid=>pid!==selected.id);const proj=i.projectId?projects.find(p=>p.id===i.projectId):null;return(
 <div key={i.id} style={{marginBottom:10,paddingBottom:10,borderBottom:"0.5px solid #f5f5f5"}}>
-<div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+<div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2,flexWrap:"wrap"}}>
 <span style={{fontSize:11,color:"#999"}}>{fmtDate(i.date)}</span>
 {i.type&&i.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 7px",fontWeight:500}}>{i.type}</span>}
+{proj&&<span className="proj-tag">{proj.icon||"📁"} {proj.name}</span>}
 {otherIds.length>0&&<span style={{fontSize:10,color:"#999"}}>with {otherIds.map(id=>contactName(id)).join(", ")}</span>}
 </div>
 {i.note&&<RichNote text={i.note}/>}
@@ -1222,12 +1274,48 @@ return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",bo
 {/* INTERACTIONS */}
 {tab==="interactions"&&(
 <div>
-<div style={{fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:12}}>{interactions.length} total interactions</div>
+{/* Filter bar */}
+<div style={{display:"flex",gap:8,marginBottom:10,alignItems:"center",flexWrap:"wrap"}}>
+<input placeholder="Filter by person, company, or note…" value={intFilter} onChange={e=>setIntFilter(e.target.value)} style={{flex:1,minWidth:160,background:"#fff",fontSize:13,padding:"7px 12px"}}/>
+<select value={intFilterProject} onChange={e=>setIntFilterProject(e.target.value)} style={{width:"auto",background:"#fff",fontSize:13,padding:"7px 10px",minWidth:120}}>
+<option value="">All projects</option>
+{projects.map(p=><option key={p.id} value={p.id}>{p.parentId?"  ↳ ":""}{p.name}</option>)}
+</select>
+{(intFilter||intFilterProject)&&<button onClick={()=>{setIntFilter("");setIntFilterProject("");}} style={{fontSize:11,padding:"5px 10px",color:"rgba(255,255,255,0.6)",background:"rgba(255,255,255,0.1)",border:"none",borderRadius:8,cursor:"pointer"}}>✕ clear</button>}
+<div style={{marginLeft:"auto",display:"flex",gap:6,alignItems:"center"}}>
+{!intBulkMode?(
+<button onClick={()=>{setIntBulkMode(true);setIntBulkSelected([]);}} style={{fontSize:11,padding:"5px 12px",color:"rgba(255,255,255,0.5)",background:"rgba(255,255,255,0.08)",border:"none",borderRadius:6,cursor:"pointer"}}>Select</button>
+):(
+<React.Fragment>
+<span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>{intBulkSelected.length} selected</span>
+<select value={intBulkProjectId} onChange={e=>setIntBulkProjectId(e.target.value)} style={{fontSize:12,padding:"5px 8px",width:"auto",minWidth:110,background:"#fff",borderRadius:6}}>
+<option value="">Assign to…</option>
+{projects.map(p=><option key={p.id} value={p.id}>{p.parentId?"↳ ":""}{p.name}</option>)}
+</select>
+<button onClick={bulkAssignProject} disabled={!intBulkProjectId||intBulkSelected.length===0} style={{fontSize:11,padding:"5px 12px",background:intBulkProjectId&&intBulkSelected.length>0?"#4f6ef7":"rgba(255,255,255,0.08)",border:"none",color:intBulkProjectId&&intBulkSelected.length>0?"#fff":"rgba(255,255,255,0.3)",borderRadius:6,cursor:"pointer"}}>Apply</button>
+<button onClick={()=>{setIntBulkMode(false);setIntBulkSelected([]);setIntBulkProjectId("");}} style={{fontSize:11,padding:"5px 8px",color:"rgba(255,255,255,0.4)",background:"none",border:"none",cursor:"pointer"}}>✕</button>
+</React.Fragment>
+)}
+</div>
+</div>
+<div style={{fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:10}}>{filteredInts.length}{(intFilter||intFilterProject)?" matching":""}  of {interactions.length} interactions</div>
 <div style={{display:"flex",flexDirection:"column",gap:8}}>
-{interactions.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,200).map(i=>(
-<IntCard key={i.id} i={i} contacts={contacts} contactName={contactName} intPersonIds={intPersonIds} intContactNames={intContactNames} deleteInteraction={deleteInteraction} saveEditInt={saveEditInt} setSelected={setSelected} setTab={setTab} onAddReminder={addReminderToInt}/>
+{filteredInts.slice(0,200).map(i=>(
+<div key={i.id} style={{display:"flex",gap:0,alignItems:"stretch"}}>
+{intBulkMode&&(
+<div onClick={()=>setIntBulkSelected(s=>s.includes(i.id)?s.filter(x=>x!==i.id):[...s,i.id])} style={{width:36,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0,background:intBulkSelected.includes(i.id)?"rgba(79,110,247,0.12)":"rgba(255,255,255,0.04)",borderRadius:"4px 0 0 4px",transition:"background 0.15s"}}>
+<div style={{width:16,height:16,borderRadius:4,border:intBulkSelected.includes(i.id)?"none":"1.5px solid rgba(255,255,255,0.25)",background:intBulkSelected.includes(i.id)?"#4f6ef7":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.15s"}}>
+{intBulkSelected.includes(i.id)&&<svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4L3.5 6.5L9 1" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+</div>
+</div>
+)}
+<div style={{flex:1,minWidth:0}}>
+<IntCard i={i} contacts={contacts} contactName={contactName} intPersonIds={intPersonIds} intContactNames={intContactNames} deleteInteraction={deleteInteraction} saveEditInt={saveEditInt} setSelected={setSelected} setTab={setTab} onAddReminder={addReminderToInt} projects={projects} onAddContact={cf=>createContact(cf)}/>
+</div>
+</div>
 ))}
-{interactions.length>200&&<p style={{fontSize:12,color:"rgba(255,255,255,0.4)",textAlign:"center"}}>Showing 200 most recent.</p>}
+{filteredInts.length>200&&<p style={{fontSize:12,color:"rgba(255,255,255,0.4)",textAlign:"center"}}>Showing 200 most recent.</p>}
+{filteredInts.length===0&&(intFilter||intFilterProject)&&<p style={{fontSize:13,color:"rgba(255,255,255,0.35)",textAlign:"center",padding:"30px 0"}}>No interactions match your filters.</p>}
 </div>
 </div>
 )}
@@ -1280,7 +1368,6 @@ return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",bo
 </div>
 );})}
 </div>
-{/* BULK ADD CONTACTS TO GROUP MODAL */}
 {bulkAddGroupId&&(
 <div className="overlay" onClick={()=>{setBulkAddGroupId(null);setBulkSelected([]);setBulkSearch("");}}>
 <div className="modal" onClick={e=>e.stopPropagation()}>
@@ -1407,21 +1494,38 @@ return(<div style={{display:"flex",flexDirection:"column",gap:6}}>
 </select>
 <div style={{fontSize:12,color:"#666",marginBottom:4}}>Date</div>
 <div style={{marginBottom:10,position:"relative"}}><DatePicker value={inf.date} onChange={v=>setInf(f=>({...f,date:v}))}/></div>
+<div style={{fontSize:12,color:"#666",marginBottom:4}}>Project</div>
+<select value={inf.projectId||""} onChange={e=>setInf(f=>({...f,projectId:e.target.value}))} style={{marginBottom:10,fontSize:13}}>
+<option value="">No project</option>
+{projects.map(p=><option key={p.id} value={p.id}>{p.parentId?"  ↳ ":""}{p.name}</option>)}
+</select>
 <div style={{fontSize:12,color:"#666",marginBottom:4}}>People</div>
-<input placeholder="Filter contacts…" value={contactSearch} onChange={e=>setContactSearch(e.target.value)} style={{marginBottom:6}}/>
-<div style={{maxHeight:150,overflowY:"auto",border:"0.5px solid #ddd",borderRadius:8,padding:8,marginBottom:10}}>
-{contacts.filter(c=>!contactSearch||c.name.toLowerCase().includes(contactSearch.toLowerCase())).slice(0,50).map(c=>(
+<input placeholder="Filter contacts…" value={contactSearch} onChange={e=>{setContactSearch(e.target.value);setShowInlineAddModal(false);}} style={{marginBottom:6}}/>
+<div style={{maxHeight:150,overflowY:"auto",border:"0.5px solid #ddd",borderRadius:8,padding:8,marginBottom:4}}>
+{(()=>{const flt=contacts.filter(c=>!contactSearch||c.name.toLowerCase().includes(contactSearch.toLowerCase())).slice(0,50);return(
+<React.Fragment>
+{flt.map(c=>(
 <label key={c.id} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,padding:"3px 0"}}>
 <input type="checkbox" checked={inf.contactIds.includes(c.id)} onChange={()=>setInf(f=>({...f,contactIds:f.contactIds.includes(c.id)?f.contactIds.filter(x=>x!==c.id):[...f.contactIds,c.id]}))} style={{width:"auto"}}/>{c.name}
 </label>
 ))}
+{contactSearch&&flt.length===0&&!showInlineAddModal&&(
+<div onClick={()=>setShowInlineAddModal(true)} style={{padding:"8px 4px",fontSize:12,color:"#4f6ef7",cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
+<span style={{fontSize:14,fontWeight:600}}>+</span> Add "{contactSearch}" as new contact
 </div>
-<div style={{fontSize:12,color:"#666",marginBottom:4}}>Notes</div>
+)}
+</React.Fragment>
+);})()}
+</div>
+{showInlineAddModal&&(
+<InlineAddContact initialName={contactSearch} onSave={cf=>{const nc=createContact(cf);setInf(f=>({...f,contactIds:[...f.contactIds,nc.id]}));setShowInlineAddModal(false);setContactSearch("");}} onCancel={()=>setShowInlineAddModal(false)}/>
+)}
+<div style={{fontSize:12,color:"#666",marginBottom:4,marginTop:6}}>Notes</div>
 <textarea id="modal_int_note" placeholder="Notes…" value={inf.note} onChange={e=>setInf(f=>({...f,note:e.target.value}))} rows={4} style={{resize:"vertical",marginBottom:0}}/>
 <div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}><FormatBar id="modal_int_note" value={inf.note} onChange={v=>setInf(f=>({...f,note:v}))}/></div>
 <div style={{display:"flex",gap:8}}>
 <button onClick={addInteraction} disabled={!inf.date||inf.contactIds.length===0} style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"7px 18px",borderRadius:8,cursor:"pointer"}}>Save</button>
-<button onClick={()=>setShowAddInteraction(false)}>Cancel</button>
+<button onClick={()=>{setShowAddInteraction(false);setShowInlineAddModal(false);}}>Cancel</button>
 </div>
 </div>
 </div>
