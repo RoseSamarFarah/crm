@@ -79,6 +79,8 @@ const renderMd=text=>{if(!text)return"";const esc=s=>s.replace(/&/g,"&amp;").rep
 const RichNote=({text,style={}})=>React.createElement("div",{dangerouslySetInnerHTML:{__html:renderMd(text)},style:{fontSize:13,color:"#444",lineHeight:1.6,...style}});
 const FormatBar=({id,value,onChange})=>{const [open,setOpen]=useState(false);const ins=(before,after)=>{const el=document.getElementById(id);const s=el?el.selectionStart:value.length;const e=el?el.selectionEnd:value.length;const nv=value.substring(0,s)+before+value.substring(s,e)+after+value.substring(e);onChange(nv);setTimeout(()=>{if(el){el.focus();el.selectionStart=s+before.length;el.selectionEnd=e+before.length;}},0);setOpen(false);};const line=prefix=>{const el=document.getElementById(id);const s=el?el.selectionStart:value.length;const before=value.substring(0,s);const lineStart=before.lastIndexOf("\n")+1;const nv=value.substring(0,lineStart)+prefix+value.substring(lineStart);onChange(nv);setTimeout(()=>{if(el)el.focus();},0);setOpen(false);};const ms={fontSize:13,padding:"7px 14px",background:"none",border:"none",cursor:"pointer",color:"#444",display:"block",width:"100%",textAlign:"left",borderRadius:0};return React.createElement("div",{style:{position:"relative",display:"inline-block"}},React.createElement("button",{type:"button",onClick:e=>{e.preventDefault();setOpen(o=>!o);},style:{background:"none",border:"none",cursor:"pointer",color:"#bbb",fontSize:14,padding:"4px 2px",lineHeight:1,letterSpacing:2}},"⋯"),open&&React.createElement(React.Fragment,null,React.createElement("div",{onClick:()=>setOpen(false),style:{position:"fixed",inset:0,zIndex:98}}),React.createElement("div",{style:{position:"absolute",bottom:"calc(100% + 6px)",left:-4,background:"#fff",borderRadius:10,boxShadow:"0 2px 16px rgba(0,0,0,0.12)",border:"0.5px solid rgba(0,0,0,0.06)",zIndex:99,overflow:"hidden",minWidth:140}},React.createElement("button",{type:"button",onClick:()=>ins("**","**"),style:{...ms,fontWeight:600,borderBottom:"0.5px solid #f0f0ee"},onMouseOver:e=>e.currentTarget.style.background="#f5f5f3",onMouseOut:e=>e.currentTarget.style.background="none"},"Bold"),React.createElement("button",{type:"button",onClick:()=>ins("*","*"),style:{...ms,fontStyle:"italic",borderBottom:"0.5px solid #f0f0ee"},onMouseOver:e=>e.currentTarget.style.background="#f5f5f3",onMouseOut:e=>e.currentTarget.style.background="none"},"Italic"),React.createElement("button",{type:"button",onClick:()=>line("- "),style:{...ms,borderBottom:"0.5px solid #f0f0ee"},onMouseOver:e=>e.currentTarget.style.background="#f5f5f3",onMouseOut:e=>e.currentTarget.style.background="none"},"Bullet"),React.createElement("button",{type:"button",onClick:()=>line("1. "),style:ms,onMouseOver:e=>e.currentTarget.style.background="#f5f5f3",onMouseOut:e=>e.currentTarget.style.background="none"},"Numbered"))));};
 /* ===== End rich text helpers ===== */
+const handleBulletKey=(e,value,onChange)=>{if(e.key==="Enter"){const el=e.target;const pos=el.selectionStart;const before=value.substring(0,pos);const after=value.substring(pos);const lineStart=before.lastIndexOf("\n")+1;const currentLine=before.substring(lineStart);const bulMatch=/^([-•]\s+)(.*)$/.exec(currentLine);const numMatch=/^(\d+)\.\s+(.*)$/.exec(currentLine);if(bulMatch){if(!bulMatch[2].trim()){e.preventDefault();const nv=value.substring(0,lineStart)+after;onChange(nv);setTimeout(()=>{el.selectionStart=el.selectionEnd=lineStart;},0);return;}e.preventDefault();const nv=before+"\n"+bulMatch[1]+after;onChange(nv);const np=pos+1+bulMatch[1].length;setTimeout(()=>{el.selectionStart=el.selectionEnd=np;},0);return;}if(numMatch){if(!numMatch[2].trim()){e.preventDefault();const nv=value.substring(0,lineStart)+after;onChange(nv);setTimeout(()=>{el.selectionStart=el.selectionEnd=lineStart;},0);return;}e.preventDefault();const nextNum=(parseInt(numMatch[1])+1)+". ";const nv=before+"\n"+nextNum+after;onChange(nv);const np=pos+1+nextNum.length;setTimeout(()=>{el.selectionStart=el.selectionEnd=np;},0);return;}}};
+
 const fmtDur=s=>{if(!s||s<0)return"0m";const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);const sec=Math.floor(s%60);if(h>0)return h+"h "+String(m).padStart(2,"0")+"m";if(m>0)return m+"m "+String(sec).padStart(2,"0")+"s";return sec+"s";};
 const fmtDurShort=s=>{if(!s||s<0)return"0m";const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);if(h>0)return h+"h "+m+"m";return m+"m";};
 const fmtTimer=s=>{const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);const sec=Math.floor(s%60);return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(sec).padStart(2,"0");};
@@ -165,7 +167,7 @@ const attachRef=useRef();
 const col=intColor(i.type);
 const iIds=intPersonIds(i);
 const editNoteId="edit_note_"+i.id;
-const proj=i.projectId?projects.find(p=>p.id===i.projectId):null;
+const iProjs=(i.projectIds||[]).map(pid=>projects.find(p=>p.id===pid)).filter(Boolean);
 const attachments=i.attachments||[];
 const handleFile=e=>{const file=e.target.files[0];if(!file||!onAttach)return;if(file.size>5*1024*1024){alert("File too large (max 5 MB).");e.target.value="";return;}const reader=new FileReader();reader.onload=()=>{onAttach(i.id,{name:file.name,type:file.type,size:file.size,data:reader.result});};reader.readAsDataURL(file);e.target.value="";};
 const removeAttachment=(idx)=>{if(!onAttach)return;const newAtts=[...attachments];newAtts.splice(idx,1);saveEditInt({...i,attachments:newAtts});};
@@ -182,11 +184,10 @@ return(
 <option value="">No type</option><option>Video Chat</option><option>Phone</option><option>In Person</option><option>Email</option><option>Note</option>
 </select>
 <div style={{marginBottom:8,position:"relative"}}><DatePicker value={draft.date} onChange={v=>setDraft(d=>({...d,date:v}))}/></div>
-<div style={{fontSize:12,color:"#666",marginBottom:4}}>Project</div>
-<select value={draft.projectId||""} onChange={e=>setDraft(d=>({...d,projectId:e.target.value}))} style={{marginBottom:8,fontSize:13}}>
-<option value="">No project</option>
-{projects.map(p=><option key={p.id} value={p.id}>{p.parentId?"  ↳ ":""}{p.name}</option>)}
-</select>
+<div style={{fontSize:12,color:"#666",marginBottom:4}}>Projects</div>
+<div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:8}}>
+{projects.map(p=>{const has=(draft.projectIds||[]).includes(p.id);return<button key={p.id} type="button" onClick={()=>setDraft(d=>({...d,projectIds:has?(d.projectIds||[]).filter(x=>x!==p.id):[...(d.projectIds||[]),p.id]}))} style={{fontSize:11,padding:"3px 8px",borderRadius:14,border:"0.5px solid "+(has?"#92400e":"#ddd"),background:has?"#fef3c7":"#fff",color:has?"#92400e":"#888",cursor:"pointer"}}>{p.parentId?"↳ ":""}{p.name}</button>;})}
+</div>
 <div style={{fontSize:12,color:"#666",marginBottom:4}}>People</div>
 <input placeholder="Filter contacts…" value={cs} onChange={e=>setCs(e.target.value)} style={{marginBottom:6}}/>
 <div style={{maxHeight:120,overflowY:"auto",border:"0.5px solid #ddd",borderRadius:8,padding:6,marginBottom:4}}>
@@ -204,7 +205,7 @@ return(
 {showInlineAdd&&(
 <InlineAddContact initialName={cs} onSave={cf=>{const nc=onAddContact(cf);setDraft(d=>({...d,personIds:[...(d.personIds||[]),nc.id]}));setShowInlineAdd(false);setCs("");}} onCancel={()=>setShowInlineAdd(false)}/>
 )}
-<textarea id={editNoteId} value={draft.note||""} onChange={e=>setDraft(d=>({...d,note:e.target.value}))} rows={3} style={{resize:"vertical",marginBottom:0,marginTop:4}}/>
+<textarea id={editNoteId} value={draft.note||""} onChange={e=>setDraft(d=>({...d,note:e.target.value}))} onKeyDown={e=>handleBulletKey(e,draft.note||"",v=>setDraft(d=>({...d,note:v})))} rows={3} style={{resize:"vertical",marginBottom:0,marginTop:4}}/>
 <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}><FormatBar id={editNoteId} value={draft.note||""} onChange={v=>setDraft(d=>({...d,note:v}))}/></div>
 <div style={{display:"flex",gap:8}}>
 <button onClick={()=>{saveEditInt(draft);setEditing(false);setDraft(null);}} disabled={draftIds.length===0} style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"6px 16px",borderRadius:8,cursor:"pointer"}}>Save</button>
@@ -219,7 +220,7 @@ return(
 <div style={{fontSize:11,color:"#999",marginBottom:3,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
 {fmtDate(i.date)}
 {i.type&&i.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 8px",fontWeight:500}}>{i.type}</span>}
-{proj&&<span className="proj-tag">{proj.icon||"📁"} {proj.name}</span>}
+{iProjs.map(pr=><span key={pr.id} className="proj-tag">{pr.icon||"📁"} {pr.name}</span>)}
 {i.reminderDate&&<span style={{fontSize:10,background:"#fef3c7",color:"#92400e",borderRadius:20,padding:"1px 8px",fontWeight:500}}>⏰ {fmtDate(i.reminderDate)}</span>}
 </div>
 <div style={{fontWeight:500,fontSize:14,marginBottom:i.note?5:0,color:"#1a1a1a",display:"flex",flexWrap:"wrap",gap:4,alignItems:"center"}}>
@@ -253,7 +254,6 @@ return(
 {showDel?(
 <div style={{display:"flex",alignItems:"center",gap:8,background:"#fff",border:"0.5px solid #ddd",borderRadius:8,padding:"4px 10px",boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
 <button onClick={()=>{setDraft({...i});setEditing(true);setShowDel(false);}} style={{fontSize:11,color:"#4f6ef7",border:"none",background:"none",padding:"2px 0",cursor:"pointer"}}>Edit</button>
-<button onClick={()=>attachRef.current?.click()} style={{fontSize:11,color:"#666",border:"none",background:"none",padding:"2px 0",cursor:"pointer"}}>Attach</button>
 <button onClick={()=>setShowReminder(s=>!s)} style={{fontSize:11,color:"#f59e0b",border:"none",background:"none",padding:"2px 0",cursor:"pointer"}}>Remind</button>
 <button onClick={()=>deleteInteraction(i)} style={{fontSize:11,color:"#c00",border:"none",background:"none",padding:"2px 0",cursor:"pointer"}}>Delete</button>
 <button onClick={()=>setShowDel(false)} style={{fontSize:12,color:"#999",border:"none",background:"none",padding:"2px 0",cursor:"pointer"}}>✕</button>
@@ -275,13 +275,13 @@ const [contactId,setContactId]=useState("");
 const [type,setType]=useState("");
 const [date,setDate]=useState(today());
 const [note,setNote]=useState("");
-const [projectId,setProjectId]=useState("");
+const [projectIds,setProjectIds]=useState([]);
 const [search,setSearch]=useState("");
 const [showPicker,setShowPicker]=useState(false);
 const [showInlineAdd,setShowInlineAdd]=useState(false);
 const filtered=contacts.filter(c=>search&&c.name.toLowerCase().includes(search.toLowerCase())).slice(0,6);
 const selC=contacts.find(c=>c.id===contactId);
-const submitInt=()=>{if(!contactId||!date)return;onAdd({contactId,type,date,note,projectId});setContactId("");setType("");setDate(today());setNote("");setProjectId("");setSearch("");};
+const submitInt=()=>{if(!contactId||!date)return;onAdd({contactId,type,date,note,projectIds});setContactId("");setType("");setDate(today());setNote("");setProjectIds([]);setSearch("");};
 const [cf,setCf]=useState({name:"",email:"",phone:"",company:"",role:"",location:"",groups:[],notes:""});
 const submitContact=()=>{if(!cf.name.trim())return;onAddContact(cf);setCf({name:"",email:"",phone:"",company:"",role:"",location:"",groups:[],notes:""});};
 return(
@@ -323,12 +323,11 @@ onMouseEnter={e=>e.currentTarget.style.background="#f0f4ff"} onMouseLeave={e=>e.
 )}
 <div style={{display:"flex",gap:8,marginBottom:8,alignItems:"center",flexWrap:"wrap"}}>
 <div style={{position:"relative"}}><DatePicker value={date} onChange={v=>setDate(v)}/></div>
-<select value={projectId} onChange={e=>setProjectId(e.target.value)} style={{fontSize:13,width:"auto",flex:1,minWidth:120}}>
-<option value="">No project</option>
-{projects.map(p=><option key={p.id} value={p.id}>{p.parentId?"  ↳ ":""}{p.name}</option>)}
-</select>
+<div style={{display:"flex",gap:4,flexWrap:"wrap",flex:1}}>
+{projects.map(p=>{const has=projectIds.includes(p.id);return<button key={p.id} type="button" onClick={()=>setProjectIds(s=>has?s.filter(x=>x!==p.id):[...s,p.id])} style={{fontSize:11,padding:"3px 8px",borderRadius:14,border:"0.5px solid "+(has?"#92400e":"#ddd"),background:has?"#fef3c7":"#f8f8f6",color:has?"#92400e":"#999",cursor:"pointer"}}>{p.parentId?"↳ ":""}{p.name}</button>;})}
 </div>
-<textarea id="quickadd_note" placeholder="Notes…" value={note} onChange={e=>setNote(e.target.value)} rows={3} style={{resize:"vertical",marginBottom:0,fontSize:13}}/>
+</div>
+<textarea id="quickadd_note" placeholder="Notes…" value={note} onChange={e=>setNote(e.target.value)} onKeyDown={e=>handleBulletKey(e,note,setNote)} rows={3} style={{resize:"vertical",marginBottom:0,fontSize:13}}/>
 <div style={{display:"flex",justifyContent:"flex-end",marginBottom:10}}><FormatBar id="quickadd_note" value={note} onChange={v=>setNote(v)}/></div>
 <button onClick={submitInt} disabled={!contactId||!date} style={{background:"#1a1a1a",border:"none",color:"#fff",fontWeight:500,padding:"7px 20px",borderRadius:8,cursor:"pointer",opacity:(!contactId||!date)?0.4:1}}>Add interaction</button>
 </div>
@@ -700,6 +699,11 @@ const [authPass,setAuthPass]=useState("");
 const [authLoading,setAuthLoading]=useState(false);
 const [authError,setAuthError]=useState("");
 const [showInlineAddModal,setShowInlineAddModal]=useState(false);
+const [briefArticles,setBriefArticles]=useState(()=>{try{return JSON.parse(localStorage.getItem("collective_brief_articles")||"[]");}catch{return[];}});
+const [briefSummary,setBriefSummary]=useState(()=>localStorage.getItem("collective_brief_summary")||"");
+const [briefDate,setBriefDate]=useState(()=>localStorage.getItem("collective_brief_date")||"");
+const [briefLoading,setBriefLoading]=useState(false);
+const [briefTopic,setBriefTopic]=useState("Syria Middle East");
 const [intFilter,setIntFilter]=useState("");
 const [intFilterProject,setIntFilterProject]=useState("");
 const [intBulkMode,setIntBulkMode]=useState(false);
@@ -708,10 +712,13 @@ const [intBulkProjectId,setIntBulkProjectId]=useState("");
 const fileRef=useRef();
 const cardRef=useRef();
 const [cf,setCf]=useState({name:"",company:"",role:"",location:"",email:"",phone:"",groups:[],notes:""});
-const [inf,setInf]=useState({contactIds:[],date:"",note:"",type:"",projectId:""});
+const [inf,setInf]=useState({contactIds:[],date:"",note:"",type:"",projectIds:[]});
 useEffect(()=>{localStorage.setItem("collective_projects",JSON.stringify(projects));},[projects]);
 useEffect(()=>{localStorage.setItem("collective_tasks",JSON.stringify(tasks));},[tasks]);
 useEffect(()=>{localStorage.setItem("collective_time_entries",JSON.stringify(timeEntries));},[timeEntries]);
+useEffect(()=>{localStorage.setItem("collective_brief_articles",JSON.stringify(briefArticles));},[briefArticles]);
+useEffect(()=>{localStorage.setItem("collective_brief_summary",briefSummary);},[briefSummary]);
+useEffect(()=>{localStorage.setItem("collective_brief_date",briefDate);},[briefDate]);
 useEffect(()=>{
 if(!timer.running)return;
 const iv=setInterval(()=>{setTimerDisplay(Math.floor((Date.now()-timer.startTime)/1000));},1000);
@@ -771,6 +778,27 @@ const data=await resp.json();
 if(data.error)throw new Error(data.error.message);
 return(data.content||[]).map(b=>b.text||"").join("");
 };
+const fetchBriefing=async(topic)=>{
+const key=localStorage.getItem("anthropic_key")||anthropicKey||sbKey;
+if(!key){setBriefLoading(false);return;}
+setBriefLoading(true);
+try{
+const resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4000,tools:[{type:"web_search_20250305",name:"web_search"}],messages:[{role:"user",content:"Search for the latest news about "+topic+". Find 8-10 recent articles from major sources (FT, Reuters, Bloomberg, Al Jazeera, WSJ, Economist, AP, BBC, etc). For each article return: title, source, date, url, and a 2-sentence summary. Then write a 3-paragraph executive briefing summarizing the key themes. Respond as JSON only, no markdown: {\"articles\":[{\"title\":\"\",\"source\":\"\",\"date\":\"\",\"url\":\"\",\"summary\":\"\"}],\"briefing\":\"\"}"}]})});
+const data=await resp.json();
+const text=(data.content||[]).filter(b=>b.type==="text").map(b=>b.text||"").join("");
+const clean=text.replace(/```json|```/g,"").trim();
+try{
+const parsed=JSON.parse(clean);
+setBriefArticles(parsed.articles||[]);
+setBriefSummary(parsed.briefing||"");
+setBriefDate(today());
+}catch(pe){
+setBriefSummary(text);
+setBriefDate(today());
+}
+}catch(err){setBriefSummary("Could not fetch briefing. Check your API key.");}
+setBriefLoading(false);
+};
 const loadFromSupabase=async(url,key)=>{
 setLoadingDB(true);setSyncStatus("Loading…");
 try{
@@ -780,7 +808,7 @@ sbFetch(url,key,"interactions?select=*&order=date.desc&limit=9999"),
 sbFetch(url,key,"groups?select=*&order=name&limit=200")
 ]);
 setContacts(c.map(r=>({...r,groupIds:(r.group_ids||"").split(",").filter(Boolean)})));
-setInteractions(i.map(r=>{let atts=[];try{if(r.attachments)atts=JSON.parse(r.attachments);}catch(e){}return{...r,personIds:(r.person_ids||r.person_id||"").split(",").filter(Boolean),note:r.note||r.notes||"",projectId:r.project_id||"",attachments:atts};}));
+setInteractions(i.map(r=>{let atts=[];try{if(r.attachments)atts=JSON.parse(r.attachments);}catch(e){}return{...r,personIds:(r.person_ids||r.person_id||"").split(",").filter(Boolean),note:r.note||r.notes||"",projectIds:(r.project_ids||r.project_id||"").split(",").filter(Boolean),attachments:atts};}));
 setGroups(g);setImported(true);
 try{
 const [p,t,te]=await Promise.all([
@@ -813,13 +841,13 @@ const dedupe=rows=>{const seen=new Set();return rows.filter(r=>{if(!r.id||seen.h
 const upsert=async(table,rows)=>{const u=dedupe(rows);for(let i=0;i<u.length;i+=BATCH)await sbFetch(sbUrl,sbKey,table,"POST",u.slice(i,i+BATCH));};
 /* Try adding missing columns via rpc — ignore errors if rpc not available */
 const tryAddCol=async(table,col,type)=>{try{const token=localStorage.getItem("sb_auth_token")||sbKey;await fetch(sbUrl+"/rest/v1/rpc/run_sql",{method:"POST",headers:{"apikey":sbKey,"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({query:`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${col} ${type} DEFAULT ''`})});}catch(e){}};
-await Promise.all([tryAddCol("interactions","project_id","text"),tryAddCol("interactions","attachments","text")]);
+await Promise.all([tryAddCol("interactions","project_ids","text"),tryAddCol("interactions","project_id","text"),tryAddCol("interactions","attachments","text")]);
 await upsert("groups",groups.map(g=>({id:g.id,name:g.name,description:g.description||"",icon:g.icon||"",people_ids:(g.peopleIds||[]).join(",")})));
 await upsert("contacts",contacts.map(c=>({id:c.id,name:c.name,email:c.email||"",phone:c.phone||"",notes:c.notes||"",date_met:c.dateMet||"",company:c.company||"",role:c.role||"",location:c.location||"",group_ids:(c.groupIds||c.groups||[]).join(",")})));
 /* Try full interaction sync first; if project_id column missing, fall back without it */
-const intRows=interactions.map(i=>({id:i.id,person_id:(i.personIds||[i.personId||i.person_id]).filter(Boolean)[0]||"",person_ids:(i.personIds||[i.personId||i.person_id]).filter(Boolean).join(","),type:i.type||"",date:i.date||"",note:i.note||"",project_id:i.projectId||"",attachments:JSON.stringify(i.attachments||[])}));
+const intRows=interactions.map(i=>({id:i.id,person_id:(i.personIds||[i.personId||i.person_id]).filter(Boolean)[0]||"",person_ids:(i.personIds||[i.personId||i.person_id]).filter(Boolean).join(","),type:i.type||"",date:i.date||"",note:i.note||"",project_ids:(i.projectIds||[]).join(","),attachments:JSON.stringify(i.attachments||[])}));
 try{await upsert("interactions",intRows);}catch(e){
-if(e.message&&e.message.includes("project_id")){
+if(e.message&&(e.message.includes("project_id")||e.message.includes("project_ids"))){
 /* Retry without project_id and attachments */
 const fallback=interactions.map(i=>({id:i.id,person_id:(i.personIds||[i.personId||i.person_id]).filter(Boolean)[0]||"",person_ids:(i.personIds||[i.personId||i.person_id]).filter(Boolean).join(","),type:i.type||"",date:i.date||"",note:i.note||""}));
 await upsert("interactions",fallback);
@@ -835,7 +863,7 @@ setSyncStatus("Synced "+contacts.length+" contacts · "+interactions.length+" in
 }catch(e){
 let msg=e.message||"";
 if(msg.includes("project_id")||msg.includes("attachments")){
-setSyncStatus("Sync partial — add missing columns in Supabase SQL Editor: ALTER TABLE interactions ADD COLUMN IF NOT EXISTS project_id text DEFAULT ''; ALTER TABLE interactions ADD COLUMN IF NOT EXISTS attachments text DEFAULT '';");
+setSyncStatus("Sync partial — add missing columns in Supabase SQL Editor: ALTER TABLE interactions ADD COLUMN IF NOT EXISTS project_ids text DEFAULT ''; ALTER TABLE interactions ADD COLUMN IF NOT EXISTS attachments text DEFAULT '';");
 }else{setSyncStatus("Sync failed: "+msg);}
 }
 setSyncing(false);
@@ -848,7 +876,7 @@ let pf=null,intf=null,gf=null;
 files.forEach(f=>{const n=f.name.toLowerCase();if(n.includes("people"))pf=f;else if(n.includes("interaction"))intf=f;else if(n.includes("group"))gf=f;});
 if(gf){const rows=parseCSV(await read(gf));const gl=rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name,description:r.Description||"",icon:r.Icon||"",peopleIds:(r.People||"").split(",").map(s=>s.trim()).filter(Boolean)})).filter(g=>g.name);setGroups(gl);}
 if(pf){const rows=parseCSV(await read(pf));setContacts(rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name||"",email:r.Email||r.email||"",phone:r.Phone||r.phone||"",notes:r.Notes||r.notes||"",dateMet:toIso(r["Date Met"]||""),groupIds:(r.Groups||r.groups||"").split(",").map(s=>s.trim()).filter(Boolean),company:"",role:"",location:""})).filter(c=>c.name));}
-if(intf){const rows=parseCSV(await read(intf));setInteractions(rows.map(r=>({id:r["Id"]||r["id"],personIds:(r["Person Ids"]||r["person_ids"]||r["Person Id"]||r["person_id"]||"").split(",").filter(Boolean),type:r["Type"]||r["type"]||"",date:toIso(r["Date"]||r["date"]||""),note:r["Notes"]||r["notes"]||"",projectId:r["Project Id"]||r["project_id"]||""})).filter(i=>i.personIds.length>0&&i.id));}
+if(intf){const rows=parseCSV(await read(intf));setInteractions(rows.map(r=>({id:r["Id"]||r["id"],personIds:(r["Person Ids"]||r["person_ids"]||r["Person Id"]||r["person_id"]||"").split(",").filter(Boolean),type:r["Type"]||r["type"]||"",date:toIso(r["Date"]||r["date"]||""),note:r["Notes"]||r["notes"]||"",projectIds:(r["Project Ids"]||r["project_ids"]||r["Project Id"]||r["project_id"]||"").split(",").filter(Boolean)})).filter(i=>i.personIds.length>0&&i.id));}
 setImported(true);setSyncStatus("CSVs imported ✓ — hit Sync to save");
 }catch(e){alert("Import failed: "+e.message);}
 e.target.value="";
@@ -876,9 +904,9 @@ try{
 const result=await callClaude(`This is a WhatsApp chat export. The contact is: ${contacts.find(c=>c.id===waContact)?.name||"Unknown"}. Extract the key points from this conversation as a concise interaction note (2-4 sentences). Also identify the most recent date mentioned or use today. Respond as JSON: {"note":"","date":"YYYY-MM-DD"}\n\nChat:\n${waText.slice(0,3000)}`);
 const clean=result.replace(/```json|```/g,"").trim();
 const parsed=JSON.parse(clean);
-const ni={id:"i_"+Date.now(),personIds:[waContact],type:"Note",date:parsed.date||today(),note:parsed.note||waText.slice(0,500),projectId:""};
+const ni={id:"i_"+Date.now(),personIds:[waContact],type:"Note",date:parsed.date||today(),note:parsed.note||waText.slice(0,500),projectIds:[]};
 setInteractions(is=>[ni,...is]);
-if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:waContact,person_ids:waContact,type:"Note",date:ni.date,note:ni.note,project_id:""}]).catch(()=>{});
+if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:waContact,person_ids:waContact,type:"Note",date:ni.date,note:ni.note,project_ids:""}]).catch(()=>{});
 setShowWhatsApp(false);setWaText("");setWaContact("");
 setSyncStatus("WhatsApp conversation imported as interaction ✓");
 }catch(err){alert("Could not parse conversation.");}
@@ -913,11 +941,11 @@ const overdueReminders=useMemo(()=>reminders.filter(r=>r.date<today()).sort((a,b
 const contactTasks=useCallback(cId=>tasks.filter(t=>t.contactId===cId&&t.status!=="done"),[tasks]);
 const filteredInts=useMemo(()=>{
 let list=[...interactions].sort((a,b)=>b.date.localeCompare(a.date));
-if(intFilterProject){list=list.filter(i=>i.projectId===intFilterProject);}
+if(intFilterProject){list=list.filter(i=>(i.projectIds||[]).includes(intFilterProject));}
 if(intFilter){const q=intFilter.toLowerCase();list=list.filter(i=>{const ids=intPersonIds(i);const matchPerson=ids.some(id=>{const c=contacts.find(c=>c.id===id);return c&&(c.name.toLowerCase().includes(q)||(c.company||"").toLowerCase().includes(q)||(c.email||"").toLowerCase().includes(q));});const matchNote=(i.note||"").toLowerCase().includes(q);return matchPerson||matchNote;});}
 return list;
 },[interactions,intFilter,intFilterProject,intPersonIds,contacts]);
-const bulkAssignProject=()=>{if(!intBulkProjectId||intBulkSelected.length===0)return;setInteractions(is=>is.map(i=>intBulkSelected.includes(i.id)?{...i,projectId:intBulkProjectId}:i));intBulkSelected.forEach(iId=>{if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+iId,"PATCH",{project_id:intBulkProjectId}).catch(()=>{});});setIntBulkSelected([]);setIntBulkMode(false);setIntBulkProjectId("");};
+const bulkAssignProject=()=>{if(!intBulkProjectId||intBulkSelected.length===0)return;setInteractions(is=>is.map(i=>{if(!intBulkSelected.includes(i.id))return i;const cur=i.projectIds||[];if(cur.includes(intBulkProjectId))return i;const newIds=[...cur,intBulkProjectId];return{...i,projectIds:newIds};}));intBulkSelected.forEach(iId=>{const inter=interactions.find(x=>x.id===iId);const cur=inter?.projectIds||[];const newIds=cur.includes(intBulkProjectId)?cur:[...cur,intBulkProjectId];if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+iId,"PATCH",{project_ids:newIds.join(",")}).catch(()=>{});});setIntBulkSelected([]);setIntBulkMode(false);setIntBulkProjectId("");};
 /* ===== Helper: create contact and return the new object ===== */
 const createContact=(cf,returnOnly)=>{
 const nc={name:cf.name||"",email:cf.email||"",phone:cf.phone||"",company:cf.company||"",role:cf.role||"",location:cf.location||"",notes:cf.notes||"",id:"c_"+Date.now(),groupIds:cf.groups||[],dateMet:""};
@@ -927,18 +955,18 @@ return nc;
 };
 const deleteContact=c=>{if(!window.confirm("Delete "+c.name+"?"))return;setContacts(cs=>cs.filter(x=>x.id!==c.id));setSelected(null);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+c.id,"DELETE").catch(()=>{});};
 const deleteInteraction=i=>{setInteractions(is=>is.filter(x=>x.id!==i.id));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+i.id,"DELETE").catch(()=>{});};
-const saveEditInt=draft=>{const pIds=draft.personIds||[draft.personId||draft.person_id].filter(Boolean);const updated={...draft,personIds:pIds};setInteractions(is=>is.map(i=>i.id===draft.id?updated:i));if(sbUrl&&sbKey){const patch={person_id:pIds[0]||"",person_ids:pIds.join(","),type:draft.type||"",date:draft.date||"",note:draft.note||"",project_id:draft.projectId||""};if(draft.attachments)patch.attachments=JSON.stringify(draft.attachments);sbFetch(sbUrl,sbKey,"interactions?id=eq."+draft.id,"PATCH",patch).catch(()=>{});}};
+const saveEditInt=draft=>{const pIds=draft.personIds||[draft.personId||draft.person_id].filter(Boolean);const updated={...draft,personIds:pIds};setInteractions(is=>is.map(i=>i.id===draft.id?updated:i));if(sbUrl&&sbKey){const patch={person_id:pIds[0]||"",person_ids:pIds.join(","),type:draft.type||"",date:draft.date||"",note:draft.note||"",project_ids:(draft.projectIds||[]).join(",")};if(draft.attachments)patch.attachments=JSON.stringify(draft.attachments);sbFetch(sbUrl,sbKey,"interactions?id=eq."+draft.id,"PATCH",patch).catch(()=>{});}};
 const addReminderToInt=(i,date,note)=>{const ids=intPersonIds(i);const r={id:"r_"+Date.now(),intId:i.id,contactId:ids[0],contactName:ids.map(id=>contactName(id)).join(", "),date,note,intNote:i.note||""};setReminders(rs=>[...rs,r]);setInteractions(is=>is.map(x=>x.id===i.id?{...x,reminderDate:date}:x));};
 const addAttachment=(intId,att)=>{setInteractions(is=>is.map(x=>{if(x.id!==intId)return x;const atts=[...(x.attachments||[]),att];const updated={...x,attachments:atts};if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+intId,"PATCH",{attachments:JSON.stringify(atts)}).catch(()=>{});return updated;}));};
 const dismissReminder=id=>setReminders(rs=>rs.filter(r=>r.id!==id));
-const handleQuickAdd=({contactId,type,date,note,projectId})=>{const ni={id:"i_"+Date.now(),personIds:[contactId],type:type||"Manual",date,note,projectId:projectId||""};setInteractions(is=>[ni,...is]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:contactId,person_ids:contactId,type:ni.type,date,note,project_id:projectId||""}]).catch(()=>{});};
+const handleQuickAdd=({contactId,type,date,note,projectIds:pIds})=>{const ni={id:"i_"+Date.now(),personIds:[contactId],type:type||"Manual",date,note,projectIds:pIds||[]};setInteractions(is=>[ni,...is]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:contactId,person_ids:contactId,type:ni.type,date,note,project_ids:(pIds||[]).join(",")}]).catch(()=>{});};
 const addContact=()=>{if(!cf.name.trim())return;const nc=createContact({...cf,groups:cf.groups});setCf({name:"",company:"",role:"",location:"",email:"",phone:"",groups:[],notes:""});setShowAddContact(false);};
 const saveEditContact=()=>{if(!editingContact)return;setContacts(cs=>cs.map(c=>c.id===editingContact.id?{...editingContact}:c));setSelected({...editingContact});if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+editingContact.id,"PATCH",{name:editingContact.name,email:editingContact.email||"",phone:editingContact.phone||"",company:editingContact.company||"",role:editingContact.role||"",location:editingContact.location||"",notes:editingContact.notes||"",group_ids:(editingContact.groupIds||[]).join(",")}).catch(()=>{});setEditingContact(null);};
 const renameGroup=(gId,newName)=>{if(!newName.trim())return;setGroups(gs=>gs.map(g=>g.id===gId?{...g,name:newName.trim()}:g));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"groups?id=eq."+gId,"PATCH",{name:newName.trim()}).catch(()=>{});setEditingGroupId(null);};
 const updateGroupIcon=(gId,icon)=>{setGroups(gs=>gs.map(g=>g.id===gId?{...g,icon}:g));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"groups?id=eq."+gId,"PATCH",{icon}).catch(()=>{});setShowEmojiPicker(null);};
 const deleteGroup=(gId)=>{if(!window.confirm("Delete this group?"))return;setGroups(gs=>gs.filter(x=>x.id!==gId));setContacts(cs=>cs.map(c=>{const ids=(c.groupIds||[]).filter(id=>id!==gId);return{...c,groupIds:ids};}));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"groups?id=eq."+gId,"DELETE").catch(()=>{});};
 const bulkAddToGroup=()=>{if(!bulkAddGroupId||bulkSelected.length===0)return;setContacts(cs=>cs.map(c=>{if(!bulkSelected.includes(c.id))return c;const ids=c.groupIds||[];if(ids.includes(bulkAddGroupId))return c;const newIds=[...ids,bulkAddGroupId];if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+c.id,"PATCH",{group_ids:newIds.join(",")}).catch(()=>{});return{...c,groupIds:newIds};}));setBulkAddGroupId(null);setBulkSelected([]);setBulkSearch("");};
-const addInteraction=()=>{if(!inf.date||inf.contactIds.length===0)return;const ni={id:"i_"+Date.now(),personIds:inf.contactIds,type:inf.type||"Manual",date:inf.date,note:inf.note,projectId:inf.projectId||""};setInteractions(is=>[ni,...is]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:inf.contactIds[0],person_ids:inf.contactIds.join(","),type:ni.type,date:inf.date,note:inf.note,project_id:inf.projectId||""}]).catch(()=>{});setInf({contactIds:[],date:"",note:"",type:"",projectId:""});setShowAddInteraction(false);};
+const addInteraction=()=>{if(!inf.date||inf.contactIds.length===0)return;const ni={id:"i_"+Date.now(),personIds:inf.contactIds,type:inf.type||"Manual",date:inf.date,note:inf.note,projectIds:inf.projectIds||[]};setInteractions(is=>[ni,...is]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:inf.contactIds[0],person_ids:inf.contactIds.join(","),type:ni.type,date:inf.date,note:inf.note,project_ids:(inf.projectIds||[]).join(",")}]).catch(()=>{});setInf({contactIds:[],date:"",note:"",type:"",projectIds:[]});setShowAddInteraction(false);};
 const saveDetailNote=()=>{if(!detailNote.trim()||!selected)return;const date=today();const nn=(selected.notes?selected.notes+"\n\n":"")+date+": "+detailNote;setContacts(cs=>cs.map(c=>c.id===selected.id?{...c,notes:nn}:c));setSelected(s=>({...s,notes:nn}));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+selected.id,"PATCH",{notes:nn}).catch(()=>{});setDetailNote("");};
 const handleImageNote=async e=>{const file=e.target.files[0];if(!file)return;setAiLoading(true);const toB64=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(f);});try{const b64=await toB64(file);const resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":sbKey,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:file.type||"image/jpeg",data:b64}},{type:"text",text:"Transcribe any text in this image. Return only the transcribed text."}]}]})});const data=await resp.json();setDetailNote(n=>{const t=(data.content||[]).map(b=>b.text||"").join("");return n?n+"\n"+t:t;});}catch(err){setDetailNote(n=>n+"\n[Could not read image]");}setAiLoading(false);e.target.value="";};
 const startRecording=async()=>{try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});const mr=new MediaRecorder(stream);const chunks=[];mr.ondataavailable=e=>chunks.push(e.data);mr.onstop=()=>{stream.getTracks().forEach(t=>t.stop());setRecording(false);setDetailNote(n=>n?n+"\n[Voice note]":"[Voice note]");};mr.start();setMediaRec(mr);setRecording(true);}catch(err){alert("Microphone access denied.");}};
@@ -1017,7 +1045,7 @@ return(
 <div className="mob-header" style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
 <span style={{fontSize:26,fontWeight:700,color:"#fff",letterSpacing:"-0.5px",cursor:"pointer"}} onClick={()=>goTab("dashboard")}>Collective</span>
 <div className="mob-header-right" style={{display:"flex",alignItems:"center",gap:8}}>
-{["dashboard","projects","contacts","interactions","groups","calendar"].map(t=>(
+{["dashboard","projects","contacts","interactions","groups","calendar","briefing"].map(t=>(
 <button key={t} style={nb(tab===t&&!selected)} onClick={()=>goTab(t)}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
 ))}
 <button onClick={()=>setShowAddContact(true)} style={ab("rgba(255,255,255,0.9)")}>+ Contact</button>
@@ -1074,7 +1102,7 @@ return(
 </div>
 {recent3.map((item,idx)=>{
 const col=intColor(item.type);
-const proj=item.projectId?projects.find(p=>p.id===item.projectId):null;
+const itemProjs=(item.projectIds||[]).map(pid=>projects.find(p=>p.id===pid)).filter(Boolean);
 return(
 <div key={item.id+"_"+idx} onClick={()=>{if(item.contactObj){setSelected(item.contactObj);setTab("contacts");}}} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 0",borderBottom:idx<recent3.length-1?"0.5px solid #f5f5f5":"none",cursor:"pointer"}}>
 <div style={{width:28,height:28,borderRadius:"50%",background:avatarColor(item.cName),display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(item.cName)}</div>
@@ -1086,7 +1114,7 @@ return(
 <div style={{fontSize:10,color:"#999"}}>{fmtDate(item.date)}</div>
 <div style={{display:"flex",gap:3,justifyContent:"flex-end",flexWrap:"wrap"}}>
 {item.type&&item.type!=="Manual"&&<span style={{fontSize:9,background:col.bg,color:col.text,borderRadius:10,padding:"1px 6px",fontWeight:500}}>{item.type}</span>}
-{proj&&<span style={{fontSize:9,background:"#fef3c7",color:"#92400e",borderRadius:10,padding:"1px 6px",fontWeight:500}}>{proj.name}</span>}
+{itemProjs.map(pr=><span key={pr.id} style={{fontSize:9,background:"#fef3c7",color:"#92400e",borderRadius:10,padding:"1px 6px",fontWeight:500}}>{pr.name}</span>)}
 </div>
 </div>
 </div>
@@ -1265,7 +1293,7 @@ return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",bo
 {selected.notes&&<div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}><div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:4}}>Notes</div><RichNote text={selected.notes} style={{color:"#333"}}/></div>}
 <div style={{borderTop:"0.5px solid #eee",paddingTop:12,marginBottom:14}}>
 <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:6}}>Add note</div>
-<textarea id="detail_note_ta" value={detailNote} onChange={e=>setDetailNote(e.target.value)} placeholder="Notes…" rows={3} style={{resize:"vertical",marginBottom:0}}/>
+<textarea id="detail_note_ta" value={detailNote} onChange={e=>setDetailNote(e.target.value)} onKeyDown={e=>handleBulletKey(e,detailNote,setDetailNote)} placeholder="Notes…" rows={3} style={{resize:"vertical",marginBottom:0}}/>
 <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}><FormatBar id="detail_note_ta" value={detailNote} onChange={v=>setDetailNote(v)}/></div>
 <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
 <button onClick={saveDetailNote} disabled={!detailNote.trim()} style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"6px 14px",borderRadius:8,cursor:"pointer"}}>Save</button>
@@ -1277,12 +1305,12 @@ return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",bo
 </div>
 <div style={{borderTop:"0.5px solid #eee",paddingTop:12}}>
 <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:8}}>Interactions ({contactInts(selected.id).length})</div>
-{contactInts(selected.id).slice(0,30).map(i=>{const col=intColor(i.type);const otherIds=intPersonIds(i).filter(pid=>pid!==selected.id);const proj=i.projectId?projects.find(p=>p.id===i.projectId):null;return(
+{contactInts(selected.id).slice(0,30).map(i=>{const col=intColor(i.type);const otherIds=intPersonIds(i).filter(pid=>pid!==selected.id);const iProjs=(i.projectIds||[]).map(pid=>projects.find(p=>p.id===pid)).filter(Boolean);return(
 <div key={i.id} style={{marginBottom:10,paddingBottom:10,borderBottom:"0.5px solid #f5f5f5"}}>
 <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2,flexWrap:"wrap"}}>
 <span style={{fontSize:11,color:"#999"}}>{fmtDate(i.date)}</span>
 {i.type&&i.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 7px",fontWeight:500}}>{i.type}</span>}
-{proj&&<span className="proj-tag">{proj.icon||"📁"} {proj.name}</span>}
+{iProjs.map(pr=><span key={pr.id} className="proj-tag">{pr.icon||"📁"} {pr.name}</span>)}
 {otherIds.length>0&&<span style={{fontSize:10,color:"#999"}}>with {otherIds.map(id=>contactName(id)).join(", ")}</span>}
 </div>
 {i.note&&<RichNote text={i.note}/>}
@@ -1366,6 +1394,58 @@ return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",bo
 {tab==="projects"&&(
 <ProjectsTab contacts={contacts} projects={projects} setProjects={setProjects} tasks={tasks} setTasks={setTasks} timeEntries={timeEntries} setTimeEntries={setTimeEntries} timer={timer} setTimer={setTimer} sbUrl={sbUrl} sbKey={sbKey} sbFetch={sbFetch}/>
 )}
+
+{/* BRIEFING */}
+{tab==="briefing"&&(
+<div>
+<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,flexWrap:"wrap",gap:8}}>
+<div>
+<div style={{fontSize:18,fontWeight:600,color:"#fff",marginBottom:2}}>Daily Briefing</div>
+{briefDate&&<div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>Last updated {fmtDate(briefDate)}</div>}
+</div>
+<div style={{display:"flex",gap:8,alignItems:"center"}}>
+<input value={briefTopic} onChange={e=>setBriefTopic(e.target.value)} placeholder="Topics…" style={{fontSize:12,padding:"6px 12px",width:200,background:"rgba(255,255,255,0.1)",border:"0.5px solid rgba(255,255,255,0.2)",color:"#fff",borderRadius:6}}/>
+<button onClick={()=>fetchBriefing(briefTopic)} disabled={briefLoading} style={{fontSize:12,padding:"6px 16px",background:"#4f6ef7",border:"none",color:"#fff",borderRadius:8,cursor:"pointer",fontWeight:500,opacity:briefLoading?0.6:1}}>{briefLoading?"Fetching…":"Refresh"}</button>
+</div>
+</div>
+{briefSummary&&(
+<div className="card" style={{marginBottom:14,padding:"18px 22px"}}>
+<div style={{fontSize:11,fontWeight:600,color:"#999",letterSpacing:"0.5px",marginBottom:8}}>EXECUTIVE SUMMARY</div>
+<div style={{fontSize:14,color:"#333",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{briefSummary}</div>
+</div>
+)}
+{briefArticles.length>0?(
+<div style={{display:"flex",flexDirection:"column",gap:8}}>
+{briefArticles.map((a,idx)=>(
+<div key={idx} className="card" style={{padding:"14px 18px"}}>
+<div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
+<div style={{flex:1,minWidth:0}}>
+<a href={a.url} target="_blank" rel="noopener noreferrer" style={{fontSize:14,fontWeight:500,color:"#1a1a1a",textDecoration:"none",lineHeight:1.4,display:"block",marginBottom:4}}
+onMouseOver={e=>e.currentTarget.style.color="#4f6ef7"} onMouseOut={e=>e.currentTarget.style.color="#1a1a1a"}>{a.title}</a>
+<div style={{fontSize:12,color:"#999",marginBottom:4,display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+{a.source&&<span style={{fontSize:10,fontWeight:500,background:"#f0f0ee",borderRadius:4,padding:"1px 6px"}}>{a.source}</span>}
+{a.date&&<span>{a.date}</span>}
+</div>
+{a.summary&&<div style={{fontSize:13,color:"#666",lineHeight:1.5}}>{a.summary}</div>}
+</div>
+</div>
+</div>
+))}
+</div>
+):(
+!briefLoading&&<div style={{textAlign:"center",padding:"60px 20px",color:"rgba(255,255,255,0.3)"}}>
+<div style={{fontSize:24,marginBottom:8}}>📰</div>
+<div style={{fontSize:14}}>Click "Refresh" to fetch the latest news</div>
+</div>
+)}
+{briefLoading&&(
+<div style={{textAlign:"center",padding:"40px 20px",color:"rgba(255,255,255,0.4)"}}>
+<div style={{fontSize:13}}>Searching news sources and generating briefing…</div>
+</div>
+)}
+</div>
+)}
+
 {/* GROUPS */}
 {tab==="groups"&&(
 <div>
@@ -1537,11 +1617,10 @@ return(<div style={{display:"flex",flexDirection:"column",gap:6}}>
 </select>
 <div style={{fontSize:12,color:"#666",marginBottom:4}}>Date</div>
 <div style={{marginBottom:10,position:"relative"}}><DatePicker value={inf.date} onChange={v=>setInf(f=>({...f,date:v}))}/></div>
-<div style={{fontSize:12,color:"#666",marginBottom:4}}>Project</div>
-<select value={inf.projectId||""} onChange={e=>setInf(f=>({...f,projectId:e.target.value}))} style={{marginBottom:10,fontSize:13}}>
-<option value="">No project</option>
-{projects.map(p=><option key={p.id} value={p.id}>{p.parentId?"  ↳ ":""}{p.name}</option>)}
-</select>
+<div style={{fontSize:12,color:"#666",marginBottom:4}}>Projects</div>
+<div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}>
+{projects.map(p=>{const has=(inf.projectIds||[]).includes(p.id);return<button key={p.id} type="button" onClick={()=>setInf(f=>({...f,projectIds:has?(f.projectIds||[]).filter(x=>x!==p.id):[...(f.projectIds||[]),p.id]}))} style={{fontSize:11,padding:"3px 8px",borderRadius:14,border:"0.5px solid "+(has?"#92400e":"#ddd"),background:has?"#fef3c7":"#fff",color:has?"#92400e":"#888",cursor:"pointer"}}>{p.parentId?"↳ ":""}{p.name}</button>;})}
+</div>
 <div style={{fontSize:12,color:"#666",marginBottom:4}}>People</div>
 <input placeholder="Filter contacts…" value={contactSearch} onChange={e=>{setContactSearch(e.target.value);setShowInlineAddModal(false);}} style={{marginBottom:6}}/>
 <div style={{maxHeight:150,overflowY:"auto",border:"0.5px solid #ddd",borderRadius:8,padding:8,marginBottom:4}}>
@@ -1564,7 +1643,7 @@ return(<div style={{display:"flex",flexDirection:"column",gap:6}}>
 <InlineAddContact initialName={contactSearch} onSave={cf=>{const nc=createContact(cf);setInf(f=>({...f,contactIds:[...f.contactIds,nc.id]}));setShowInlineAddModal(false);setContactSearch("");}} onCancel={()=>setShowInlineAddModal(false)}/>
 )}
 <div style={{fontSize:12,color:"#666",marginBottom:4,marginTop:6}}>Notes</div>
-<textarea id="modal_int_note" placeholder="Notes…" value={inf.note} onChange={e=>setInf(f=>({...f,note:e.target.value}))} rows={4} style={{resize:"vertical",marginBottom:0}}/>
+<textarea id="modal_int_note" placeholder="Notes…" value={inf.note} onChange={e=>setInf(f=>({...f,note:e.target.value}))} onKeyDown={e=>handleBulletKey(e,inf.note,v=>setInf(f=>({...f,note:v})))} rows={4} style={{resize:"vertical",marginBottom:0}}/>
 <div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}><FormatBar id="modal_int_note" value={inf.note} onChange={v=>setInf(f=>({...f,note:v}))}/></div>
 <div style={{display:"flex",gap:8}}>
 <button onClick={addInteraction} disabled={!inf.date||inf.contactIds.length===0} style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"7px 18px",borderRadius:8,cursor:"pointer"}}>Save</button>
