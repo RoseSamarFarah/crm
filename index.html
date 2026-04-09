@@ -65,7 +65,7 @@ const toIso=d=>{if(!d)return"";const t=new Date(d);if(!isNaN(t))return t.toISOSt
 const today=()=>new Date().toISOString().slice(0,10);
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DAYS=["Mo","Tu","We","Th","Fr","Sa","Su"];
-const intColor=type=>{const t=(type||"").toLowerCase();if(t.includes("ias"))return{bg:"#dbeafe",text:"#1d4ed8"};if(t.includes("beeorder"))return{bg:"#dcfce7",text:"#15803d"};if(t.includes("video")||t.includes("phone")||t.includes("call"))return{bg:"#dbeafe",text:"#1d4ed8"};if(t.includes("email")||t.includes("note"))return{bg:"#dcfce7",text:"#15803d"};if(t.includes("person")||t.includes("coffee")||t.includes("lunch")||t.includes("dinner")||t.includes("meeting"))return{bg:"#ede9fe",text:"#7c3aed"};return{bg:"#f3f4f6",text:"#6b7280"};};
+const intColor=type=>{const t=(type||"").toLowerCase();if(t.includes("email"))return{bg:"#dcfce7",text:"#15803d"};if(t.includes("call"))return{bg:"#dbeafe",text:"#1d4ed8"};if(t.includes("in person"))return{bg:"#ede9fe",text:"#7c3aed"};if(t.includes("note"))return{bg:"#fef3c7",text:"#92400e"};return{bg:"#f3f4f6",text:"#6b7280"};};
 const DEFAULT_GROUP_ICONS={"Beirut":"🌲","Boston":"⚾","Bridgespan":"🌉","California":"🌴","Climate":"☀️","Colombia":"☕","CrossBoundary":"🌐","Dubai":"✈️","Duke":"🔵","Egypt":"🐪","Gems":"💎","Goldman Sachs":"♠️","HBS":"📕","India":"🕌","Infrastructure":"🏗️","Investors":"📈","Jusoor":"❤️","London":"👑","Morgan Stanley":"💙","New York":"🗽","Paris":"🍷","Philanthropy and Nonprofits":"🤍","Private Equity":"💼","Sacred Heart":"🌹","Saudi Arabia":"🌙","Singapore":"🌴","Syria":"💚","Venture":"🚀","Washington DC":"🏛️"};
 const EMOJI_CATEGORIES=[
 {name:"Smileys",emojis:["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","😊","😇","🥰","😍","🤩","😘","😋","😛","😜","🤪","😎","🤓","🧐","😏","😒","😞","😔","😟","😕","🙁","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","😈","👿","💀","☠️","💩","🤡","👹","👺","👻","👽","👾","🤖"]},
@@ -173,7 +173,7 @@ const attachRef=useRef();
 const col=intColor(i.type);
 const iIds=intPersonIds(i);
 const editNoteId="edit_note_"+i.id;
-const proj=i.projectId?projects.find(p=>p.id===i.projectId):null;
+const proj=i.projectId?projects.find(p=>p.id===i.projectId)||(["IAS","BeeOrder"].includes(i.projectId)?{name:i.projectId,icon:""}:null):null;
 const attachments=i.attachments||[];
 const handleFile=e=>{const file=e.target.files[0];if(!file||!onAttach)return;if(file.size>5*1024*1024){alert("File too large (max 5 MB).");e.target.value="";return;}const reader=new FileReader();reader.onload=()=>{onAttach(i.id,{name:file.name,type:file.type,size:file.size,data:reader.result});};reader.readAsDataURL(file);e.target.value="";};
 const removeAttachment=(idx)=>{if(!onAttach)return;const newAtts=[...attachments];newAtts.splice(idx,1);saveEditInt({...i,attachments:newAtts});};
@@ -187,13 +187,12 @@ return(
 <div className="card" style={{padding:"14px 16px"}}>
 <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:10}}>Edit interaction</div>
 <select value={draft.type||""} onChange={e=>setDraft(d=>({...d,type:e.target.value}))} style={{marginBottom:8}}>
-<option value="">No type</option><option>IAS</option><option>BeeOrder</option>
+<option value="">No type</option><option>Email</option><option>Note</option><option>In Person</option><option>Call</option>
 </select>
 <div style={{marginBottom:8,position:"relative"}}><DatePicker value={draft.date} onChange={v=>setDraft(d=>({...d,date:v}))}/></div>
 <div style={{fontSize:12,color:"#666",marginBottom:4}}>Project</div>
 <select value={draft.projectId||""} onChange={e=>setDraft(d=>({...d,projectId:e.target.value}))} style={{marginBottom:8,fontSize:13}}>
-<option value="">No project</option>
-{projects.map(p=><option key={p.id} value={p.id}>{p.parentId?"  ↳ ":""}{p.name}</option>)}
+<option value="">No project</option><option value="IAS">IAS</option><option value="BeeOrder">BeeOrder</option>
 </select>
 <div style={{fontSize:12,color:"#666",marginBottom:4}}>People</div>
 <input placeholder="Filter contacts…" value={cs} onChange={e=>setCs(e.target.value)} style={{marginBottom:6}}/>
@@ -323,7 +322,7 @@ onMouseEnter={e=>e.currentTarget.style.background="#f0f4ff"} onMouseLeave={e=>e.
 </div>
 <select value={type} onChange={e=>setType(e.target.value)} style={{fontSize:13}}>
 <option value="">Type</option>
-<option>IAS</option><option>BeeOrder</option>
+<option>Email</option><option>Note</option><option>In Person</option><option>Call</option>
 </select>
 </div>
 {showInlineAdd&&(
@@ -332,8 +331,7 @@ onMouseEnter={e=>e.currentTarget.style.background="#f0f4ff"} onMouseLeave={e=>e.
 <div style={{display:"flex",gap:8,marginBottom:8,alignItems:"center",flexWrap:"wrap"}}>
 <div style={{position:"relative"}}><DatePicker value={date} onChange={v=>setDate(v)}/></div>
 <select value={projectId} onChange={e=>setProjectId(e.target.value)} style={{fontSize:13,width:"auto",flex:1,minWidth:120}}>
-<option value="">No project</option>
-{projects.map(p=><option key={p.id} value={p.id}>{p.parentId?"  ↳ ":""}{p.name}</option>)}
+<option value="">No project</option><option value="IAS">IAS</option><option value="BeeOrder">BeeOrder</option>
 </select>
 </div>
 <textarea id="quickadd_note" placeholder="Notes…" value={note} onChange={e=>setNote(e.target.value)} rows={3} style={{resize:"vertical",marginBottom:0,fontSize:13}}/>
@@ -822,16 +820,13 @@ try{
 const BATCH=50;
 const dedupe=rows=>{const seen=new Set();return rows.filter(r=>{if(!r.id||seen.has(r.id))return false;seen.add(r.id);return true;});};
 const upsert=async(table,rows)=>{const u=dedupe(rows);for(let i=0;i<u.length;i+=BATCH)await sbFetch(sbUrl,sbKey,table,"POST",u.slice(i,i+BATCH));};
-/* Try adding missing columns via rpc — ignore errors if rpc not available */
 const tryAddCol=async(table,col,type)=>{try{const token=localStorage.getItem("sb_auth_token")||sbKey;await fetch(sbUrl+"/rest/v1/rpc/run_sql",{method:"POST",headers:{"apikey":sbKey,"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({query:`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${col} ${type} DEFAULT ''`})});}catch(e){}};
 await Promise.all([tryAddCol("interactions","project_id","text"),tryAddCol("interactions","attachments","text")]);
 await upsert("groups",groups.map(g=>({id:g.id,name:g.name,description:g.description||"",icon:g.icon||"",people_ids:(g.peopleIds||[]).join(",")})));
 await upsert("contacts",contacts.map(c=>({id:c.id,name:c.name,email:c.email||"",phone:c.phone||"",notes:c.notes||"",date_met:c.dateMet||"",company:c.company||"",role:c.role||"",location:c.location||"",group_ids:(c.groupIds||c.groups||[]).join(",")})));
-/* Try full interaction sync first; if project_id column missing, fall back without it */
 const intRows=interactions.map(i=>({id:i.id,person_id:(i.personIds||[i.personId||i.person_id]).filter(Boolean)[0]||"",person_ids:(i.personIds||[i.personId||i.person_id]).filter(Boolean).join(","),type:i.type||"",date:i.date||"",note:i.note||"",project_id:i.projectId||"",attachments:JSON.stringify(i.attachments||[])}));
 try{await upsert("interactions",intRows);}catch(e){
 if(e.message&&e.message.includes("project_id")){
-/* Retry without project_id and attachments */
 const fallback=interactions.map(i=>({id:i.id,person_id:(i.personIds||[i.personId||i.person_id]).filter(Boolean)[0]||"",person_ids:(i.personIds||[i.personId||i.person_id]).filter(Boolean).join(","),type:i.type||"",date:i.date||"",note:i.note||""}));
 await upsert("interactions",fallback);
 setSyncStatus("Synced (note: run SQL below in Supabase to enable project tagging & attachments)");
@@ -929,7 +924,6 @@ if(intFilter){const q=intFilter.toLowerCase();list=list.filter(i=>{const ids=int
 return list;
 },[interactions,intFilter,intFilterProject,intPersonIds,contacts]);
 const bulkAssignProject=()=>{if(!intBulkProjectId||intBulkSelected.length===0)return;setInteractions(is=>is.map(i=>intBulkSelected.includes(i.id)?{...i,projectId:intBulkProjectId}:i));intBulkSelected.forEach(iId=>{if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+iId,"PATCH",{project_id:intBulkProjectId}).catch(()=>{});});setIntBulkSelected([]);setIntBulkMode(false);setIntBulkProjectId("");};
-/* ===== Helper: create contact and return the new object ===== */
 const createContact=(cf,returnOnly)=>{
 const nc={name:cf.name||"",email:cf.email||"",phone:cf.phone||"",company:cf.company||"",role:cf.role||"",location:cf.location||"",notes:cf.notes||"",id:"c_"+Date.now(),groupIds:cf.groups||[],dateMet:""};
 setContacts(cs=>[nc,...cs]);
@@ -1085,7 +1079,7 @@ return(
 </div>
 {recent3.map((item,idx)=>{
 const col=intColor(item.type);
-const proj=item.projectId?projects.find(p=>p.id===item.projectId):null;
+const proj=item.projectId?projects.find(p=>p.id===item.projectId)||(["IAS","BeeOrder"].includes(item.projectId)?{name:item.projectId,icon:""}:null):null;
 return(
 <div key={item.id+"_"+idx} onClick={()=>{if(item.contactObj){setSelected(item.contactObj);setTab("contacts");}}} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 0",borderBottom:idx<recent3.length-1?"0.5px solid #f5f5f5":"none",cursor:"pointer"}}>
 <div style={{width:28,height:28,borderRadius:"50%",background:avatarColor(item.cName),display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(item.cName)}</div>
@@ -1288,7 +1282,7 @@ return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",bo
 </div>
 <div style={{borderTop:"0.5px solid #eee",paddingTop:12}}>
 <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:8}}>Interactions ({contactInts(selected.id).length})</div>
-{contactInts(selected.id).slice(0,30).map(i=>{const col=intColor(i.type);const otherIds=intPersonIds(i).filter(pid=>pid!==selected.id);const proj=i.projectId?projects.find(p=>p.id===i.projectId):null;return(
+{contactInts(selected.id).slice(0,30).map(i=>{const col=intColor(i.type);const otherIds=intPersonIds(i).filter(pid=>pid!==selected.id);const proj=i.projectId?projects.find(p=>p.id===i.projectId)||(["IAS","BeeOrder"].includes(i.projectId)?{name:i.projectId,icon:""}:null):null;return(
 <div key={i.id} style={{marginBottom:10,paddingBottom:10,borderBottom:"0.5px solid #f5f5f5"}}>
 <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2,flexWrap:"wrap"}}>
 <span style={{fontSize:11,color:"#999"}}>{fmtDate(i.date)}</span>
@@ -1328,12 +1322,10 @@ return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",bo
 {/* INTERACTIONS */}
 {tab==="interactions"&&(
 <div>
-{/* Filter bar */}
 <div style={{display:"flex",gap:8,marginBottom:10,alignItems:"center",flexWrap:"wrap"}}>
 <input placeholder="Filter by person, company, or note…" value={intFilter} onChange={e=>setIntFilter(e.target.value)} style={{flex:1,minWidth:160,background:"#fff",fontSize:13,padding:"7px 12px"}}/>
 <select value={intFilterProject} onChange={e=>setIntFilterProject(e.target.value)} style={{width:"auto",background:"#fff",fontSize:13,padding:"7px 10px",minWidth:120}}>
-<option value="">All projects</option>
-{projects.map(p=><option key={p.id} value={p.id}>{p.parentId?"  ↳ ":""}{p.name}</option>)}
+<option value="">All projects</option><option value="IAS">IAS</option><option value="BeeOrder">BeeOrder</option>
 </select>
 {(intFilter||intFilterProject)&&<button onClick={()=>{setIntFilter("");setIntFilterProject("");}} style={{fontSize:11,padding:"5px 10px",color:"rgba(255,255,255,0.6)",background:"rgba(255,255,255,0.1)",border:"none",borderRadius:8,cursor:"pointer"}}>✕ clear</button>}
 <div style={{marginLeft:"auto",display:"flex",gap:6,alignItems:"center"}}>
@@ -1343,8 +1335,7 @@ return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",bo
 <React.Fragment>
 <span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>{intBulkSelected.length} selected</span>
 <select value={intBulkProjectId} onChange={e=>setIntBulkProjectId(e.target.value)} style={{fontSize:12,padding:"5px 8px",width:"auto",minWidth:110,background:"#fff",borderRadius:6}}>
-<option value="">Assign to…</option>
-{projects.map(p=><option key={p.id} value={p.id}>{p.parentId?"↳ ":""}{p.name}</option>)}
+<option value="">Assign to…</option><option value="IAS">IAS</option><option value="BeeOrder">BeeOrder</option>
 </select>
 <button onClick={bulkAssignProject} disabled={!intBulkProjectId||intBulkSelected.length===0} style={{fontSize:11,padding:"5px 12px",background:intBulkProjectId&&intBulkSelected.length>0?"#4f6ef7":"rgba(255,255,255,0.08)",border:"none",color:intBulkProjectId&&intBulkSelected.length>0?"#fff":"rgba(255,255,255,0.3)",borderRadius:6,cursor:"pointer"}}>Apply</button>
 <button onClick={()=>{setIntBulkMode(false);setIntBulkSelected([]);setIntBulkProjectId("");}} style={{fontSize:11,padding:"5px 8px",color:"rgba(255,255,255,0.4)",background:"none",border:"none",cursor:"pointer"}}>✕</button>
@@ -1464,7 +1455,7 @@ return<button key={g} onClick={toggle} style={{fontSize:12,padding:"3px 10px",bo
 <button onClick={nextMonth} style={{background:"rgba(255,255,255,0.1)",border:"none",color:"#fff",borderRadius:8,padding:"4px 10px",cursor:"pointer"}}>›</button>
 </div>
 <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-<div style={{display:"flex",gap:5}}>{[{l:"IAS",bg:"#dbeafe",t:"#1d4ed8"},{l:"BeeOrder",bg:"#dcfce7",t:"#15803d"},{l:"Other",bg:"#f3f4f6",t:"#6b7280"}].map(x=><span key={x.l} style={{fontSize:10,background:x.bg,color:x.t,borderRadius:20,padding:"2px 7px",fontWeight:500}}>{x.l}</span>)}</div>
+<div style={{display:"flex",gap:5}}>{[{l:"Email",bg:"#dcfce7",t:"#15803d"},{l:"Call",bg:"#dbeafe",t:"#1d4ed8"},{l:"In Person",bg:"#ede9fe",t:"#7c3aed"},{l:"Note",bg:"#fef3c7",t:"#92400e"}].map(x=><span key={x.l} style={{fontSize:10,background:x.bg,color:x.t,borderRadius:20,padding:"2px 7px",fontWeight:500}}>{x.l}</span>)}</div>
 {["month","week"].map(m=><button key={m} onClick={()=>setCalMode(m)} style={{background:calMode===m?"#4f6ef7":"rgba(255,255,255,0.1)",border:"none",color:"#fff",borderRadius:8,padding:"5px 12px",cursor:"pointer",fontWeight:calMode===m?500:400,fontSize:13}}>{m.charAt(0).toUpperCase()+m.slice(1)}</button>)}
 </div>
 </div>
@@ -1544,14 +1535,13 @@ return(<div style={{display:"flex",flexDirection:"column",gap:6}}>
 <div style={{fontSize:16,fontWeight:600,marginBottom:14}}>Log interaction</div>
 <div style={{fontSize:12,color:"#666",marginBottom:4}}>Type</div>
 <select value={inf.type} onChange={e=>setInf(f=>({...f,type:e.target.value}))} style={{marginBottom:10}}>
-<option value="">Select type…</option><option>IAS</option><option>BeeOrder</option>
+<option value="">Select type…</option><option>Email</option><option>Note</option><option>In Person</option><option>Call</option>
 </select>
 <div style={{fontSize:12,color:"#666",marginBottom:4}}>Date</div>
 <div style={{marginBottom:10,position:"relative"}}><DatePicker value={inf.date} onChange={v=>setInf(f=>({...f,date:v}))}/></div>
 <div style={{fontSize:12,color:"#666",marginBottom:4}}>Project</div>
 <select value={inf.projectId||""} onChange={e=>setInf(f=>({...f,projectId:e.target.value}))} style={{marginBottom:10,fontSize:13}}>
-<option value="">No project</option>
-{projects.map(p=><option key={p.id} value={p.id}>{p.parentId?"  ↳ ":""}{p.name}</option>)}
+<option value="">No project</option><option value="IAS">IAS</option><option value="BeeOrder">BeeOrder</option>
 </select>
 <div style={{fontSize:12,color:"#666",marginBottom:4}}>People</div>
 <input placeholder="Filter contacts…" value={contactSearch} onChange={e=>{setContactSearch(e.target.value);setShowInlineAddModal(false);}} style={{marginBottom:6}}/>
