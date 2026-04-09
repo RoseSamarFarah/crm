@@ -65,6 +65,7 @@ const toIso=d=>{if(!d)return"";const t=new Date(d);if(!isNaN(t))return t.toISOSt
 const today=()=>new Date().toISOString().slice(0,10);
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DAYS=["Mo","Tu","We","Th","Fr","Sa","Su"];
+const normalizeType=t=>{if(!t)return t;const m={"video chat":"Call","video":"Call","phone":"Call","phone call":"Call","coffee":"In Person","lunch":"In Person","dinner":"In Person","meeting":"In Person","in-person":"In Person"};return m[t.toLowerCase()]||t;};
 const intColor=type=>{const t=(type||"").toLowerCase();if(t.includes("email"))return{bg:"#dcfce7",text:"#15803d"};if(t.includes("call"))return{bg:"#dbeafe",text:"#1d4ed8"};if(t.includes("in person"))return{bg:"#ede9fe",text:"#7c3aed"};if(t.includes("note"))return{bg:"#fef3c7",text:"#92400e"};return{bg:"#f3f4f6",text:"#6b7280"};};
 const DEFAULT_GROUP_ICONS={"Beirut":"🌲","Boston":"⚾","Bridgespan":"🌉","California":"🌴","Climate":"☀️","Colombia":"☕","CrossBoundary":"🌐","Dubai":"✈️","Duke":"🔵","Egypt":"🐪","Gems":"💎","Goldman Sachs":"♠️","HBS":"📕","India":"🕌","Infrastructure":"🏗️","Investors":"📈","Jusoor":"❤️","London":"👑","Morgan Stanley":"💙","New York":"🗽","Paris":"🍷","Philanthropy and Nonprofits":"🤍","Private Equity":"💼","Sacred Heart":"🌹","Saudi Arabia":"🌙","Singapore":"🌴","Syria":"💚","Venture":"🚀","Washington DC":"🏛️"};
 const EMOJI_CATEGORIES=[
@@ -789,7 +790,7 @@ sbFetch(url,key,"interactions?select=*&order=date.desc&limit=9999"),
 sbFetch(url,key,"groups?select=*&order=name&limit=200")
 ]);
 setContacts(c.map(r=>({...r,groupIds:(r.group_ids||"").split(",").filter(Boolean)})));
-setInteractions(i.map(r=>{let atts=[];try{if(r.attachments)atts=JSON.parse(r.attachments);}catch(e){}return{...r,personIds:(r.person_ids||r.person_id||"").split(",").filter(Boolean),note:r.note||r.notes||"",projectId:r.project_id||"",attachments:atts};}));
+setInteractions(i.map(r=>{let atts=[];try{if(r.attachments)atts=JSON.parse(r.attachments);}catch(e){}return{...r,personIds:(r.person_ids||r.person_id||"").split(",").filter(Boolean),type:normalizeType(r.type),note:r.note||r.notes||"",projectId:r.project_id||"",attachments:atts};}));
 setGroups(g);setImported(true);
 try{
 const [p,t,te]=await Promise.all([
@@ -854,7 +855,7 @@ let pf=null,intf=null,gf=null;
 files.forEach(f=>{const n=f.name.toLowerCase();if(n.includes("people"))pf=f;else if(n.includes("interaction"))intf=f;else if(n.includes("group"))gf=f;});
 if(gf){const rows=parseCSV(await read(gf));const gl=rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name,description:r.Description||"",icon:r.Icon||"",peopleIds:(r.People||"").split(",").map(s=>s.trim()).filter(Boolean)})).filter(g=>g.name);setGroups(gl);}
 if(pf){const rows=parseCSV(await read(pf));setContacts(rows.map(r=>({id:r.Id||r.id,name:r.Name||r.name||"",email:r.Email||r.email||"",phone:r.Phone||r.phone||"",notes:r.Notes||r.notes||"",dateMet:toIso(r["Date Met"]||""),groupIds:(r.Groups||r.groups||"").split(",").map(s=>s.trim()).filter(Boolean),company:"",role:"",location:""})).filter(c=>c.name));}
-if(intf){const rows=parseCSV(await read(intf));setInteractions(rows.map(r=>({id:r["Id"]||r["id"],personIds:(r["Person Ids"]||r["person_ids"]||r["Person Id"]||r["person_id"]||"").split(",").filter(Boolean),type:r["Type"]||r["type"]||"",date:toIso(r["Date"]||r["date"]||""),note:r["Notes"]||r["notes"]||"",projectId:r["Project Id"]||r["project_id"]||""})).filter(i=>i.personIds.length>0&&i.id));}
+if(intf){const rows=parseCSV(await read(intf));setInteractions(rows.map(r=>({id:r["Id"]||r["id"],personIds:(r["Person Ids"]||r["person_ids"]||r["Person Id"]||r["person_id"]||"").split(",").filter(Boolean),type:normalizeType(r["Type"]||r["type"]||""),date:toIso(r["Date"]||r["date"]||""),note:r["Notes"]||r["notes"]||"",projectId:r["Project Id"]||r["project_id"]||""})).filter(i=>i.personIds.length>0&&i.id));}
 setImported(true);setSyncStatus("CSVs imported ✓ — hit Sync to save");
 }catch(e){alert("Import failed: "+e.message);}
 e.target.value="";
