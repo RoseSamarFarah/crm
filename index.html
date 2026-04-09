@@ -48,6 +48,8 @@ button:hover{background:#e8e8e8;}
 .mob-filter-row>input{min-width:0!important;}
 .mob-filter-row>select{width:100%!important;}
 }
+@keyframes fadeUpIn{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
+.anim-letter{display:inline-block;opacity:0;animation:fadeUpIn 0.6s ease-out forwards;}
 </style>
 </head>
 <body>
@@ -74,6 +76,11 @@ const EMOJI_CATEGORIES=[
 {name:"Flags",emojis:["🏁","🚩","🎌","🏴","🏳️","🏳️‍🌈","🇦🇷","🇦🇺","🇧🇷","🇨🇦","🇨🇳","🇨🇴","🇩🇪","🇪🇬","🇪🇸","🇫🇷","🇬🇧","🇮🇳","🇮🇹","🇯🇵","🇰🇷","🇱🇧","🇲🇽","🇳🇱","🇵🇸","🇷🇺","🇸🇦","🇸🇬","🇸🇾","🇹🇷","🇺🇦","🇦🇪","🇺🇸"]}
 ];
 const GIcon=({name,icon,size=20})=>React.createElement("span",{style:{fontSize:size,lineHeight:1}},icon||DEFAULT_GROUP_ICONS[name]||"🏷️");
+function AnimatedText({text,staggerDelay=0.05,className}){
+const [key,setKey]=useState(0);
+useEffect(()=>{setKey(k=>k+1);},[text]);
+return React.createElement("span",{key,className},text.split("").map((ch,i)=>React.createElement("span",{key:i,className:"anim-letter",style:{animationDelay:i*staggerDelay+"s",whiteSpace:ch===" "?"pre":"normal"}},ch)));
+}
 const intSortKey=i=>{const num=parseInt((i.id||'').replace(/\D/g,''))||0;return num;};
 /* ===== Rich text helpers ===== */
 const renderMd=text=>{if(!text)return"";const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");return text.split("\n").map(line=>{const el=esc(line);const bul=/^[-•]\s+(.*)/.exec(el);const num=/^(\d+)\.\s+(.*)/.exec(el);const fmt=s=>{let r=s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');r=r.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g,'<em>$1</em>');return r;};if(bul)return'<div style="display:flex;gap:6px;padding:1px 0;margin-left:4px"><span style="color:#999">•</span><span>'+fmt(bul[1])+'</span></div>';if(num)return'<div style="display:flex;gap:6px;padding:1px 0;margin-left:4px"><span style="color:#999;min-width:16px;text-align:right">'+num[1]+'.</span><span>'+fmt(num[2])+'</span></div>';return'<div>'+fmt(el||"&nbsp;")+'</div>';}).join("");};
@@ -1066,7 +1073,7 @@ return(
 {tab==="dashboard"&&!selected&&(
 <div>
 <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:16}}>
-<div style={{fontSize:20,fontWeight:600,color:"#fff"}}>{(()=>{const h=new Date().getHours();return h<12?"Good Morning":h<17?"Good Afternoon":"Good Evening";})()}, Rose</div>
+<div style={{fontSize:20,fontWeight:600,color:"#fff"}}><AnimatedText text={((()=>{const h=new Date().getHours();return h<12?"Good Morning":h<17?"Good Afternoon":"Good Evening";})()+", Rose")} staggerDelay={0.04}/></div>
 <div style={{fontSize:11,color:"rgba(255,255,255,0.35)"}}>{fmtNum(contacts.length)} contacts · {fmtNum(interactions.length)} interactions · {tasks.filter(t=>t.status!=="done").length} tasks</div>
 </div>
 <QuickAdd contacts={contacts} onAdd={handleQuickAdd} onAddContact={(cf,returnOnly)=>{return createContact(cf);}} allGroupNames={allGroupNames} groups={groups} projects={projects}/>
