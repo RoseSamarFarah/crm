@@ -76,6 +76,7 @@ const MONTHS=["January","February","March","April","May","June","July","August",
 const DAYS=["Mo","Tu","We","Th","Fr","Sa","Su"];
 const normalizeType=t=>{if(!t)return t;const m={"video chat":"Call","video":"Call","phone":"Call","phone call":"Call","coffee":"In Person","lunch":"In Person","dinner":"In Person","meeting":"In Person","in-person":"In Person"};return m[t.toLowerCase()]||t;};
 const intColor=type=>{const t=(type||"").toLowerCase();if(t.includes("email"))return{bg:"#dcfce7",text:"#15803d"};if(t.includes("call"))return{bg:"#dbeafe",text:"#1d4ed8"};if(t.includes("in person"))return{bg:"#ede9fe",text:"#7c3aed"};if(t.includes("note"))return{bg:"#fef3c7",text:"#92400e"};return{bg:"#f3f4f6",text:"#6b7280"};};
+const INT_TYPE_LEGEND=[{label:"Email",bg:"#dcfce7",text:"#15803d"},{label:"Call",bg:"#dbeafe",text:"#1d4ed8"},{label:"In Person",bg:"#ede9fe",text:"#7c3aed"},{label:"Note",bg:"#fef3c7",text:"#92400e"}];
 const DEFAULT_GROUP_ICONS={"Beirut":"🌲","Boston":"⚾","Bridgespan":"🌉","California":"🌴","Climate":"☀️","Colombia":"☕","CrossBoundary":"🌐","Dubai":"✈️","Duke":"🔵","Egypt":"🐪","Gems":"💎","Goldman Sachs":"♠️","HBS":"📕","India":"🕌","Infrastructure":"🏗️","Investors":"📈","Jusoor":"❤️","London":"👑","Morgan Stanley":"💙","New York":"🗽","Paris":"🍷","Philanthropy and Nonprofits":"🤍","Private Equity":"💼","Sacred Heart":"🌹","Saudi Arabia":"🌙","Singapore":"🌴","Syria":"💚","Venture":"🚀","Washington DC":"🏛️"};
 const EMOJI_CATEGORIES=[
 {name:"Smileys",emojis:["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","😊","😇","🥰","😍","🤩","😘","😋","😛","😜","🤪","😎","🤓","🧐","😏","😒","😞","😔","😟","😕","🙁","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","😈","👿","💀","☠️","💩","🤡","👹","👺","👻","👽","👾","🤖"]},
@@ -92,7 +93,8 @@ useEffect(()=>{setKey(k=>k+1);},[text]);
 return React.createElement("span",{key,className},text.split("").map((ch,i)=>React.createElement("span",{key:i,className:"anim-letter",style:{animationDelay:i*staggerDelay+"s",whiteSpace:ch===" "?"pre":"normal"}},ch)));
 }
 const intSortKey=i=>{const num=parseInt((i.id||'').replace(/\D/g,''))||0;return num;};
-const renderMd=text=>{if(!text)return"";const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");return text.split("\n").map(line=>{const el=esc(line);const bul=/^[-•]\s+(.*)/.exec(el);const num=/^(\d+)\.\s+(.*)/.exec(el);const fmt=s=>{let r=s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');r=r.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g,'<em>$1</em>');return r;};if(bul)return'<div style="display:flex;gap:6px;padding:1px 0;margin-left:4px"><span style="color:#999">•</span><span>'+fmt(bul[1])+'</span></div>';if(num)return'<div style="display:flex;gap:6px;padding:1px 0;margin-left:4px"><span style="color:#999;min-width:16px;text-align:right">'+num[1]+'.</span><span>'+fmt(num[2])+'</span></div>';return'<div>'+fmt(el||"&nbsp;")+'</div>';}).join("");};
+// --- Updated renderMd: recognizes more bullet types and indented bullets ---
+const renderMd=text=>{if(!text)return"";const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");return text.split("\n").map(line=>{const el=esc(line);const bul=/^(\s*)([-•*·▪▫◦‣⁃○●►–—])\s+(.*)/.exec(el);const num=/^(\s*)(\d+)[.\)]\s+(.*)/.exec(el);const fmt=s=>{let r=s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');r=r.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g,'<em>$1</em>');return r;};if(bul){const ind=Math.min((bul[1]||"").length,12)*4+4;return'<div style="display:flex;gap:6px;padding:1px 0;margin-left:'+ind+'px"><span style="color:#999">•</span><span>'+fmt(bul[3])+'</span></div>';}if(num){const ind=Math.min((num[1]||"").length,12)*4+4;return'<div style="display:flex;gap:6px;padding:1px 0;margin-left:'+ind+'px"><span style="color:#999;min-width:16px;text-align:right">'+num[2]+'.</span><span>'+fmt(num[3])+'</span></div>';}return'<div>'+fmt(el||"&nbsp;")+'</div>';}).join("");};
 const RichNote=({text,style={}})=>React.createElement("div",{dangerouslySetInnerHTML:{__html:renderMd(text)},style:{fontSize:13,color:"#444",lineHeight:1.6,...style}});
 const FormatBar=({id,value,onChange})=>{const [open,setOpen]=useState(false);const ins=(before,after)=>{const el=document.getElementById(id);const s=el?el.selectionStart:value.length;const e=el?el.selectionEnd:value.length;const nv=value.substring(0,s)+before+value.substring(s,e)+after+value.substring(e);onChange(nv);setTimeout(()=>{if(el){el.focus();el.selectionStart=s+before.length;el.selectionEnd=e+before.length;}},0);setOpen(false);};const line=prefix=>{const el=document.getElementById(id);const s=el?el.selectionStart:value.length;const before=value.substring(0,s);const lineStart=before.lastIndexOf("\n")+1;const nv=value.substring(0,lineStart)+prefix+value.substring(lineStart);onChange(nv);setTimeout(()=>{if(el)el.focus();},0);setOpen(false);};const ms={fontSize:13,padding:"7px 14px",background:"none",border:"none",cursor:"pointer",color:"#444",display:"block",width:"100%",textAlign:"left",borderRadius:0};return React.createElement("div",{style:{position:"relative",display:"inline-block"}},React.createElement("button",{type:"button",onClick:e=>{e.preventDefault();setOpen(o=>!o);},style:{background:"none",border:"none",cursor:"pointer",color:"#bbb",fontSize:14,padding:"4px 2px",lineHeight:1,letterSpacing:2}},"⋯"),open&&React.createElement(React.Fragment,null,React.createElement("div",{onClick:()=>setOpen(false),style:{position:"fixed",inset:0,zIndex:98}}),React.createElement("div",{style:{position:"absolute",bottom:"calc(100% + 6px)",left:-4,background:"#fff",borderRadius:10,boxShadow:"0 2px 16px rgba(0,0,0,0.12)",border:"0.5px solid rgba(0,0,0,0.06)",zIndex:99,overflow:"hidden",minWidth:140}},React.createElement("button",{type:"button",onClick:()=>ins("**","**"),style:{...ms,fontWeight:600,borderBottom:"0.5px solid #f0f0ee"},onMouseOver:e=>e.currentTarget.style.background="#f5f5f3",onMouseOut:e=>e.currentTarget.style.background="none"},"Bold"),React.createElement("button",{type:"button",onClick:()=>ins("*","*"),style:{...ms,fontStyle:"italic",borderBottom:"0.5px solid #f0f0ee"},onMouseOver:e=>e.currentTarget.style.background="#f5f5f3",onMouseOut:e=>e.currentTarget.style.background="none"},"Italic"),React.createElement("button",{type:"button",onClick:()=>line("- "),style:{...ms,borderBottom:"0.5px solid #f0f0ee"},onMouseOver:e=>e.currentTarget.style.background="#f5f5f3",onMouseOut:e=>e.currentTarget.style.background="none"},"Bullet"),React.createElement("button",{type:"button",onClick:()=>line("1. "),style:ms,onMouseOver:e=>e.currentTarget.style.background="#f5f5f3",onMouseOut:e=>e.currentTarget.style.background="none"},"Numbered"))));};
 const fmtDur=s=>{if(!s||s<0)return"0m";const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);const sec=Math.floor(s%60);if(h>0)return h+"h "+String(m).padStart(2,"0")+"m";if(m>0)return m+"m "+String(sec).padStart(2,"0")+"s";return sec+"s";};
@@ -166,7 +168,7 @@ return(
 );
 }
 
-function IntCard({i,contacts,contactName,intPersonIds,intContactNames,deleteInteraction,saveEditInt,setSelected,setTab,onAddReminder,projects,onAddContact,onAttach}){
+function IntCard({i,contacts,contactName,intPersonIds,intPersonIdsForDisplay,intContactNames,deleteInteraction,saveEditInt,setSelected,setTab,onAddReminder,projects,onAddContact,onAttach}){
 const [showDel,setShowDel]=useState(false);
 const [editing,setEditing]=useState(false);
 const [draft,setDraft]=useState(null);
@@ -177,7 +179,8 @@ const [reminderNote,setReminderNote]=useState("");
 const [showInlineAdd,setShowInlineAdd]=useState(false);
 const attachRef=useRef();
 const col=intColor(i.type);
-const iIds=intPersonIds(i);
+// Use display-filtered IDs (dedupes duplicate names + strips parser-garbage chips)
+const iIds=intPersonIdsForDisplay?intPersonIdsForDisplay(i):intPersonIds(i);
 const editNoteId="edit_note_"+i.id;
 const proj=i.projectId?projects.find(p=>p.id===i.projectId)||(["IAS","BeeOrder"].includes(i.projectId)?{name:i.projectId,icon:""}:null):null;
 const attachments=i.attachments||[];
@@ -236,7 +239,7 @@ return(
 {i.reminderDate&&<span style={{fontSize:10,background:"#fef3c7",color:"#92400e",borderRadius:20,padding:"1px 8px",fontWeight:500}}>⏰ {fmtDate(i.reminderDate)}</span>}
 </div>
 <div style={{fontWeight:500,fontSize:14,marginBottom:i.note?5:0,color:"#1a1a1a",display:"flex",flexWrap:"wrap",gap:4,alignItems:"center"}}>
-{iIds.map((pid,idx)=>{const c=contacts.find(c=>c.id===pid);return(<React.Fragment key={pid}>{idx>0&&<span style={{color:"#ccc",fontWeight:400}}>&</span>}<span style={{cursor:"pointer"}} onClick={()=>{if(c){setSelected(c);setTab("contacts");}}}>{c?.name||"Unknown"}</span></React.Fragment>);})}
+{iIds.length>0?iIds.map((pid,idx)=>{const c=contacts.find(c=>c.id===pid);return(<React.Fragment key={pid}>{idx>0&&<span style={{color:"#ccc",fontWeight:400}}>&</span>}<span style={{cursor:"pointer"}} onClick={()=>{if(c){setSelected(c);setTab("contacts");}}}>{c?.name||"Unknown"}</span></React.Fragment>);}):<span style={{color:"#aaa",fontWeight:400,fontStyle:"italic"}}>No contacts</span>}
 </div>
 {i.note&&<RichNote text={i.note}/>}
 {attachments.length>0&&(
@@ -307,7 +310,7 @@ return(
 /* ========================================================
    MOBILE APP COMPONENT
    ======================================================== */
-function MobileApp({contacts,interactions,groups,projects,tasks,setTasks,intPersonIds,contactGroups,contactName,lastInteraction,allGroupNames,groupMemberCount,sortedGroups,
+function MobileApp({contacts,interactions,groups,projects,tasks,setTasks,intPersonIds,intPersonIdsForDisplay,contactGroups,contactName,lastInteraction,allGroupNames,groupMemberCount,sortedGroups,
   setContacts,setInteractions,sbUrl,sbKey,sbFetch,createContact,deleteInteraction,saveEditInt,handleQuickAdd,addInteraction:addIntProp,syncToSupabase,syncing,syncStatus,
   showSettings,setShowSettings,setSbUrlInput,setSbKeyInput,sbUrlInput,sbKeyInput,connectSupabase,loadingDB,imported,authToken,loginSupabase,authEmail,setAuthEmail,authPass,setAuthPass,authLoading,authError,
   handleImportFiles,logout}){
@@ -384,7 +387,7 @@ if(selContact){
         )}
         <div className="mob-section-header">Interactions ({ints.length})</div>
         {ints.length===0&&<div style={{padding:"20px 16px",color:"#bbb",fontSize:13}}>No interactions yet.</div>}
-        {ints.slice(0,50).map(i=>{const col=intColor(i.type);const otherIds=intPersonIds(i).filter(pid=>pid!==selContact.id);return(
+        {ints.slice(0,50).map(i=>{const col=intColor(i.type);const otherIds=intPersonIdsForDisplay(i).filter(pid=>pid!==selContact.id);return(
           <div key={i.id} style={{background:"#fff",padding:"12px 16px",borderBottom:"0.5px solid #f0f0ee"}}>
             <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
               <span style={{fontSize:12,color:"#999"}}>{fmtDate(i.date)}</span>
@@ -537,7 +540,7 @@ return(
         <div>
           <input className="mob-search" placeholder="Search interactions…" value={intSearch} onChange={e=>setIntSearch(e.target.value)}/>
           <div style={{fontSize:11,color:"#999",padding:"0 16px 6px"}}>{sortedInts.length} interactions</div>
-          {sortedInts.slice(0,200).map(i=>{const col=intColor(i.type);const ids=intPersonIds(i);const names=ids.map(id=>contactName(id)).join(", ");return(
+          {sortedInts.slice(0,200).map(i=>{const col=intColor(i.type);const ids=intPersonIdsForDisplay(i);const names=ids.map(id=>contactName(id)).join(", ")||"Unknown";return(
             <div key={i.id} className="mob-row" style={{alignItems:"flex-start",gap:10}}>
               <div style={{width:36,height:36,borderRadius:"50%",background:avatarColor(names),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#fff",flexShrink:0,marginTop:2}}>{initials(names)}</div>
               <div style={{flex:1,minWidth:0}} onClick={()=>{const c=contacts.find(c=>c.id===ids[0]);if(c)setSelContact(c);}}>
@@ -972,11 +975,41 @@ e.target.value="";
 const contactGroups=useCallback(c=>{if(!c)return[];return(c.groupIds||c.groups||[]).map(gid=>{const g=groups.find(g=>g.id===gid||g.name===gid);return g?g.name:gid;}).filter(Boolean);},[groups]);
 const allGroupNames=useMemo(()=>[...new Set(groups.map(g=>g.name))],[groups]);
 const filteredContacts=useMemo(()=>contacts.filter(c=>{const q=search.toLowerCase();const cg=contactGroups(c);const mq=!q||c.name.toLowerCase().includes(q)||(c.email||"").toLowerCase().includes(q)||(c.company||"").toLowerCase().includes(q);return mq&&(filterGroup==="All"||cg.includes(filterGroup))&&(filterGroup2==="All"||cg.includes(filterGroup2));}),[contacts,search,filterGroup,filterGroup2,contactGroups]);
-const intPersonIds=useCallback(i=>{if(i.personIds&&i.personIds.length)return i.personIds;if(i.personId)return[i.personId];if(i.person_id)return[i.person_id];return[];},[]);
+// --- FIX 1: intPersonIds now dedupes by ID (handles "Yousif Damirji & Yousif Damirji" when same ID was added twice) ---
+const intPersonIds=useCallback(i=>{let ids=[];if(i.personIds&&i.personIds.length)ids=i.personIds;else if(i.personId)ids=[i.personId];else if(i.person_id)ids=[i.person_id];return[...new Set(ids)];},[]);
+// --- FIX 1b: display-layer helper also dedupes by name (case-insensitive) and filters parser garbage chips (emails/sentences). Used in IntCard, calendar, contact detail, mobile. ---
+const intPersonIdsForDisplay=useCallback(i=>{
+  const rawIds=intPersonIds(i);
+  const seen=new Set();
+  const result=[];
+  for(const pid of rawIds){
+    const c=contacts.find(c=>c.id===pid);
+    const name=(c?.name||"").trim();
+    if(!name){result.push(pid);continue;}
+    const lower=name.toLowerCase();
+    if(name.includes("@")||/[<>]/.test(name)||lower.startsWith("http"))continue;
+    if(seen.has(lower))continue;
+    seen.add(lower);
+    result.push(pid);
+  }
+  // Fallback: if strict filter removed everything, at least dedupe by name without the garbage filter so the interaction still shows people
+  if(result.length===0&&rawIds.length>0){
+    const seen2=new Set();
+    for(const pid of rawIds){
+      const c=contacts.find(c=>c.id===pid);
+      const name=(c?.name||"").trim().toLowerCase();
+      if(seen2.has(name))continue;
+      seen2.add(name);
+      result.push(pid);
+    }
+  }
+  return result;
+},[intPersonIds,contacts]);
 const contactInts=useCallback(cId=>interactions.filter(i=>intPersonIds(i).includes(cId)).sort((a,b)=>b.date.localeCompare(a.date)||intSortKey(b)-intSortKey(a)),[interactions,intPersonIds]);
 const lastInteraction=useCallback(cId=>{const hits=interactions.filter(i=>intPersonIds(i).includes(cId)).map(i=>i.date).filter(Boolean);return hits.length?hits.sort().reverse()[0]:null;},[interactions,intPersonIds]);
 const contactName=useCallback(id=>contacts.find(c=>c.id===id)?.name||"Unknown",[contacts]);
-const intContactNames=useCallback(i=>{const ids=intPersonIds(i);return ids.map(id=>contactName(id)).join(", ");},[intPersonIds,contactName]);
+// Uses display-filtered IDs so dashboard/calendar labels are deduped too
+const intContactNames=useCallback(i=>{const ids=intPersonIdsForDisplay(i);return ids.map(id=>contactName(id)).join(", ");},[intPersonIdsForDisplay,contactName]);
 const intsOnDate=useCallback(d=>interactions.filter(i=>i.date===d),[interactions]);
 const groupMemberCount=useCallback(name=>contacts.filter(c=>contactGroups(c).includes(name)).length,[contacts,contactGroups]);
 const sortedGroups=useMemo(()=>[...groups].sort((a,b)=>groupMemberCount(b.name)-groupMemberCount(a.name)),[groups,groupMemberCount]);
@@ -994,7 +1027,7 @@ const addReminderToInt=(i,date,note)=>{const ids=intPersonIds(i);const r={id:"r_
 const addAttachment=(intId,att)=>{setInteractions(is=>is.map(x=>{if(x.id!==intId)return x;const atts=[...(x.attachments||[]),att];const updated={...x,attachments:atts};if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+intId,"PATCH",{attachments:JSON.stringify(atts)}).catch(()=>{});return updated;}));};
 const handleQuickAdd=({contactId,type,date,note,projectId})=>{const ni={id:"i_"+Date.now(),personIds:[contactId],type:type||"Manual",date,note,projectId:projectId||""};setInteractions(is=>[ni,...is]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:contactId,person_ids:contactId,type:ni.type,date,note,project_id:projectId||""}]).catch(()=>{});};
 
-const recent3=useMemo(()=>[...interactions].sort((a,b)=>b.date.localeCompare(a.date)||intSortKey(b)-intSortKey(a)).slice(0,3).map(i=>{const ids=intPersonIds(i);const c=contacts.find(c=>c.id===ids[0]);return{...i,contactObj:c,cName:ids.map(id=>contacts.find(c=>c.id===id)?.name||"Unknown").join(", "),cGroups:c?contactGroups(c):[]};}),[interactions,contacts,contactGroups,intPersonIds]);
+const recent3=useMemo(()=>[...interactions].sort((a,b)=>b.date.localeCompare(a.date)||intSortKey(b)-intSortKey(a)).slice(0,3).map(i=>{const ids=intPersonIdsForDisplay(i);const c=contacts.find(c=>c.id===ids[0]);return{...i,contactObj:c,cName:ids.map(id=>contacts.find(c=>c.id===id)?.name||"Unknown").join(", ")||"Unknown",cGroups:c?contactGroups(c):[]};}),[interactions,contacts,contactGroups,intPersonIdsForDisplay]);
 
 const filteredInts=useMemo(()=>{
 let list=[...interactions].sort((a,b)=>b.date.localeCompare(a.date)||intSortKey(b)-intSortKey(a));
@@ -1055,7 +1088,7 @@ if(isMobile&&!imported)return(
 if(isMobile&&imported)return(
 <MobileApp
   contacts={contacts} interactions={interactions} groups={groups} projects={projects} tasks={tasks} setTasks={setTasks}
-  intPersonIds={intPersonIds} contactGroups={contactGroups} contactName={contactName} lastInteraction={lastInteraction}
+  intPersonIds={intPersonIds} intPersonIdsForDisplay={intPersonIdsForDisplay} contactGroups={contactGroups} contactName={contactName} lastInteraction={lastInteraction}
   allGroupNames={allGroupNames} groupMemberCount={groupMemberCount} sortedGroups={sortedGroups}
   setContacts={setContacts} setInteractions={setInteractions} sbUrl={sbUrl} sbKey={sbKey} sbFetch={sbFetch}
   createContact={createContact} deleteInteraction={deleteInteraction} saveEditInt={saveEditInt} handleQuickAdd={handleQuickAdd}
@@ -1257,7 +1290,7 @@ return(
 </div>
 {dashPopup.hits.map(h=>{const col=intColor(h.type);return(
 <div key={h.id} style={{borderBottom:"0.5px solid #f0f0ee",paddingBottom:10,marginBottom:10}}>
-<div style={{fontWeight:500,fontSize:13,color:"#4f6ef7",cursor:"pointer",marginBottom:4}} onClick={()=>{setDashPopup(null);setIntFilter("");setIntFilterProject("");goTab("interactions");setHighlightIntId(h.id);}}>{intContactNames(h)}</div>
+<div style={{fontWeight:500,fontSize:13,color:"#4f6ef7",cursor:"pointer",marginBottom:4}} onClick={()=>{setDashPopup(null);setIntFilter("");setIntFilterProject("");goTab("interactions");setHighlightIntId(h.id);}}>{intContactNames(h)||"Unknown"}</div>
 {h.type&&h.type!=="Manual"&&<span style={{fontSize:10,background:col.bg,color:col.text,borderRadius:20,padding:"1px 8px",fontWeight:500,display:"inline-block",marginBottom:4}}>{h.type}</span>}
 {h.note&&<RichNote text={h.note} style={{fontSize:12,color:"#555"}}/>}
 </div>
@@ -1339,7 +1372,7 @@ return(
 </div>
 <div style={{borderTop:"0.5px solid #eee",paddingTop:12}}>
 <div style={{fontSize:12,fontWeight:500,color:"#999",marginBottom:8}}>Interactions ({contactInts(selected.id).length})</div>
-{contactInts(selected.id).slice(0,30).map(i=>{const col=intColor(i.type);const otherIds=intPersonIds(i).filter(pid=>pid!==selected.id);const proj=i.projectId?projects.find(p=>p.id===i.projectId)||(["IAS","BeeOrder"].includes(i.projectId)?{name:i.projectId}:null):null;return(
+{contactInts(selected.id).slice(0,30).map(i=>{const col=intColor(i.type);const otherIds=intPersonIdsForDisplay(i).filter(pid=>pid!==selected.id);const proj=i.projectId?projects.find(p=>p.id===i.projectId)||(["IAS","BeeOrder"].includes(i.projectId)?{name:i.projectId}:null):null;return(
 <div key={i.id} style={{marginBottom:10,paddingBottom:10,borderBottom:"0.5px solid #f5f5f5"}}>
 <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2,flexWrap:"wrap"}}>
 <span style={{fontSize:11,color:"#999"}}>{fmtDate(i.date)}</span>
@@ -1387,7 +1420,7 @@ return(
 <div style={{display:"flex",flexDirection:"column",gap:8}}>
 {filteredInts.slice(0,200).map(i=>(
 <div key={i.id} ref={highlightIntId===i.id?highlightRef:null} style={{borderRadius:4,boxShadow:highlightIntId===i.id?"0 0 0 2px #4f6ef7":"none"}}>
-<IntCard i={i} contacts={contacts} contactName={contactName} intPersonIds={intPersonIds} intContactNames={intContactNames} deleteInteraction={deleteInteraction} saveEditInt={saveEditInt} setSelected={setSelected} setTab={setTab} onAddReminder={addReminderToInt} projects={projects} onAddContact={cf=>createContact(cf)} onAttach={addAttachment}/>
+<IntCard i={i} contacts={contacts} contactName={contactName} intPersonIds={intPersonIds} intPersonIdsForDisplay={intPersonIdsForDisplay} intContactNames={intContactNames} deleteInteraction={deleteInteraction} saveEditInt={saveEditInt} setSelected={setSelected} setTab={setTab} onAddReminder={addReminderToInt} projects={projects} onAddContact={cf=>createContact(cf)} onAttach={addAttachment}/>
 </div>
 ))}
 </div>
@@ -1418,19 +1451,27 @@ return(
 </div>
 )}
 
-{/* CALENDAR */}
+{/* CALENDAR — FIX 3: legend + FIX 4: click-to-navigate */}
 {tab==="calendar"&&(
 <div>
-<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:10}}>
 <div style={{display:"flex",alignItems:"center",gap:10}}>
 <button onClick={prevMonth} style={{background:"rgba(255,255,255,0.1)",border:"none",color:"#fff",borderRadius:8,padding:"4px 10px"}}>‹</button>
 <span style={{fontWeight:600,fontSize:15,color:"#fff"}}>{MONTHS[cm]} {cy}</span>
 <button onClick={nextMonth} style={{background:"rgba(255,255,255,0.1)",border:"none",color:"#fff",borderRadius:8,padding:"4px 10px"}}>›</button>
 </div>
+<div style={{display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"}}>
+{INT_TYPE_LEGEND.map(({label,bg,text})=>(
+<div key={label} style={{display:"flex",alignItems:"center",gap:5}}>
+<span style={{width:10,height:10,borderRadius:2,background:bg,border:"0.5px solid "+text,display:"inline-block"}}/>
+<span style={{fontSize:11,color:"rgba(255,255,255,0.65)"}}>{label}</span>
+</div>
+))}
+</div>
 </div>
 <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",marginBottom:4}}>{DAYS.map(d=><div key={d} style={{textAlign:"center",fontSize:11,color:"rgba(255,255,255,0.3)",padding:"3px 0"}}>{d}</div>)}</div>
 <div style={{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))",gap:3}}>
-{calCells.map((d,i)=>{if(!d)return React.createElement("div",{key:i});const ds=cy+"-"+String(cm+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");const hits=intsOnDate(ds);const isToday=new Date().toDateString()===new Date(ds+"T00:00:00").toDateString();return(<div key={i} style={{minHeight:100,background:"#fff",borderRadius:3,padding:"6px 8px",border:isToday?"2px solid #4f6ef7":"none"}}><div style={{fontSize:11,fontWeight:isToday?700:400,color:isToday?"#4f6ef7":"#999",marginBottom:3}}>{d}</div>{hits.slice(0,3).map(h=>{const col=intColor(h.type);const ids=intPersonIds(h);return<div key={h.id} style={{fontSize:9,background:col.bg,color:col.text,borderRadius:3,padding:"1px 4px",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:500}}>{ids.map(id=>contactName(id)).join(", ")}</div>;})}{hits.length>3&&<div style={{fontSize:9,color:"#999"}}>+{hits.length-3}</div>}</div>);})}
+{calCells.map((d,i)=>{if(!d)return React.createElement("div",{key:i});const ds=cy+"-"+String(cm+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");const hits=intsOnDate(ds);const isToday=new Date().toDateString()===new Date(ds+"T00:00:00").toDateString();return(<div key={i} style={{minHeight:100,background:"#fff",borderRadius:3,padding:"6px 8px",border:isToday?"2px solid #4f6ef7":"none"}}><div style={{fontSize:11,fontWeight:isToday?700:400,color:isToday?"#4f6ef7":"#999",marginBottom:3}}>{d}</div>{hits.slice(0,3).map(h=>{const col=intColor(h.type);const ids=intPersonIdsForDisplay(h);return <div key={h.id} onClick={e=>{e.stopPropagation();setIntFilter("");setIntFilterProject("");goTab("interactions");setHighlightIntId(h.id);}} style={{fontSize:9,background:col.bg,color:col.text,borderRadius:3,padding:"1px 4px",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:500,cursor:"pointer"}} title="Click to open this interaction">{ids.map(id=>contactName(id)).join(", ")||"Unknown"}</div>;})}{hits.length>3&&<div onClick={e=>{e.stopPropagation();setDashPopup({date:ds,hits});}} style={{fontSize:9,color:"#4f6ef7",cursor:"pointer",fontWeight:500}}>+{hits.length-3} more</div>}</div>);})}
 </div>
 </div>
 )}
