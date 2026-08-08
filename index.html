@@ -747,10 +747,9 @@ const dmed=a=>{if(!a.length)return 0;const s=[...a].sort((x,y)=>x-y);const m=Mat
 const dpct=(a,p)=>{if(!a.length)return 0;const s=[...a].sort((x,y)=>x-y);const i=(s.length-1)*p;const lo=Math.floor(i),hi=Math.ceil(i);return lo===hi?s[lo]:s[lo]+(s[hi]-s[lo])*(i-lo);};
 const dmoney=n=>n>=1000?"$"+(n/1000).toFixed(1)+"bn":"$"+n.toFixed(1)+"m";
 const DPri=({p})=>{const m={High:["#141414","#e6e6e3"],Medium:["#5a5a5a","#efefec"],Low:["#9a9a9a","#f5f5f3"]};const c=m[p]||m.Low;return <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",color:c[0],background:c[1]}}>{p}</span>;};
-
 const STATUS_COLORS={pending:["#5b6470","#eceef1"],sent:["#5f6b78","#e9edf1"],disc:["#8a6d1f","#f7efd2"],dd:["#5a7d2a","#eaf3dd"],hold:["#9a5a24","#f6e9db"],deprio:["#8f4a4a","#f4e5e5"],closed:["#256b45","#d6ecdf"]};
 const PRIORITY_COLORS={High:["#256b45","#d6ecdf"],Medium:["#8a6d1f","#f7efd2"],Low:["#9a5a24","#f6e9db"]};
-function InvestorLog({deal,store,people,inv,setInv,contacts,interactions,intPersonIds,openContact,addContact}){
+function InvestorLog({deal,store,people,inv,setInv,contacts,interactions,intPersonIds,openContact,addContact,removed,addInvestor,removeInvestor}){
   const [q,setQ]=useState("");
   const [showAdd,setShowAdd]=useState(false);
   const [sortKey,setSortKey]=useState("");
@@ -760,7 +759,9 @@ function InvestorLog({deal,store,people,inv,setInv,contacts,interactions,intPers
   const [filterPos,setFilterPos]=useState({x:0,y:0});
   const [fSearch,setFSearch]=useState("");
   const dids=deal.ids||[deal.id];
-  const logIds=[...new Set([...people.map(c=>c.id),...Object.keys(inv)])];
+  const rmv=removed||[];
+  const logIds=[...new Set([...people.map(c=>c.id),...Object.keys(inv)])].filter(id=>!rmv.includes(id));
+  const [selected,setSelected]=useState({});
   const lastFor=id=>{const ds=interactions.filter(x=>dids.includes(x.projectId)&&intPersonIds(x).includes(id)).map(x=>x.date).filter(Boolean).sort();return ds.length?ds[ds.length-1]:"";};
   const raw=(c,k)=>{const iv=inv[c.id]||{};switch(k){case"name":return c.name||"";case"type":return iv.type||"";case"location":return iv.location!==undefined?iv.location:(c.location||"");case"lead":return iv.lead||"";case"priority":return iv.priority||"";case"status":return pipeLabel(iv.status||"pending");case"last":return lastFor(c.id)||"";case"early":return iv.early?"1":"0";case"teaser":return iv.teaser?"1":"0";case"vdr":return iv.vdr?"1":"0";case"reeng":return iv.reeng?"1":"0";case"teaserDate":return iv.teaserDate||"";case"vdrDate":return iv.vdrDate||"";case"reengDate":return iv.reengDate||"";case"feedback":return iv.feedback||"";default:return"";}};
   const disp=(c,k)=>{if(["early","teaser","vdr","reeng"].includes(k))return raw(c,k)==="1"?"Yes":"No";const v=raw(c,k);return v===""?"(Blanks)":v;};
@@ -779,13 +780,21 @@ function InvestorLog({deal,store,people,inv,setInv,contacts,interactions,intPers
   const ddBtn={display:"block",width:"100%",textAlign:"left",padding:"7px 10px",background:"none",border:"none",cursor:"pointer",fontSize:12};
   const ddOpt={display:"flex",alignItems:"center",gap:7,padding:"5px 10px",cursor:"pointer",whiteSpace:"nowrap",fontSize:12};
   const matches=q.trim()?contacts.filter(c=>!logIds.includes(c.id)&&(c.name||"").toLowerCase().includes(q.trim().toLowerCase())).slice(0,7):[];
-  const addExisting=id=>{setInv(id,{});setQ("");};
-  const addNew=()=>{const nm=q.trim();if(!nm)return;const nc=addContact?addContact({name:nm}):null;if(nc&&nc.id)setInv(nc.id,{});setQ("");};
+  const addExisting=id=>{if(addInvestor)addInvestor(id);else setInv(id,{});setQ("");};
+  const addNew=()=>{const nm=q.trim();if(!nm)return;const nc=addContact?addContact({name:nm}):null;if(nc&&nc.id){if(addInvestor)addInvestor(nc.id);else setInv(nc.id,{});}setQ("");};
+  const removeRow=id=>{if(removeInvestor)removeInvestor(id);setSelected(s=>{const n={...s};delete n[id];return n;});};
+  const selIds=Object.keys(selected).filter(k=>selected[k]);
+  const removeSelected=()=>{if(removeInvestor&&selIds.length)removeInvestor(selIds);setSelected({});};
+  const toggleSel=id=>setSelected(s=>({...s,[id]:!s[id]}));
+  const allSel=rows.length>0&&rows.every(c=>selected[c.id]);
+  const toggleSelAll=()=>{if(allSel)setSelected({});else{const n={};rows.forEach(c=>n[c.id]=true);setSelected(n);}};
   const fcol=COLS.find(c=>c.k===openFilter);
   const opts=fcol?distinct(fcol.k).filter(v=>!fSearch||v.toLowerCase().includes(fSearch.toLowerCase())):[];
   return <div className="card" style={{padding:0,overflow:"visible"}}>
     <div style={{padding:"10px 14px",borderBottom:"1px solid #eee",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,position:"relative"}}>
-      <span style={{fontWeight:600,fontSize:12.5}}>Investor Log <span style={{color:"#999",fontWeight:400}}>· {rows.length}{rows.length!==allRows.length?" of "+allRows.length:""}</span>{Object.keys(colFilters).length>0&&<span onClick={()=>setColFilters({})} style={{marginLeft:10,fontSize:11,color:"#4f6ef7",cursor:"pointer",fontWeight:500}}>clear all filters</span>}</span>
+      <span style={{fontWeight:600,fontSize:12.5}}>Investor Log <span style={{color:"#999",fontWeight:400}}>· {rows.length}{rows.length!==allRows.length?" of "+allRows.length:""}</span>{Object.keys(colFilters).length>0&&<span onClick={()=>setColFilters({})} style={{marginLeft:10,fontSize:11,color:"#4f6ef7",cursor:"pointer",fontWeight:500}}>clear all filters</span>}{selIds.length>0&&<span style={{marginLeft:10,fontSize:11,color:"#999"}}>{selIds.length} selected</span>}</span>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+      {selIds.length>0&&<button onClick={removeSelected} title="Delete selected rows" style={{fontSize:11.5,fontWeight:600,padding:"7px 12px",background:"#fff",color:"#a12a2a",border:"1px solid #e3b4b4",cursor:"pointer"}}>Delete {selIds.length} row{selIds.length>1?"s":""}</button>}
       {!showAdd&&<button onClick={()=>setShowAdd(true)} title="Add investor" style={{width:30,height:30,padding:0,fontSize:20,lineHeight:1,background:"#141414",color:"#fff",border:"none",cursor:"pointer"}}>+</button>}
       {showAdd&&<div style={{position:"relative",display:"flex",alignItems:"center",gap:6}}>
         <input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Name…" style={{fontSize:12.5,padding:"6px 10px",width:240}}/>
@@ -796,19 +805,21 @@ function InvestorLog({deal,store,people,inv,setInv,contacts,interactions,intPers
           <div onClick={addNew} style={{padding:"9px 12px",cursor:"pointer",fontSize:12,color:"#4f6ef7",borderTop:"1px solid #f0f0ee",fontWeight:500}}>+ Add “{q.trim()}” as a new contact</div>
         </div>}
       </div>}
+      </div>
     </div>
     <div className="scroll" style={{overflowX:"auto"}}>
       <table style={{borderCollapse:"collapse",width:"100%",minWidth:1240}}>
-        <thead><tr>{COLS.map(col=><th key={col.k} style={{...hc,minWidth:col.w,textAlign:col.flag?"center":"left"}}>
+        <thead><tr><th style={{...hc,minWidth:30,width:30,textAlign:"center"}}><input type="checkbox" checked={allSel} onChange={toggleSelAll} title="Select all" style={{width:"auto",cursor:"pointer"}}/></th>{COLS.map(col=><th key={col.k} style={{...hc,minWidth:col.w,textAlign:col.flag?"center":"left"}}>
           <div style={{display:"flex",alignItems:"center",gap:4,justifyContent:col.flag?"center":"space-between"}}>
             <span onClick={()=>toggleSort(col.k)} style={{cursor:"pointer"}}>{col.l}{sortKey===col.k?(sortDir===1?" ↑":" ↓"):""}</span>
             <button onClick={e=>{const r=e.currentTarget.getBoundingClientRect();setFilterPos({x:Math.max(8,Math.min(r.left,window.innerWidth-224)),y:r.bottom+2});setFSearch("");setOpenFilter(openFilter===col.k?null:col.k);}} title="Filter & sort" style={{border:"none",background:colFilters[col.k]?"#141414":"none",cursor:"pointer",color:colFilters[col.k]?"#fff":"#c2c2c2",fontSize:9,padding:"1px 3px",lineHeight:1}}>▼</button>
           </div>
-        </th>)}</tr></thead>
+        </th>)}<th style={{...hc,minWidth:34,width:34,textAlign:"center"}}></th></tr></thead>
         <tbody>
-        {rows.length===0&&<tr><td colSpan={15} style={{padding:26,textAlign:"center",color:"#999",fontSize:12.5}}>No investors match the current filters — clear filters, or add one with +.</td></tr>}
-        {rows.map(c=>{const iv=inv[c.id]||{};const chk=f=><span onClick={()=>setInv(c.id,{[f]:!iv[f]})} style={{width:16,height:16,border:"1px solid #d4d4d0",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:9,cursor:"pointer",background:iv[f]?"#141414":"#fff",color:"#fff"}}>{iv[f]?"✓":""}</span>;const sc=STATUS_COLORS[iv.status||"pending"]||STATUS_COLORS.pending;return(
-          <tr key={c.id}>
+        {rows.length===0&&<tr><td colSpan={17} style={{padding:26,textAlign:"center",color:"#999",fontSize:12.5}}>No investors match the current filters — clear filters, or add one with +.</td></tr>}
+        {rows.map(c=>{const iv=inv[c.id]||{};const chk=f=><span onClick={()=>setInv(c.id,{[f]:!iv[f]})} style={{width:16,height:16,border:"1px solid #d4d4d0",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:9,cursor:"pointer",background:iv[f]?"#141414":"#fff",color:"#fff"}}>{iv[f]?"✓":""}</span>;const sc=STATUS_COLORS[iv.status||"pending"]||STATUS_COLORS.pending;const isSel=!!selected[c.id];return(
+          <tr key={c.id} style={{background:isSel?"#fdf3f3":"transparent"}}>
+            <td style={{...cell,textAlign:"center"}}><input type="checkbox" checked={isSel} onChange={()=>toggleSel(c.id)} style={{width:"auto",cursor:"pointer"}}/></td>
             <td style={{...cell,minWidth:168}}><div style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}} onClick={()=>openContact(c)}><div style={{width:24,height:24,borderRadius:"50%",background:avatarColor(c.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(c.name)}</div><div style={{minWidth:0}}><div style={{fontWeight:600,whiteSpace:"nowrap"}}>{c.name}</div>{c.company&&<div style={{fontSize:10,color:"#999",whiteSpace:"nowrap"}}>{c.company}</div>}</div></div></td>
             <td style={{...cell,minWidth:130}}><select value={iv.type||""} onChange={e=>setInv(c.id,{type:e.target.value})} style={ci}>{TYPES.map(t=><option key={t} value={t}>{t||"—"}</option>)}</select></td>
             <td style={{...cell,minWidth:110}}><input value={iv.location!==undefined?iv.location:(c.location||"")} onChange={e=>setInv(c.id,{location:e.target.value})} placeholder="—" style={ci}/></td>
@@ -824,11 +835,12 @@ function InvestorLog({deal,store,people,inv,setInv,contacts,interactions,intPers
             <td style={{...cell,textAlign:"center"}}>{chk("reeng")}</td>
             <td style={{...cell,minWidth:84}}><input value={iv.reengDate||""} onChange={e=>setInv(c.id,{reengDate:e.target.value})} placeholder="—" style={ci}/></td>
             <td style={{...cell,minWidth:180}}><input value={iv.feedback||""} onChange={e=>setInv(c.id,{feedback:e.target.value})} placeholder="—" style={ci}/></td>
+            <td style={{...cell,textAlign:"center",padding:"4px 6px"}}><button onClick={()=>removeRow(c.id)} title="Remove this investor from the log" style={{border:"none",background:"none",color:"#c26a6a",cursor:"pointer",fontSize:13,lineHeight:1,padding:"3px 5px"}} onMouseOver={e=>{e.currentTarget.style.color="#a12a2a";}} onMouseOut={e=>{e.currentTarget.style.color="#c26a6a";}}>✕</button></td>
           </tr>);})}
         </tbody>
       </table>
     </div>
-    <div style={{padding:"8px 14px",fontSize:10.5,color:"#999"}}>Click the ▼ on any column to sort and filter (Excel-style). Add investors with +. Every cell saves per deal.</div>
+    <div style={{padding:"8px 14px",fontSize:10.5,color:"#999"}}>Click the ▼ on any column to sort and filter (Excel-style). Add investors with +. Remove a row with ✕, or tick rows and use “Delete”. Every change saves per deal.</div>
     {openFilter&&fcol&&<React.Fragment>
       <div onClick={()=>setOpenFilter(null)} style={{position:"fixed",inset:0,zIndex:200}}/>
       <div style={{position:"fixed",left:filterPos.x,top:filterPos.y,zIndex:201,background:"#fff",border:"1px solid #d4d4d0",boxShadow:"0 10px 30px rgba(0,0,0,0.18)",width:214,fontSize:12}}>
@@ -848,7 +860,6 @@ function InvestorLog({deal,store,people,inv,setInv,contacts,interactions,intPers
     </React.Fragment>}
   </div>;
 }
-
 function DealsView({deals,dealCandidates,dealIds,addDeal,removeDeal,dealId,setDealId,interactions,contacts,projects,tasks,setTasks,intPersonIds,contactName,openContact,dealStore,setDeal,addContact}){
   const [openSheet,setOpenSheet]=useState(null);
   const [workTitle,setWorkTitle]=useState("");
@@ -882,13 +893,14 @@ function DealsView({deals,dealCandidates,dealIds,addDeal,removeDeal,dealId,setDe
   const peopleIds=[...new Set(dealInts.flatMap(i=>intPersonIds(i)))];
   const people=peopleIds.map(id=>contacts.find(c=>c.id===id)).filter(Boolean);
   const inv=store.investors||{};
+  const removed=store.removed||[];
   const setInv=(cid,patch)=>setDeal(deal.id,{investors:{...inv,[cid]:{...(inv[cid]||{}),...patch}}});
+  const removeInvestor=cids=>{const arr=Array.isArray(cids)?cids:[cids];const nx=Object.fromEntries(Object.entries(inv).filter(([k])=>!arr.includes(k)));setDeal(deal.id,{investors:nx,removed:[...new Set([...removed,...arr])]});};
+  const addInvestor=cid=>setDeal(deal.id,{investors:{...inv,[cid]:{...(inv[cid]||{})}},removed:removed.filter(x=>x!==cid)});
   const dealTasks=tasks.filter(t=>(deal.ids||[deal.id]).includes(t.projectId));
   const toggleTask=id=>setTasks(ts=>ts.map(t=>t.id===id?{...t,status:t.status==="done"?"todo":"done",completedAt:t.status==="done"?null:new Date().toISOString().slice(0,10)}:t));
-const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)]).size;const openTasksN=dealTasks.filter(t=>t.status!=="done").length;const _cc=(store.comps||DEAL_COMPS).filter(c=>c.inc);const _ci=store.inputs||{rev:6,ebitda:0.8,netDebt:0.5};const _rm=dmed(_cc.map(c=>c.evRev)),_em=dmed(_cc.map(c=>c.evEbitda));const midpoint=((_ci.rev*_rm-_ci.netDebt)+(_ci.ebitda*_em-_ci.netDebt))/2;
-
+const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!removed.includes(id))).size;const openTasksN=dealTasks.filter(t=>t.status!=="done").length;const _cc=(store.comps||DEAL_COMPS).filter(c=>c.inc);const _ci=store.inputs||{rev:6,ebitda:0.8,netDebt:0.5};const _rm=dmed(_cc.map(c=>c.evRev)),_em=dmed(_cc.map(c=>c.evEbitda));const midpoint=((_ci.rev*_rm-_ci.netDebt)+(_ci.ebitda*_em-_ci.netDebt))/2;
   const Flag=({label,on,onT})=><button onClick={onT} style={{display:"flex",alignItems:"center",gap:7,padding:"6px 0",background:"none",border:"none",borderBottom:"1px solid #eee",width:"100%",cursor:"pointer",textAlign:"left"}}><span style={{width:17,height:17,border:"1px solid #d4d4d0",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:10,background:on?"#141414":"#fff",color:"#fff"}}>{on?"✓":""}</span><span style={{fontSize:12.5,fontWeight:on?600:400,color:"#1a1a1a"}}>{label}</span></button>;
-
   return <div>
     <button onClick={()=>setDealId(null)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.6)",cursor:"pointer",fontSize:12,padding:0,marginBottom:10}}>← All deals</button>
     <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginBottom:14,flexWrap:"wrap",gap:10}}>
@@ -907,7 +919,6 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)]).size;const 
         <div style={{fontSize:11,color:"#4f6ef7",marginTop:12,fontWeight:500}}>Open sheet ↗</div>
       </div>))}
     </div>
-
     {openSheet&&<div style={{position:"fixed",inset:0,zIndex:400,background:"#f7f7f5",display:"flex",flexDirection:"column"}}><div style={{background:"#141414",color:"#fff",padding:"0 20px",height:48,display:"flex",alignItems:"center",gap:12,flexShrink:0}}><span style={{fontSize:16}}>{deal.icon}</span><span style={{fontWeight:700,fontSize:14}}>{deal.name}</span><span style={{color:"#8a8a8a"}}>/</span><span style={{fontWeight:600,fontSize:13}}>{({interactions:"Interactions",people:"Investor Log",work:"Workstreams",comps:"Comps & valuation"})[openSheet]}</span><div style={{flex:1}}/><button onClick={()=>setOpenSheet(null)} style={{background:"rgba(255,255,255,0.12)",border:"none",color:"#fff",padding:"6px 14px",cursor:"pointer",fontSize:12}}>✕ Close</button></div><div className="scroll" style={{flex:1,overflow:"auto",padding:"18px 22px"}}>
     {openSheet==="interactions"&&<div style={{display:"flex",flexDirection:"column",gap:8}}>
       {dealInts.length===0&&<div className="card" style={{padding:24,textAlign:"center",color:"#999"}}>No interactions tagged to this deal yet.</div>}
@@ -921,9 +932,7 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)]).size;const 
           {i.note&&<div style={{fontSize:12.5,color:"#444",lineHeight:1.55,whiteSpace:"pre-wrap"}}>{(i.note||"").replace(/\*+/g,"")}</div>}
         </div>);})}
     </div>}
-
-    {openSheet==="people"&&<InvestorLog deal={deal} store={store} people={people} inv={inv} setInv={setInv} contacts={contacts} interactions={interactions} intPersonIds={intPersonIds} openContact={openContact} addContact={addContact}/>}
-
+    {openSheet==="people"&&<InvestorLog deal={deal} store={store} people={people} inv={inv} setInv={setInv} contacts={contacts} interactions={interactions} intPersonIds={intPersonIds} openContact={openContact} addContact={addContact} removed={removed} addInvestor={addInvestor} removeInvestor={removeInvestor}/>}
     {openSheet==="work"&&(()=>{
       const dealProjId=(deal.ids||[]).find(id=>projects.some(p=>p.id===id))||deal.id;
       const proj=projects.find(p=>p.id===dealProjId);
@@ -939,7 +948,6 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)]).size;const 
         <p style={{color:"#8a8a8a",fontSize:11.5,marginTop:12}}>These are the same tasks as your <b style={{color:"#3d3d3d"}}>To Do</b> sheet, tagged {deal.name} — add them here or there and they stay in sync.</p>
       </div>;
     })()}
-
     {openSheet==="comps"&&(()=>{
       const comps=store.comps||DEAL_COMPS;const inp=store.inputs||{rev:6,ebitda:0.8,netDebt:0.5};
       const inc=comps.filter(c=>c.inc);const rM={p25:dpct(inc.map(c=>c.evRev),0.25),med:dmed(inc.map(c=>c.evRev)),p75:dpct(inc.map(c=>c.evRev),0.75)};const eM={p25:dpct(inc.map(c=>c.evEbitda),0.25),med:dmed(inc.map(c=>c.evEbitda)),p75:dpct(inc.map(c=>c.evEbitda),0.75)};
@@ -963,7 +971,6 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)]).size;const 
   </div>;
 }
 /* ===================== END DEAL PLATFORM ===================== */
-
 function App(){
 const [contacts,setContacts]=useState([]);
 const [interactions,setInteractions]=useState([]);
