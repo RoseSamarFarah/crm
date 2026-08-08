@@ -739,7 +739,7 @@ return(<div><div style={{display:"flex",alignItems:"center",justifyContent:"spac
 /* ======================= DEAL PLATFORM (added) ======================= */
 const DEAL_STAGES=["Preparation","Pre-marketing","Early discussions","Diligence","Bids due","Second-round bids"];
 const SG=["#8c8c8c","#5f6b78","#8a6d34","#3f6b68","#b5721f","#4a7a5c"];
-const PIPE=[["not","Not contacted"],["contacted","Contacted"],["disc","In discussion"],["dd","Diligence"],["hold","On hold"],["closed","Closed"]];
+const PIPE=[["pending","Pending outreach"],["sent","Outreach sent"],["disc","In discussion"],["dd","Diligence"],["hold","On hold"],["deprio","Deprioritized"],["closed","Closed (secured)"]];
 const pipeColor={not:["#8c8c8c","#f0f0ee"],contacted:["#5f6b78","#eceef1"],disc:["#8a6d34","#f2ede2"],dd:["#3f6b68","#e8efee"],hold:["#8c8c8c","#f0f0ee"],closed:["#8f4a4a","#f2e9e9"]};
 const pipeLabel=k=>{const f=PIPE.find(p=>p[0]===k);return f?f[1]:k;};
 const DEAL_COMPS=[{name:"Delivery Hero",evRev:1.3,evEbitda:13.5,inc:true},{name:"Talabat",evRev:4.6,evEbitda:16.0,inc:true},{name:"Zomato (Eternal)",evRev:7.8,evEbitda:38.0,inc:true},{name:"Deliveroo",evRev:0.9,evEbitda:11.0,inc:true},{name:"Jahez (KSA)",evRev:3.1,evEbitda:14.5,inc:true}];
@@ -748,7 +748,8 @@ const dpct=(a,p)=>{if(!a.length)return 0;const s=[...a].sort((x,y)=>x-y);const i
 const dmoney=n=>n>=1000?"$"+(n/1000).toFixed(1)+"bn":"$"+n.toFixed(1)+"m";
 const DPri=({p})=>{const m={High:["#141414","#e6e6e3"],Medium:["#5a5a5a","#efefec"],Low:["#9a9a9a","#f5f5f3"]};const c=m[p]||m.Low;return <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",color:c[0],background:c[1]}}>{p}</span>;};
 
-const STATUS_COLORS={not:["#5b6470","#eceef1"],contacted:["#8a6d1f","#f7efd2"],disc:["#5a7d2a","#eaf3dd"],dd:["#2f7d52","#dff0e7"],hold:["#9a5a24","#f6e9db"],closed:["#8f4a4a","#f4e5e5"]};
+const STATUS_COLORS={pending:["#5b6470","#eceef1"],sent:["#5f6b78","#e9edf1"],disc:["#8a6d1f","#f7efd2"],dd:["#5a7d2a","#eaf3dd"],hold:["#9a5a24","#f6e9db"],deprio:["#8f4a4a","#f4e5e5"],closed:["#256b45","#d6ecdf"]};
+const PRIORITY_COLORS={High:["#256b45","#d6ecdf"],Medium:["#8a6d1f","#f7efd2"],Low:["#9a5a24","#f6e9db"]};
 function InvestorLog({deal,store,people,inv,setInv,contacts,interactions,intPersonIds,openContact,addContact}){
   const [q,setQ]=useState("");
   const [showAdd,setShowAdd]=useState(false);
@@ -761,7 +762,7 @@ function InvestorLog({deal,store,people,inv,setInv,contacts,interactions,intPers
   const dids=deal.ids||[deal.id];
   const logIds=[...new Set([...people.map(c=>c.id),...Object.keys(inv)])];
   const lastFor=id=>{const ds=interactions.filter(x=>dids.includes(x.projectId)&&intPersonIds(x).includes(id)).map(x=>x.date).filter(Boolean).sort();return ds.length?ds[ds.length-1]:"";};
-  const raw=(c,k)=>{const iv=inv[c.id]||{};switch(k){case"name":return c.name||"";case"type":return iv.type||"";case"location":return c.location||"";case"lead":return iv.lead||"";case"priority":return iv.priority||"";case"status":return pipeLabel(iv.status||"disc");case"last":return lastFor(c.id)||"";case"early":return iv.early?"1":"0";case"teaser":return iv.teaser?"1":"0";case"vdr":return iv.vdr?"1":"0";case"reeng":return iv.reeng?"1":"0";case"teaserDate":return iv.teaserDate||"";case"vdrDate":return iv.vdrDate||"";case"reengDate":return iv.reengDate||"";case"feedback":return iv.feedback||"";default:return"";}};
+  const raw=(c,k)=>{const iv=inv[c.id]||{};switch(k){case"name":return c.name||"";case"type":return iv.type||"";case"location":return iv.location!==undefined?iv.location:(c.location||"");case"lead":return iv.lead||"";case"priority":return iv.priority||"";case"status":return pipeLabel(iv.status||"pending");case"last":return lastFor(c.id)||"";case"early":return iv.early?"1":"0";case"teaser":return iv.teaser?"1":"0";case"vdr":return iv.vdr?"1":"0";case"reeng":return iv.reeng?"1":"0";case"teaserDate":return iv.teaserDate||"";case"vdrDate":return iv.vdrDate||"";case"reengDate":return iv.reengDate||"";case"feedback":return iv.feedback||"";default:return"";}};
   const disp=(c,k)=>{if(["early","teaser","vdr","reeng"].includes(k))return raw(c,k)==="1"?"Yes":"No";const v=raw(c,k);return v===""?"(Blanks)":v;};
   const allRows=logIds.map(id=>contacts.find(c=>c.id===id)).filter(Boolean);
   const distinct=k=>[...new Set(allRows.map(c=>disp(c,k)))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
@@ -806,14 +807,14 @@ function InvestorLog({deal,store,people,inv,setInv,contacts,interactions,intPers
         </th>)}</tr></thead>
         <tbody>
         {rows.length===0&&<tr><td colSpan={15} style={{padding:26,textAlign:"center",color:"#999",fontSize:12.5}}>No investors match the current filters — clear filters, or add one with +.</td></tr>}
-        {rows.map(c=>{const iv=inv[c.id]||{};const chk=f=><span onClick={()=>setInv(c.id,{[f]:!iv[f]})} style={{width:16,height:16,border:"1px solid #d4d4d0",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:9,cursor:"pointer",background:iv[f]?"#141414":"#fff",color:"#fff"}}>{iv[f]?"✓":""}</span>;const sc=STATUS_COLORS[iv.status||"disc"];return(
+        {rows.map(c=>{const iv=inv[c.id]||{};const chk=f=><span onClick={()=>setInv(c.id,{[f]:!iv[f]})} style={{width:16,height:16,border:"1px solid #d4d4d0",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:9,cursor:"pointer",background:iv[f]?"#141414":"#fff",color:"#fff"}}>{iv[f]?"✓":""}</span>;const sc=STATUS_COLORS[iv.status||"pending"]||STATUS_COLORS.pending;return(
           <tr key={c.id}>
             <td style={{...cell,minWidth:168}}><div style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}} onClick={()=>openContact(c)}><div style={{width:24,height:24,borderRadius:"50%",background:avatarColor(c.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(c.name)}</div><div style={{minWidth:0}}><div style={{fontWeight:600,whiteSpace:"nowrap"}}>{c.name}</div>{c.company&&<div style={{fontSize:10,color:"#999",whiteSpace:"nowrap"}}>{c.company}</div>}</div></div></td>
             <td style={{...cell,minWidth:130}}><select value={iv.type||""} onChange={e=>setInv(c.id,{type:e.target.value})} style={ci}>{TYPES.map(t=><option key={t} value={t}>{t||"—"}</option>)}</select></td>
-            <td style={{...cell,minWidth:110,color:"#555",whiteSpace:"nowrap"}}>{c.location||"—"}</td>
+            <td style={{...cell,minWidth:110}}><input value={iv.location!==undefined?iv.location:(c.location||"")} onChange={e=>setInv(c.id,{location:e.target.value})} placeholder="—" style={ci}/></td>
             <td style={{...cell,minWidth:70}}><input value={iv.lead||""} onChange={e=>setInv(c.id,{lead:e.target.value})} placeholder="—" style={ci}/></td>
-            <td style={{...cell,minWidth:82}}><select value={iv.priority||""} onChange={e=>setInv(c.id,{priority:e.target.value})} style={ci}><option value="">—</option><option>High</option><option>Medium</option><option>Low</option></select></td>
-            <td style={{...cell,minWidth:120}}><select value={iv.status||"disc"} onChange={e=>setInv(c.id,{status:e.target.value})} style={{...ci,background:sc[1],color:sc[0],fontWeight:600,border:"1px solid "+sc[1]}}>{PIPE.map(p=><option key={p[0]} value={p[0]}>{p[1]}</option>)}</select></td>
+            <td style={{...cell,minWidth:82}}>{(()=>{const pc=PRIORITY_COLORS[iv.priority];return <select value={iv.priority||""} onChange={e=>setInv(c.id,{priority:e.target.value})} style={pc?{...ci,background:pc[1],color:pc[0],fontWeight:600,border:"1px solid "+pc[1]}:ci}><option value="">—</option><option>High</option><option>Medium</option><option>Low</option></select>;})()}</td>
+            <td style={{...cell,minWidth:120}}><select value={iv.status||"pending"} onChange={e=>setInv(c.id,{status:e.target.value})} style={{...ci,background:sc[1],color:sc[0],fontWeight:600,border:"1px solid "+sc[1]}}>{PIPE.map(p=><option key={p[0]} value={p[0]}>{p[1]}</option>)}</select></td>
             <td style={{...cell,minWidth:96,color:"#777",whiteSpace:"nowrap"}}>{lastFor(c.id)?fmtDate(lastFor(c.id)):"—"}</td>
             <td style={{...cell,textAlign:"center"}}>{chk("early")}</td>
             <td style={{...cell,textAlign:"center"}}>{chk("teaser")}</td>
@@ -850,6 +851,7 @@ function InvestorLog({deal,store,people,inv,setInv,contacts,interactions,intPers
 
 function DealsView({deals,dealCandidates,dealIds,addDeal,removeDeal,dealId,setDealId,interactions,contacts,projects,tasks,setTasks,intPersonIds,contactName,openContact,dealStore,setDeal,addContact}){
   const [openSheet,setOpenSheet]=useState(null);
+  const [workTitle,setWorkTitle]=useState("");
   if(!dealId){
     return <div>
       <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:14}}>
@@ -922,15 +924,21 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)]).size;const 
 
     {openSheet==="people"&&<InvestorLog deal={deal} store={store} people={people} inv={inv} setInv={setInv} contacts={contacts} interactions={interactions} intPersonIds={intPersonIds} openContact={openContact} addContact={addContact}/>}
 
-    {openSheet==="work"&&<div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-        <div className="card"><div style={{padding:"10px 14px",borderBottom:"1px solid #eee",fontWeight:600,fontSize:12.5}}>Deal tasks</div>
-          {dealTasks.length===0&&<div style={{padding:"16px 14px",color:"#999",fontSize:12}}>No tasks tagged to this deal. Add tasks in Projects and tag them to {deal.name}.</div>}
-          {dealTasks.map(t=><div key={t.id} onClick={()=>toggleTask(t.id)} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 14px",borderBottom:"1px solid #f4f4f2",cursor:"pointer"}}><span style={{width:17,height:17,border:"1px solid #d4d4d0",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:10,background:t.status==="done"?"#141414":"#fff",color:"#fff"}}>{t.status==="done"?"✓":""}</span><span style={{flex:1,fontSize:12.5,color:t.status==="done"?"#bbb":"#1a1a1a",textDecoration:t.status==="done"?"line-through":"none"}}>{t.title}</span>{t.dueDate&&<span style={{fontSize:10.5,color:"#999"}}>{fmtDate(t.dueDate)}</span>}{t.priority&&<DPri p={t.priority}/>}</div>)}
-        </div>
-        <div className="card" style={{padding:"14px 16px"}}><div style={{fontWeight:600,fontSize:12.5,marginBottom:8}}>Standard sell-side checklist</div><div style={{fontSize:12,color:"#666",lineHeight:1.7}}>Teaser · CIM / CIP · Management presentation · Model · Board deck · Engagement letter · Data room (VDR) · NDA tracker · Buyer list</div><div style={{fontSize:11,color:"#999",marginTop:10}}>These map onto your existing task engine — tag tasks to <b>{deal.name}</b> and they show on the left.</div></div>
-      </div>
-    </div>}
+    {openSheet==="work"&&(()=>{
+      const dealProjId=(deal.ids||[]).find(id=>projects.some(p=>p.id===id))||deal.id;
+      const proj=projects.find(p=>p.id===dealProjId);
+      const tagName=proj?proj.name:deal.name;const tagIcon=(proj&&proj.icon)?proj.icon:deal.icon;
+      const openT=dealTasks.filter(t=>t.status!=="done").sort((a,b)=>((a.dueDate||"~")+"").localeCompare((b.dueDate||"~")+""));
+      const doneT=dealTasks.filter(t=>t.status==="done").sort((a,b)=>((b.completedAt||"")+"").localeCompare((a.completedAt||"")+""));
+      const addWork=()=>{if(!workTitle.trim())return;setTasks(ts=>[...ts,{id:"task_"+Date.now(),title:workTitle.trim(),projectId:dealProjId,contactId:"",dueDate:"",priority:"",notes:"",status:"todo",order:0,createdAt:today()}]);setWorkTitle("");};
+      const Row=({t})=>(<div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",borderBottom:"1px solid #f0f0ee"}}><span onClick={()=>toggleTask(t.id)} style={{width:18,height:18,borderRadius:"50%",border:t.status==="done"?"none":"1.5px solid #cfcfcf",background:t.status==="done"?"#256b45":"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#fff"}}>{t.status==="done"?"✓":""}</span><span style={{flex:1,fontSize:13,color:t.status==="done"?"#bbb":"#1a1a1a",textDecoration:t.status==="done"?"line-through":"none"}}>{t.title}</span><span className="proj-tag">{(tagIcon?tagIcon+" ":"")+tagName}</span>{t.priority&&<DPri p={t.priority}/>}{t.dueDate&&<span style={{fontSize:11,color:"#999"}}>{fmtDate(t.dueDate)}</span>}{t.status==="done"&&t.completedAt&&<span style={{fontSize:10,color:"#ccc"}}>{fmtDate(t.completedAt)}</span>}</div>);
+      return <div style={{maxWidth:800}}>
+        <div className="card" style={{padding:"10px 14px",marginBottom:12,display:"flex",gap:8,alignItems:"center"}}><input placeholder={"Add a task for "+deal.name+"…"} value={workTitle} onChange={e=>setWorkTitle(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")addWork();}} style={{flex:1,fontSize:13}}/><button onClick={addWork} style={{background:"#141414",border:"none",color:"#fff",padding:"7px 16px",fontSize:12,cursor:"pointer"}}>Add</button></div>
+        <div className="card" style={{padding:0,overflow:"hidden"}}>{openT.length===0&&<div style={{padding:"28px 16px",textAlign:"center",color:"#bbb",fontSize:13}}>No open tasks — add one above.</div>}{openT.map(t=><Row key={t.id} t={t}/>)}</div>
+        {doneT.length>0&&<div style={{marginTop:14}}><div style={{fontSize:10,letterSpacing:"0.08em",textTransform:"uppercase",color:"#8a8a8a",fontWeight:600,marginBottom:6}}>Completed · {doneT.length}</div><div className="card" style={{padding:0,overflow:"hidden"}}>{doneT.map(t=><Row key={t.id} t={t}/>)}</div></div>}
+        <p style={{color:"#8a8a8a",fontSize:11.5,marginTop:12}}>These are the same tasks as your <b style={{color:"#3d3d3d"}}>To Do</b> sheet, tagged {deal.name} — add them here or there and they stay in sync.</p>
+      </div>;
+    })()}
 
     {openSheet==="comps"&&(()=>{
       const comps=store.comps||DEAL_COMPS;const inp=store.inputs||{rev:6,ebitda:0.8,netDebt:0.5};
@@ -1381,7 +1389,7 @@ return(
 <span style={{fontSize:26,fontWeight:700,color:"#fff",letterSpacing:"-0.5px",cursor:"pointer"}} onClick={()=>goTab("dashboard")}>Collective</span>
 <div style={{display:"flex",alignItems:"center",gap:8}}>
 {["dashboard","deals","projects","contacts","interactions","groups","calendar"].map(t=>(
-<button key={t} style={nb(tab===t&&!selected)} onClick={()=>goTab(t)}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
+<button key={t} style={nb(tab===t&&!selected)} onClick={()=>goTab(t)}>{t==="projects"?"To Do":t.charAt(0).toUpperCase()+t.slice(1)}</button>
 ))}
 <button onClick={()=>setShowAddContact(true)} style={ab("rgba(255,255,255,0.9)")}>+ Contact</button>
 <button onClick={()=>setShowAddInteraction(true)} style={ab("rgba(255,255,255,0.9)")}>+ Interaction</button>
