@@ -978,9 +978,8 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!
     {openSheet==="comps"&&(()=>{
       const proj={...MODEL_PROJ,...(store.proj||{})};
       const setProj=p=>setDeal(deal.id,{proj:{...proj,...p}});
-      const compOff=store.compOff||[],ffOff=store.ffOff||[];
+      const compOff=store.compOff||[];
       const toggleComp=n=>setDeal(deal.id,{compOff:compOff.includes(n)?compOff.filter(x=>x!==n):[...compOff,n]});
-      const toggleFf=l=>setDeal(deal.id,{ffOff:ffOff.includes(l)?ffOff.filter(x=>x!==l):[...ffOff,l]});
       const allC=(syncedComps&&Array.isArray(syncedComps.comps))?syncedComps.comps:[];
       const asOf=(syncedComps&&syncedComps.asOf)?fmtDate(syncedComps.asOf.slice(0,10)):null;
       const on=c=>!compOff.includes(c.n);
@@ -1009,15 +1008,21 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!
           {list.length>0&&<tr style={{background:"#f7f7f5"}}><td style={cell}></td><td style={{...cell,fontWeight:700}}>Median (incl.)</td><td style={cell}></td>{YRS.map((y,i)=><td key={"rm"+i} style={{...cell,textAlign:"center",fontWeight:700,borderLeft:i===0?"1px solid #e2e2e0":"none"}}>{fmtx(medOf(list,"rev",i))}</td>)}{YRS.map((y,i)=><td key={"em"+i} style={{...cell,textAlign:"center",fontWeight:700,borderLeft:i===0?"1px solid #e2e2e0":"none"}}>{fmtx(medOf(list,"eb",i))}</td>)}</tr>}
           </tbody></table></div></div>);
       const medRow=(nm,list,bg)=>(<tr key={nm} style={bg?{background:bg}:null}><td style={{...cell,fontWeight:nm==="Total"?700:600}}>{nm}</td>{YRS.map((y,i)=><td key={"r"+i} style={{...cell,textAlign:"center",fontWeight:nm==="Total"?700:400,borderLeft:i===0?"1px solid #e2e2e0":"none"}}>{fmtx(medOf(list,"rev",i))}</td>)}{YRS.map((y,i)=><td key={"e"+i} style={{...cell,textAlign:"center",fontWeight:nm==="Total"?700:400,borderLeft:i===0?"1px solid #e2e2e0":"none"}}>{fmtx(medOf(list,"eb",i))}</td>)}</tr>);
-      const bars=[];
-      YRS.forEach((y,yi)=>{const pr=medOf(P,"rev",yi),sr=medOf(S,"rev",yi),tr=medOf(allC,"rev",yi);const vs=[pr,sr,tr].filter(v=>v!=null);if(REV[yi]&&vs.length){const im=vs.map(v=>v*REV[yi]);bars.push({l:"EV/Rev "+y,lo:Math.min(...im),hi:Math.max(...im),mid:tr!=null?tr*REV[yi]:null,c:"#3d3d3d"});}});
-      YRS.forEach((y,yi)=>{const pe=medOf(P,"eb",yi),se=medOf(S,"eb",yi),te=medOf(allC,"eb",yi);const vs=[pe,se,te].filter(v=>v!=null);if(EB[yi]>0&&vs.length){const im=vs.map(v=>v*EB[yi]);bars.push({l:"EV/EBITDA "+y,lo:Math.min(...im),hi:Math.max(...im),mid:te!=null?te*EB[yi]:null,c:"#8a8a8a"});}});
-      bars.push({l:"Transaction · Snoonu 2.2x",lo:proj.txMult*proj.r25*0.9,hi:proj.txMult*proj.r25*1.1,mid:proj.txMult*proj.r25,c:"#256b45"});
+      // ---- valuation methods: Total median multiple x BeeOrder metric = implied EV ----
+      const methods=[];
+      YRS.forEach((y,yi)=>{const m=medOf(allC,"rev",yi);if(m!=null&&REV[yi])methods.push({l:"EV/Rev "+y,mult:m,base:REV[yi],baseL:"Rev "+y,implied:m*REV[yi],c:"#3d3d3d",fy1:y==="2027E"});});
+      YRS.forEach((y,yi)=>{const m=medOf(allC,"eb",yi);if(m!=null&&EB[yi]>0)methods.push({l:"EV/EBITDA "+y,mult:m,base:EB[yi],baseL:"EBITDA "+y,implied:m*EB[yi],c:"#8a8a8a",fy1:y==="2027E"});});
+      methods.push({l:"Transaction · Snoonu",mult:proj.txMult,base:proj.r25,baseL:"2025A rev",implied:proj.txMult*proj.r25,c:"#256b45",fy1:true});
+      const band=(typeof proj.band==="number"&&proj.band>0)?proj.band:0.2;
+      const setBand=v=>setProj({band:v});
+      const ffOff=Array.isArray(store.ffOff)?store.ffOff:methods.filter(m=>!m.fy1).map(m=>m.l);
+      const toggleFf=l=>setDeal(deal.id,{ffOff:ffOff.includes(l)?ffOff.filter(x=>x!==l):[...ffOff,l]});
+      const bars=methods.map(m=>({l:m.l,c:m.c,mid:m.implied,lo:m.implied*(1-band),hi:m.implied*(1+band)}));
       const barOn=b=>!ffOff.includes(b.l);const incB=bars.filter(barOn);
       const ffMax=Math.max(1,...bars.map(b=>b.hi))*1.06;
       const recLo=incB.length?Math.min(...incB.map(b=>b.lo)):0,recHi=incB.length?Math.max(...incB.map(b=>b.hi)):0;
-      const recMid=incB.length?med(incB.map(b=>b.mid).filter(v=>v!=null)):null;
-      return <div style={{display:"grid",gridTemplateColumns:"1.35fr 1fr",gap:14,alignItems:"start"}}>
+      const recMid=incB.length?med(incB.map(b=>b.mid)):null;
+      return <div style={{display:"grid",gridTemplateColumns:"1.3fr 1fr",gap:14,alignItems:"start"}}>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
           <div className="card" style={{padding:0,overflow:"hidden"}}>
             <div style={{padding:"9px 12px",borderBottom:"1px solid #eee",fontWeight:600,fontSize:12}}>BeeOrder inputs · model projections ($m)</div>
@@ -1037,27 +1042,36 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!
             </table></div>
           </div>
         </div>
-        <div className="card" style={{padding:0,overflow:"hidden"}}>
-          <div style={{padding:"9px 12px",borderBottom:"1px solid #eee",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:600,fontSize:12.5}}>Football field · implied EV ($m)</span><span style={{fontSize:10,color:"#999"}}>tick to include</span></div>
-          <div style={{padding:"10px 12px"}}>
-            {bars.length===0&&<div style={{padding:16,textAlign:"center",color:"#bbb",fontSize:11.5}}>Sync comps from Excel to build the field.</div>}
-            {bars.map((b,i)=>{const inb=barOn(b);const lo=(b.lo/ffMax)*100,hi=(b.hi/ffMax)*100,mid=b.mid!=null?(b.mid/ffMax)*100:null;return <div key={i} style={{display:"flex",alignItems:"center",gap:7,marginBottom:7,opacity:inb?1:0.4}}>
-              <input type="checkbox" checked={inb} onChange={()=>toggleFf(b.l)} style={{width:"auto",cursor:"pointer",flexShrink:0}}/>
-              <div style={{width:112,fontSize:10.5,color:"#444",flexShrink:0}}>{b.l}</div>
-              <div style={{flex:1,position:"relative",height:16,background:"#f2f2f0"}}><div style={{position:"absolute",left:lo+"%",width:Math.max(1.5,hi-lo)+"%",top:0,bottom:0,background:b.c,opacity:0.85}}/>{mid!=null&&<div style={{position:"absolute",left:mid+"%",top:-2,bottom:-2,width:2,background:"#141414"}}/>}</div>
-              <div style={{width:92,textAlign:"right",fontSize:10,fontVariantNumeric:"tabular-nums",color:"#444",flexShrink:0}}>{dmoney(b.lo)}–{dmoney(b.hi)}</div>
-            </div>;})}
-            {bars.length>0&&<div style={{display:"flex",gap:7,marginTop:2}}><div style={{width:19}}/><div style={{width:112}}/><div style={{flex:1,position:"relative",height:12}}>{[0,0.5,1].map(f=><span key={f} style={{position:"absolute",left:(f*100)+"%",fontSize:9,color:"#bbb",transform:"translateX(-50%)"}}>{dmoney(ffMax*f)}</span>)}</div><div style={{width:92}}/></div>}
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <div className="card" style={{padding:0,overflow:"hidden"}}>
+            <div style={{padding:"9px 12px",borderBottom:"1px solid #eee",fontWeight:600,fontSize:12}}>Valuation summary <span style={{color:"#999",fontWeight:400,fontSize:10.5}}>· Total median × BeeOrder = implied EV</span></div>
+            <div className="scroll" style={{overflowX:"auto"}}><table style={{borderCollapse:"collapse",width:"100%",minWidth:360}}>
+              <thead><tr><th style={{...hc,textAlign:"left"}}>Method</th><th style={hc}>Multiple</th><th style={hc}>BeeOrder</th><th style={{...hc,textAlign:"right"}}>Implied EV</th></tr></thead>
+              <tbody>{methods.map(m=><tr key={m.l} style={barOn({l:m.l})?null:{opacity:0.4}}><td style={{...cell,fontWeight:600,whiteSpace:"nowrap"}}>{m.l}</td><td style={{...cell,textAlign:"center",fontVariantNumeric:"tabular-nums"}}>{m.mult.toFixed(1)}x</td><td style={{...cell,textAlign:"center",color:"#888",fontVariantNumeric:"tabular-nums"}}>{m.baseL} {m.base}</td><td style={{...cell,textAlign:"right",fontWeight:700,fontVariantNumeric:"tabular-nums"}}>{dmoney(m.implied)}</td></tr>)}</tbody>
+            </table></div>
           </div>
-          {incB.length>0&&<div style={{padding:"10px 12px",borderTop:"1px solid #eee",background:"#f7f7f5"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}><span style={{fontSize:10,letterSpacing:"0.06em",textTransform:"uppercase",color:"#8a8a8a",fontWeight:600}}>Implied range (incl.)</span><span style={{fontSize:15,fontWeight:700}}>{dmoney(recLo)} – {dmoney(recHi)}</span></div>
-            {recMid!=null&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginTop:3}}><span style={{fontSize:10,letterSpacing:"0.06em",textTransform:"uppercase",color:"#8a8a8a",fontWeight:600}}>Midpoint</span><span style={{fontSize:13,fontWeight:600}}>{dmoney(recMid)}</span></div>}
-          </div>}
-          <div style={{padding:"8px 12px",display:"flex",gap:7,borderTop:"1px solid #eee"}}>
-            <button onClick={()=>setDeal(deal.id,{ffOff:bars.filter(b=>b.l.indexOf("2027E")<0&&b.l.indexOf("Transaction")<0).map(b=>b.l)})} style={{fontSize:11,padding:"5px 10px",background:"#141414",color:"#fff",border:"none",cursor:"pointer"}}>FY+1 only (2027E)</button>
-            <button onClick={()=>setDeal(deal.id,{ffOff:[]})} style={{fontSize:11,padding:"5px 10px",cursor:"pointer"}}>Show all</button>
+          <div className="card" style={{padding:0,overflow:"hidden"}}>
+            <div style={{padding:"9px 12px",borderBottom:"1px solid #eee",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:600,fontSize:12.5}}>Football field · implied EV ($m)</span><span style={{fontSize:10,color:"#666",display:"flex",alignItems:"center",gap:4}}>± <input value={Math.round(band*100)} onChange={e=>setBand(Math.max(0,(parseFloat(e.target.value)||0))/100)} style={{width:34,fontSize:11,padding:"2px 4px",textAlign:"right"}}/>%</span></div>
+            <div style={{padding:"10px 12px"}}>
+              {bars.length===0&&<div style={{padding:16,textAlign:"center",color:"#bbb",fontSize:11.5}}>Sync comps to build the field.</div>}
+              {bars.map((b,i)=>{const inb=barOn(b);const lo=(b.lo/ffMax)*100,hi=(b.hi/ffMax)*100,mid=(b.mid/ffMax)*100;return <div key={i} style={{display:"flex",alignItems:"center",gap:7,marginBottom:7,opacity:inb?1:0.4}}>
+                <input type="checkbox" checked={inb} onChange={()=>toggleFf(b.l)} style={{width:"auto",cursor:"pointer",flexShrink:0}}/>
+                <div style={{width:112,fontSize:10.5,color:"#444",flexShrink:0}}>{b.l}</div>
+                <div style={{flex:1,position:"relative",height:16,background:"#f2f2f0"}}><div style={{position:"absolute",left:lo+"%",width:Math.max(1.5,hi-lo)+"%",top:0,bottom:0,background:b.c,opacity:0.85}}/><div style={{position:"absolute",left:mid+"%",top:-2,bottom:-2,width:2,background:"#141414"}}/></div>
+                <div style={{width:100,textAlign:"right",fontSize:10,fontVariantNumeric:"tabular-nums",color:"#444",flexShrink:0}}>{dmoney(b.lo)}–{dmoney(b.hi)}</div>
+              </div>;})}
+              {bars.length>0&&<div style={{display:"flex",gap:7,marginTop:2}}><div style={{width:19}}/><div style={{width:112}}/><div style={{flex:1,position:"relative",height:12}}>{[0,0.5,1].map(f=><span key={f} style={{position:"absolute",left:(f*100)+"%",fontSize:9,color:"#bbb",transform:"translateX(-50%)"}}>{dmoney(ffMax*f)}</span>)}</div><div style={{width:100}}/></div>}
+            </div>
+            {incB.length>0&&<div style={{padding:"10px 12px",borderTop:"1px solid #eee",background:"#f7f7f5"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}><span style={{fontSize:10,letterSpacing:"0.06em",textTransform:"uppercase",color:"#8a8a8a",fontWeight:600}}>Implied range (incl.)</span><span style={{fontSize:15,fontWeight:700}}>{dmoney(recLo)} – {dmoney(recHi)}</span></div>
+              {recMid!=null&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginTop:3}}><span style={{fontSize:10,letterSpacing:"0.06em",textTransform:"uppercase",color:"#8a8a8a",fontWeight:600}}>Midpoint of methods</span><span style={{fontSize:13,fontWeight:600}}>{dmoney(recMid)}</span></div>}
+            </div>}
+            <div style={{padding:"8px 12px",display:"flex",gap:7,borderTop:"1px solid #eee"}}>
+              <button onClick={()=>setDeal(deal.id,{ffOff:methods.filter(m=>!m.fy1).map(m=>m.l)})} style={{fontSize:11,padding:"5px 10px",background:"#141414",color:"#fff",border:"none",cursor:"pointer"}}>FY+1 only (2027E)</button>
+              <button onClick={()=>setDeal(deal.id,{ffOff:[]})} style={{fontSize:11,padding:"5px 10px",cursor:"pointer"}}>Show all</button>
+            </div>
+            <div style={{padding:"0 12px 10px",fontSize:9.5,color:"#bbb"}}>Each bar = implied EV (from the summary) ± {Math.round(band*100)}%; black tick = the implied midpoint. FY+1 = 2027E. Out-year methods are undiscounted, so they read high — value off FY+1 or near-term.</div>
           </div>
-          <div style={{padding:"0 12px 10px",fontSize:9.5,color:"#bbb"}}>Bar spans Primary→Secondary implied; black tick = Total-median implied. FY+1 = 2027E metric × 2027E multiple. Out-year bars undiscounted.</div>
         </div>
       </div>;
     })()}
