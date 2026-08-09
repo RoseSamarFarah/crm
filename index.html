@@ -986,7 +986,7 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!
       const med=a=>{const s=a.filter(x=>typeof x==="number").sort((x,y)=>x-y);if(!s.length)return null;const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;};
       const medOf=(list,mt,yi)=>med(list.filter(c=>on(c)&&(mt==="eb"||c.m==="MK")).map(c=>(c[mt]||[])[yi]).filter(v=>typeof v==="number"));
       const P=allC.filter(c=>c.t==="Primary"),S=allC.filter(c=>c.t==="Secondary");
-      const YRS=["2026E","2027E","2028E"],REV=[proj.r26,proj.r27,proj.r28],EB=[proj.e26,proj.e27,proj.e28];
+      const YRS=["2026E","2027E"],REV=[proj.r26,proj.r27,proj.r28],EB=[proj.e26,proj.e27,proj.e28];
       const fmtx=v=>v==null?"—":v.toFixed(1)+"x";
       const cell={padding:"5px 8px",borderBottom:"1px solid #f0f0ee",fontSize:11.5,verticalAlign:"middle"};
       const hc={padding:"6px 8px",fontSize:9,letterSpacing:"0.04em",textTransform:"uppercase",color:"#8a8a8a",fontWeight:600,background:"#f7f7f5",borderBottom:"1px solid #e2e2e0",whiteSpace:"nowrap"};
@@ -1027,8 +1027,8 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!
           <div className="card" style={{padding:0,overflow:"hidden"}}>
             <div style={{padding:"9px 12px",borderBottom:"1px solid #eee",fontWeight:600,fontSize:12}}>BeeOrder inputs · model projections ($m)</div>
             <table style={{borderCollapse:"collapse",width:"100%"}}><thead><tr><th style={{...hc,textAlign:"left"}}></th>{YRS.map(y=><th key={y} style={hc}>{y}</th>)}</tr></thead><tbody>
-              <tr><td style={{...cell,fontWeight:600}}>Revenue</td>{["r26","r27","r28"].map(k=><td key={k} style={{...cell,textAlign:"center"}}><input value={proj[k]} onChange={e=>setProj({[k]:parseFloat(e.target.value)||0})} style={pIn}/></td>)}</tr>
-              <tr><td style={{...cell,fontWeight:600}}>EBITDA</td>{["e26","e27","e28"].map(k=><td key={k} style={{...cell,textAlign:"center"}}><input value={proj[k]} onChange={e=>setProj({[k]:parseFloat(e.target.value)||0})} style={pIn}/></td>)}</tr>
+              <tr><td style={{...cell,fontWeight:600}}>Revenue</td>{["r26","r27"].map(k=><td key={k} style={{...cell,textAlign:"center"}}><input value={proj[k]} onChange={e=>setProj({[k]:parseFloat(e.target.value)||0})} style={pIn}/></td>)}</tr>
+              <tr><td style={{...cell,fontWeight:600}}>EBITDA</td>{["e26","e27"].map(k=><td key={k} style={{...cell,textAlign:"center"}}><input value={proj[k]} onChange={e=>setProj({[k]:parseFloat(e.target.value)||0})} style={pIn}/></td>)}</tr>
             </tbody></table>
             <div style={{padding:"6px 12px",fontSize:10,color:"#bbb"}}>Editable · seed from the 2030 model. Also used: 2025A rev {proj.r25} & transaction multiple {proj.txMult}x.</div>
           </div>
