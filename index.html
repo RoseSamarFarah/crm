@@ -790,7 +790,7 @@ function InvestorLog({deal,store,people,inv,setInv,setInvMany,contacts,interacti
   const distinct=k=>[...new Set(allRows.map(c=>disp(c,k)))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
   let rows=allRows.filter(c=>Object.keys(colFilters).every(k=>colFilters[k].includes(disp(c,k))));
   if(sortKey)rows=[...rows].sort((a,b)=>raw(a,sortKey).localeCompare(raw(b,sortKey),undefined,{numeric:true})*sortDir);
-  else{const PR={High:0,Medium:1,Low:2};const prank=c=>{const iv=inv[c.id]||{};if(iv.priority==="Low"&&(iv.status||"pending")==="deprio")return 100;return (iv.priority in PR)?PR[iv.priority]:3;};rows=[...rows].sort((a,b)=>prank(a)-prank(b)||(a.name||"").localeCompare(b.name||""));}
+  else{const PR={High:0,Medium:1,Low:2};const SR={dd:0,disc:1,sent:2,hold:3,deprio:4};const prank=c=>{const iv=inv[c.id]||{};return (iv.priority in PR)?PR[iv.priority]:3;};const srank=c=>{const iv=inv[c.id]||{};const s=iv.status||"pending";return (s in SR)?SR[s]:9;};rows=[...rows].sort((a,b)=>prank(a)-prank(b)||srank(a)-srank(b)||(a.name||"").localeCompare(b.name||""));}
   const toggleSort=k=>{if(sortKey===k){if(sortDir===1)setSortDir(-1);else{setSortKey("");setSortDir(1);}}else{setSortKey(k);setSortDir(1);}};
   const toggleAll=k=>setColFilters(p=>{const n={...p};if(n[k])delete n[k];else n[k]=[];return n;});
   const toggleVal=(k,v)=>setColFilters(p=>{const all=distinct(k);const cur=p[k]?p[k]:all.slice();const next=cur.includes(v)?cur.filter(x=>x!==v):[...cur,v];const n={...p};if(next.length>=all.length)delete n[k];else n[k]=next;return n;});
@@ -866,7 +866,7 @@ function InvestorLog({deal,store,people,inv,setInv,setInvMany,contacts,interacti
         </tbody>
       </table>
     </div>
-    <div style={{padding:"8px 14px",fontSize:10.5,color:"#999"}}>Sorted by priority (High → Low) with deprioritized at the bottom — click any column ▼ to override. Hover a cell and click <b>⤓</b> to fill its value down (into ticked rows, or all rows below) — e.g. type your name as Lead once and fill it down. Add with +, remove with ✕. Every change saves per deal.</div>
+    <div style={{padding:"8px 14px",fontSize:10.5,color:"#999"}}>Sorted by priority (High → Medium → Low), then by status (Diligence → In discussion → Outreach sent → On hold → Deprioritized) — click any column ▼ to override. Hover a cell and click <b>⤓</b> to fill its value down (into ticked rows, or all rows below) — e.g. type your name as Lead once and fill it down. Add with +, remove with ✕. Every change saves per deal.</div>
     {openFilter&&fcol&&<React.Fragment>
       <div onClick={()=>setOpenFilter(null)} style={{position:"fixed",inset:0,zIndex:200}}/>
       <div style={{position:"fixed",left:filterPos.x,top:filterPos.y,zIndex:201,background:"#fff",border:"1px solid #d4d4d0",boxShadow:"0 10px 30px rgba(0,0,0,0.18)",width:214,fontSize:12}}>
