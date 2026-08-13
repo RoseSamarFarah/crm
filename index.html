@@ -1054,19 +1054,19 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!
       const nIn={width:62,fontSize:11,padding:"2px 5px",textAlign:"right",border:"1px solid #e6e6e3",background:"#fff",borderRadius:0,fontVariantNumeric:"tabular-nums"};
       const tIn={fontSize:11,padding:"2px 5px",border:"1px solid #e6e6e3",background:"#fff",borderRadius:0,width:"100%"};
       const Chk=({v,onClick})=><span onClick={onClick} title="Include / exclude" style={{display:"inline-block",width:14,height:14,border:"1px solid "+(v?"#6a6a66":"#d4d4d0"),background:v?"#f0f0ec":"#fff",color:"#1a1a1a",fontSize:10,lineHeight:"12px",textAlign:"center",cursor:"pointer",verticalAlign:"-2px"}}>{v?"✓":""}</span>;
-      const Box=({val,lbl,green,tint})=>(
-        <div style={{padding:"18px 20px",borderRight:"1px solid #f0f0ee",background:tint?"#f7f7f5":"#fff"}}>
+      const Box=({val,lbl,green,last})=>(
+        <div style={{padding:"18px 20px",borderRight:last?"none":"1px solid #f0f0ee",background:"#fff"}}>
           <div style={{fontSize:22,fontWeight:600,color:green?"#256b45":"#141414",fontVariantNumeric:"tabular-nums",lineHeight:1.2}}>{val}</div>
           <div style={{fontSize:10,letterSpacing:"0.05em",textTransform:"uppercase",color:"#8a8a8a",fontWeight:600,marginTop:8}}>{lbl}</div>
         </div>);
-      return <div style={{maxWidth:940}}>
+      return <div style={{maxWidth:1180,margin:"0 auto"}}>
 
       {/* ---------- IMPLIED VALUATION ---------- */}
       <div className="card" style={{padding:0,overflow:"hidden",marginBottom:12,display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))"}}>
         <Box val={incB.length?dmoney(recLo)+" – "+dmoney(recHi):"—"} lbl="Implied range"/>
         <Box val={recMid!=null?dmoney(recMid):"—"} lbl="Pre-money"/>
-        <Box val={recMid!=null?dmoney(recMid+RAISE_M):"—"} lbl="Post-money" green tint/>
-        <Box val={dmoney(RAISE_M)} lbl="Primary raise"/>
+        <Box val={recMid!=null?dmoney(recMid+RAISE_M):"—"} lbl="Post-money" green/>
+        <Box val={dmoney(RAISE_M)} lbl="Primary raise" last/>
       </div>
 
       {/* ---------- COMPANY FINANCIALS ---------- */}
