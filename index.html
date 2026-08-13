@@ -1038,6 +1038,7 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!
       const num=v=>(typeof v==="number"&&isFinite(v))?v.toFixed(2):"—";
       const pct=v=>(typeof v==="number"&&isFinite(v))?(v*100).toFixed(1)+"%":"—";
       const fmtx=v=>v==null?"—":v.toFixed(1)+"x";
+      const dispName=n=>String(n||"").replace(/\s*\([^)]*\)/g,"").trim()||String(n||"");
       const grow=(arr,i)=>(i>0&&typeof arr[i]==="number"&&typeof arr[i-1]==="number"&&arr[i-1]>0)?arr[i]/arr[i-1]-1:null;
       const ratio=(a,b)=>(typeof a==="number"&&typeof b==="number"&&b>0)?a/b:null;
       const precOn=precedents.filter(p=>!p.off&&typeof p.mult==="number"&&p.mult>0);
@@ -1065,8 +1066,8 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!
       <div className="card" style={{padding:0,overflow:"hidden",marginBottom:12,display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))"}}>
         <Box val={incB.length?dmoney(recLo)+" – "+dmoney(recHi):"—"} lbl="Implied range"/>
         <Box val={recMid!=null?dmoney(recMid):"—"} lbl="Pre-money"/>
-        <Box val={recMid!=null?dmoney(recMid+RAISE_M):"—"} lbl="Post-money" green/>
-        <Box val={dmoney(RAISE_M)} lbl="Primary raise" last/>
+        <Box val={"+ "+dmoney(RAISE_M)} lbl="Primary raise"/>
+        <Box val={recMid!=null?dmoney(recMid+RAISE_M):"—"} lbl="Post-money" green last/>
       </div>
 
       {/* ---------- COMPANY FINANCIALS ---------- */}
@@ -1104,7 +1105,7 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!
           {allC.length===0&&<tr><td colSpan={8} style={{padding:20,textAlign:"center",color:"#bbb",fontSize:11.5}}>No synced comps — in Excel, Refresh then run “Sync to Collective”.</td></tr>}
           {allC.map(c=>{const inc=on(c);return <tr key={c.n} style={{opacity:inc?1:0.4}}>
             <td style={{...cell,textAlign:"center"}}><Chk v={inc} onClick={()=>toggleComp(c.n)}/></td>
-            <td style={lab}>{c.n}</td>
+            <td style={lab}>{dispName(c.n)}</td>
             <td style={{...cell,textAlign:"center",fontSize:10,fontWeight:600,color:c.m==="MK"?"#256b45":"#9a5a24"}}>{c.m==="MK"?"MKTPL":"1P"}</td>
             <td style={{...dcell,textAlign:"center",fontSize:10}}>{c.t||"—"}</td>
             {YRS.map((y,i)=><td key={"r"+i} style={{...cell,borderLeft:i===0?"1px solid #f0f0ee":"none",color:c.m==="MK"?"#1a1a1a":"#cbcbcb"}}>{c.m==="MK"?fmtx((c.rev||[])[i]):"n/a"}</td>)}
