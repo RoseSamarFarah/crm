@@ -760,14 +760,17 @@ const PIPE=[["pending","Pending outreach"],["sent","Outreach sent"],["disc","In 
 const pipeColor={not:["#8c8c8c","#f0f0ee"],contacted:["#5f6b78","#eceef1"],disc:["#8a6d34","#f2ede2"],dd:["#3f6b68","#e8efee"],hold:["#8c8c8c","#f0f0ee"],closed:["#8f4a4a","#f2e9e9"]};
 const pipeLabel=k=>{const f=PIPE.find(p=>p[0]===k);return f?f[1]:k;};
 const DEAL_COMPS=[{name:"Delivery Hero",evRev:1.3,evEbitda:13.5,inc:true},{name:"Talabat",evRev:4.6,evEbitda:16.0,inc:true},{name:"Zomato (Eternal)",evRev:7.8,evEbitda:38.0,inc:true},{name:"Deliveroo",evRev:0.9,evEbitda:11.0,inc:true},{name:"Jahez (KSA)",evRev:3.1,evEbitda:14.5,inc:true}];
-const MODEL_PROJ={r25:4.58,r26:8.62,r27:24.66,r28:52.53,e26:0.57,e27:1.98,e28:5.45,txMult:2.2};
+// Financial model v3, 18 August 2026 — 2025 actuals plus the refreshed 2026-2028 projections.
+// $ in millions. r25/r26/r27/r28 = total sales; e26/e27/e28 = EBITDA.
+const MODEL_PROJ={r25:4.58,r26:9.37,r27:32.13,r28:67.50,e26:0.79,e27:2.42,e28:7.05,txMult:2.2};
 const RAISE_M=2.5; // planned round size ($m) — post-money = pre-money midpoint + RAISE_M
 // Company financials shown on the valuation sheet. Revenue and EBITDA come from MODEL_PROJ
 // (single source of truth) — only the rows MODEL_PROJ does not carry live here.
-const MODEL_FIN={gmv:[22.41,34.85,76.41,148.67],gp:[2.13,3.58,9.22,19.99],take:[0.204,0.20,0.21,0.22],e25:0.43};
+const MODEL_FIN={gmv:[22.41,46.37,111.29,214.72],gp:[2.13,4.22,14.46,30.37],take:[0.204,0.20,0.21,0.22],e25:0.42};
 const DEFAULT_PRECEDENTS=[{n:"Snoonu",inv:"",date:"Mar 25",stake:"Minority",mult:2.2,off:false}];
 // Single source of truth for the deal valuation (mirrors the Comps & valuation sheet exactly).
 // Both the dashboard card and the sheet read from this so the implied midpoint can't drift.
+// PRIMARY BASIS: the Snoonu precedent multiple applied to 2026E revenue. Everything else is context.
 function computeVal(store,syncedComps){
   store=store||{};
   const proj={...MODEL_PROJ,...(store.proj||{})};
@@ -782,15 +785,19 @@ function computeVal(store,syncedComps){
   YRS.forEach((y,yi)=>{const m=medOf(allC,"eb",yi);if(m!=null&&EB[yi]>0)methods.push({l:"EV/EBITDA "+y,mult:m,base:EB[yi],baseL:"EBITDA "+y,implied:m*EB[yi],c:"#8a8a8a",fy1:y==="2027E"});});
   const precs=Array.isArray(store.precedents)?store.precedents.filter(p=>p&&!p.off&&typeof p.mult==="number"&&p.mult>0):[];
   const txM=precs.length?med(precs.map(p=>p.mult)):proj.txMult;
-  methods.push({l:"Transaction · Snoonu",mult:txM,base:proj.r25,baseL:"2025A rev",implied:txM*proj.r25,c:"#256b45",fy1:true});
+  /* PRIMARY basis — Snoonu transaction multiple on 2026E revenue */
+  methods.push({l:"Transaction · Snoonu",mult:txM,base:proj.r26,baseL:"2026E rev",implied:txM*proj.r26,c:"#256b45",fy1:true,primary:true});
   const band=(typeof proj.band==="number"&&proj.band>0)?proj.band:0.1;
-  const ffOff=Array.isArray(store.ffOff)?store.ffOff:methods.filter(m=>!m.fy1).map(m=>m.l);
-  const bars=methods.map(m=>({l:m.l,c:m.c,mid:m.implied,lo:m.implied*(1-band),hi:m.implied*(1+band)}));
+  /* default field shows the primary method only; comps stay on the sheet as context */
+  const ffOff=Array.isArray(store.ffOff)?store.ffOff:methods.filter(m=>!m.primary).map(m=>m.l);
+  const bars=methods.map(m=>({l:m.l,c:m.c,mid:m.implied,lo:m.implied*(1-band),hi:m.implied*(1+band),primary:!!m.primary}));
   const incB=bars.filter(b=>!ffOff.includes(b.l));
   const recLo=incB.length?Math.min(...incB.map(b=>b.lo)):0,recHi=incB.length?Math.max(...incB.map(b=>b.hi)):0;
   const recMid=incB.length?med(incB.map(b=>b.mid)):null;
   const preMoney=recMid,postMoney=recMid!=null?recMid+RAISE_M:null;
-  return {proj,allC,P:allC.filter(c=>c.t==="Primary"),S:allC.filter(c=>c.t==="Secondary"),on,med,medOf,YRS,REV,EB,methods,band,ffOff,bars,incB,recLo,recHi,recMid,preMoney,postMoney};
+  const primaryBar=bars.find(b=>b.primary)||null;
+  const primaryOnly=incB.length===1&&!!(incB[0]&&incB[0].primary);
+  return {proj,allC,P:allC.filter(c=>c.t==="Primary"),S:allC.filter(c=>c.t==="Secondary"),on,med,medOf,YRS,REV,EB,methods,band,ffOff,bars,incB,recLo,recHi,recMid,preMoney,postMoney,txM,primaryBar,primaryOnly};
 }
 const dmed=a=>{if(!a.length)return 0;const s=[...a].sort((x,y)=>x-y);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;};
 const dpct=(a,p)=>{if(!a.length)return 0;const s=[...a].sort((x,y)=>x-y);const i=(s.length-1)*p;const lo=Math.floor(i),hi=Math.ceil(i);return lo===hi?s[lo]:s[lo]+(s[hi]-s[lo])*(i-lo);};
@@ -971,7 +978,7 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!
     {/* subtabs */}
     <div style={{fontSize:10,letterSpacing:"0.09em",textTransform:"uppercase",color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:8}}>Sheets</div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:6}}>
-    {[["interactions","\uD83D\uDCAC","Interactions",dealInts.length+" logged","Full activity history"],["people","\uD83D\uDCCA","Investor Log",logCount+" investors","Excel-style outreach sheet"],["work","\u2705","Workstreams",openTasksN+" open tasks","Deal to-do list"],["comps","\uD83D\uDCC8","Comps & valuation",preMoney!=null?dmoney(preMoney)+" pre \u00B7 "+dmoney(postMoney)+" post":"Sync comps to value",preMoney!=null?"Midpoint pre-money + $2.5m raise":"Valuation model"]].map(([k,ic,ti,st,su])=>(
+    {[["interactions","💬","Interactions",dealInts.length+" logged","Full activity history"],["people","📊","Investor Log",logCount+" investors","Excel-style outreach sheet"],["work","✅","Workstreams",openTasksN+" open tasks","Deal to-do list"],["comps","📈","Comps & valuation",preMoney!=null?dmoney(preMoney)+" pre · "+dmoney(postMoney)+" post":"Sync comps to value",preMoney!=null?("Snoonu "+_V.txM.toFixed(1)+"x on 2026E revenue + "+dmoney(RAISE_M)+" raise"):"Valuation model"]].map(([k,ic,ti,st,su])=>(
       <div key={k} className="card" onClick={()=>setOpenSheet(k)} style={{padding:"18px 18px 16px",cursor:"pointer",transition:"transform .06s"}} onMouseOver={e=>{e.currentTarget.style.boxShadow="0 6px 22px rgba(0,0,0,0.18)";}} onMouseOut={e=>{e.currentTarget.style.boxShadow="none";}}>
         <div style={{fontWeight:700,fontSize:15,color:"#1a1a1a"}}>{ti}</div>
         <div style={{fontVariantNumeric:"tabular-nums",fontSize:12.5,color:"#444",marginTop:4,fontWeight:500}}>{st}</div>
@@ -1029,6 +1036,7 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!
       const toggleFf=l=>setDeal(deal.id,{ffOff:ffOff.includes(l)?ffOff.filter(x=>x!==l):[...ffOff,l]});
       const barOn=b=>!ffOff.includes(b.l);
       const ffMax=Math.max(1,...bars.map(b=>b.hi))*1.06;
+      const showPrimaryOnly=()=>setDeal(deal.id,{ffOff:methods.filter(m=>!m.primary).map(m=>m.l)});
       // ---- display helpers ----
       const FY=["2025A","2026E","2027E","2028E"];
       const REVROW=[proj.r25,proj.r26,proj.r27,proj.r28];
@@ -1054,33 +1062,41 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!
       const sub={fontSize:11,color:"#999",fontWeight:400};
       const nIn={width:62,fontSize:11,padding:"2px 5px",textAlign:"right",border:"1px solid #e6e6e3",background:"#fff",borderRadius:0,fontVariantNumeric:"tabular-nums"};
       const tIn={fontSize:11,padding:"2px 5px",border:"1px solid #e6e6e3",background:"#fff",borderRadius:0,width:"100%"};
+      const pchip={fontSize:8.5,fontWeight:700,letterSpacing:"0.07em",textTransform:"uppercase",color:"#256b45",background:"#d6ecdf",padding:"1px 5px",whiteSpace:"nowrap"};
       const Chk=({v,onClick})=><span onClick={onClick} title="Include / exclude" style={{display:"inline-block",width:14,height:14,border:"1px solid "+(v?"#6a6a66":"#d4d4d0"),background:v?"#f0f0ec":"#fff",color:"#1a1a1a",fontSize:10,lineHeight:"12px",textAlign:"center",cursor:"pointer",verticalAlign:"-2px"}}>{v?"✓":""}</span>;
-      const Box=({val,lbl,green,last})=>(
+      const Box=({val,lbl,note,green,last})=>(
         <div style={{padding:"18px 20px",borderRight:last?"none":"1px solid #f0f0ee",background:"#fff"}}>
           <div style={{fontSize:22,fontWeight:600,color:green?"#256b45":"#141414",fontVariantNumeric:"tabular-nums",lineHeight:1.2}}>{val}</div>
           <div style={{fontSize:10,letterSpacing:"0.05em",textTransform:"uppercase",color:"#8a8a8a",fontWeight:600,marginTop:8}}>{lbl}</div>
+          {note&&<div style={{fontSize:10,color:"#bbb",marginTop:3}}>{note}</div>}
         </div>);
       return <div style={{maxWidth:1180,margin:"0 auto"}}>
-
+      {/* ---------- PRIMARY BASIS BANNER ---------- */}
+      <div className="card" style={{padding:"10px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",borderLeft:"3px solid #256b45"}}>
+        <span style={pchip}>Primary basis</span>
+        <span style={{fontSize:12.5,fontWeight:600,color:"#1a1a1a"}}>Snoonu precedent multiple {V.txM.toFixed(1)}x on 2026E revenue of {dmoney(proj.r26)}</span>
+        <span style={{fontSize:11.5,color:"#8a8a8a"}}>= {dmoney(V.txM*proj.r26)} pre-money</span>
+        <span style={{flex:1}}/>
+        <span style={{fontSize:10.5,color:"#bbb"}}>{V.primaryOnly?"Trading comps shown below as context — not in the headline":"Field has been edited — headline is the median of ticked bars"}</span>
+      </div>
       {/* ---------- IMPLIED VALUATION ---------- */}
       <div className="card" style={{padding:0,overflow:"hidden",marginBottom:12,display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))"}}>
-        <Box val={incB.length?dmoney(recLo)+" – "+dmoney(recHi):"—"} lbl="Implied range"/>
-        <Box val={recMid!=null?dmoney(recMid):"—"} lbl="Pre-money"/>
-        <Box val={"+ "+dmoney(RAISE_M)} lbl="Primary raise"/>
-        <Box val={recMid!=null?dmoney(recMid+RAISE_M):"—"} lbl="Post-money" green last/>
+        <Box val={incB.length?dmoney(recLo)+" – "+dmoney(recHi):"—"} lbl="Implied range" note={"±"+Math.round(band*100)+"% band"}/>
+        <Box val={recMid!=null?dmoney(recMid):"—"} lbl="Pre-money" note={V.primaryOnly?("Snoonu "+V.txM.toFixed(1)+"x · 2026E rev"):"Median of ticked methods"}/>
+        <Box val={"+ "+dmoney(RAISE_M)} lbl="Primary raise" note="Series A"/>
+        <Box val={recMid!=null?dmoney(recMid+RAISE_M):"—"} lbl="Post-money" note="Pre-money + raise" green last/>
       </div>
-
       {/* ---------- COMPANY FINANCIALS ---------- */}
       <div className="card" style={{padding:0,overflow:"hidden",marginBottom:12}}>
-        <div style={ph}><span>Company financials <span style={sub}>· $ in millions</span></span><span style={sub}>BeeOrder 2030 Projections · editable</span></div>
+        <div style={ph}><span>Company financials <span style={sub}>· $ in millions</span></span><span style={sub}>BeeOrder 2030 Projections · model v3, 18 Aug 2026 · editable</span></div>
         <div className="scroll" style={{overflowX:"auto"}}>
         <table style={{borderCollapse:"collapse",width:"100%",minWidth:520}}>
-          <thead><tr><th style={hcL}>Metric</th>{FY.map(y=><th key={y} style={hc}>{y}</th>)}</tr></thead>
+          <thead><tr><th style={hcL}>Metric</th>{FY.map(y=><th key={y} style={{...hc,background:y==="2026E"?"#eef4f1":"#f7f7f5",color:y==="2026E"?"#256b45":"#8a8a8a"}}>{y}{y==="2026E"?" ◆":""}</th>)}</tr></thead>
           <tbody>
             <tr><td style={lab}>Total GMV</td>{FY.map((y,i)=><td key={i} style={cell}><input value={fin.gmv[i]} onChange={e=>{const a=[...fin.gmv];a[i]=parseFloat(e.target.value)||0;setFin({gmv:a});}} style={nIn}/></td>)}</tr>
             <tr><td style={drv}>GMV growth</td>{FY.map((y,i)=><td key={i} style={dcell}>{pct(grow(fin.gmv,i))}</td>)}</tr>
             <tr><td style={drv}>Marketplace take rate</td>{FY.map((y,i)=><td key={i} style={dcell}>{pct(fin.take[i])}</td>)}</tr>
-            <tr><td style={lab}>Total sales</td>{FY.map((y,i)=><td key={i} style={cell}><input value={REVROW[i]} onChange={e=>setProj({[REVKEY[i]]:parseFloat(e.target.value)||0})} style={nIn}/></td>)}</tr>
+            <tr><td style={{...lab,fontWeight:700}}>Total sales</td>{FY.map((y,i)=><td key={i} style={{...cell,background:y==="2026E"?"#f4f9f6":"transparent"}}><input value={REVROW[i]} onChange={e=>setProj({[REVKEY[i]]:parseFloat(e.target.value)||0})} style={nIn}/></td>)}</tr>
             <tr><td style={drv}>Revenue growth</td>{FY.map((y,i)=><td key={i} style={dcell}>{pct(grow(REVROW,i))}</td>)}</tr>
             <tr><td style={lab}>Gross profit</td>{FY.map((y,i)=><td key={i} style={cell}><input value={fin.gp[i]} onChange={e=>{const a=[...fin.gp];a[i]=parseFloat(e.target.value)||0;setFin({gp:a});}} style={nIn}/></td>)}</tr>
             <tr><td style={drv}>Gross margin</td>{FY.map((y,i)=><td key={i} style={dcell}>{pct(ratio(fin.gp[i],REVROW[i]))}</td>)}</tr>
@@ -1089,12 +1105,35 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!
           </tbody>
         </table>
         </div>
-        <div style={{padding:"7px 14px",fontSize:10,color:"#bbb",borderTop:"1px solid #f0f0ee"}}>Italic rows are calculated — they update from the rows above. 2025 EBITDA and revenue are management figures; audited accounts run through 2023.</div>
+        <div style={{padding:"7px 14px",fontSize:10,color:"#bbb",borderTop:"1px solid #f0f0ee"}}>◆ 2026E total sales is the valuation anchor. Italic rows are calculated — they update from the rows above. 2025 and 2026 figures are management accounts; audited accounts run through 2023. Dark stores contribute nothing in 2026 — no store has opened.</div>
       </div>
-
+      {/* ---------- PRECEDENT TRANSACTIONS ---------- */}
+      <div className="card" style={{padding:0,overflow:"hidden",marginBottom:12,borderLeft:"3px solid #256b45"}}>
+        <div style={ph}><span>Precedent transactions <span style={pchip}>Primary</span> <span style={sub}>· {precOn.length} of {precedents.length} included</span></span><span style={sub}>applied to 2026E revenue</span></div>
+        <div className="scroll" style={{overflowX:"auto"}}>
+        <table style={{borderCollapse:"collapse",width:"100%",minWidth:620}}>
+          <thead><tr><th style={{...hc,width:30}}></th><th style={hcL}>Target</th><th style={{...hc,textAlign:"left"}}>Investor</th><th style={{...hc,width:88}}>Date</th><th style={{...hc,width:88}}>Stake</th><th style={{...hc,width:78}}>EV/Rev</th><th style={{...hc,width:104}}>Implied EV</th><th style={{...hc,width:34}}></th></tr></thead>
+          <tbody>
+          {precedents.map((p,i)=><tr key={i} style={{opacity:p.off?0.4:1}}>
+            <td style={{...cell,textAlign:"center"}}><Chk v={!p.off} onClick={()=>patchPrec(i,{off:!p.off})}/></td>
+            <td style={{...lab,padding:"5px 10px 5px 14px"}}><input value={p.n||""} onChange={e=>patchPrec(i,{n:e.target.value})} style={tIn}/></td>
+            <td style={{padding:"5px 10px",borderBottom:"1px solid #f0f0ee"}}><input value={p.inv||""} onChange={e=>patchPrec(i,{inv:e.target.value})} placeholder="—" style={tIn}/></td>
+            <td style={{padding:"5px 10px",borderBottom:"1px solid #f0f0ee"}}><input value={p.date||""} onChange={e=>patchPrec(i,{date:e.target.value})} placeholder="—" style={{...tIn,textAlign:"right"}}/></td>
+            <td style={{padding:"5px 10px",borderBottom:"1px solid #f0f0ee"}}><input value={p.stake||""} onChange={e=>patchPrec(i,{stake:e.target.value})} placeholder="—" style={{...tIn,textAlign:"right"}}/></td>
+            <td style={{padding:"5px 10px",borderBottom:"1px solid #f0f0ee"}}><input value={p.mult} onChange={e=>patchPrec(i,{mult:parseFloat(e.target.value)||0})} style={{...tIn,textAlign:"right"}}/></td>
+            <td style={{...cell,color:p.off?"#bbb":"#256b45",fontWeight:600}}>{(typeof p.mult==="number"&&p.mult>0)?dmoney(p.mult*proj.r26):"—"}</td>
+            <td style={{...cell,textAlign:"center",padding:"5px 6px"}}><span onClick={()=>delPrec(i)} title="Remove" style={{cursor:"pointer",color:"#c26a6a",fontSize:12}}>✕</span></td>
+          </tr>)}
+          <tr><td style={{...cell,borderBottom:"none"}}></td><td colSpan={7} style={{...lab,borderBottom:"none",color:"#4f6ef7",cursor:"pointer",fontWeight:400,padding:"7px 10px 7px 14px"}} onClick={addPrec}>+ Add transaction</td></tr>
+          {precMed!=null&&<tr style={{background:"#f4f9f6"}}><td style={{...cell,borderBottom:"none"}}></td><td style={{...lab,borderBottom:"none",fontWeight:700}}>Median <span style={sub}>(incl.)</span></td><td style={{...cell,borderBottom:"none"}}></td><td style={{...cell,borderBottom:"none"}}></td><td style={{...cell,borderBottom:"none"}}></td><td style={{...cell,borderBottom:"none",fontWeight:700}}>{fmtx(precMed)}</td><td style={{...cell,borderBottom:"none",fontWeight:700,color:"#256b45"}}>{dmoney(precMed*proj.r26)}</td><td style={{...cell,borderBottom:"none"}}></td></tr>}
+          </tbody>
+        </table>
+        </div>
+        <div style={{padding:"7px 14px",fontSize:10,color:"#bbb",borderTop:"1px solid #f0f0ee"}}>This is the headline valuation basis: the Snoonu multiple applied to <b style={{color:"#8a8a8a"}}>2026E revenue of {dmoney(proj.r26)}</b>. Note for diligence — the multiple is trailing at announcement and is here applied to a forward year, so it is not a like-for-like comparison; it reads conservative against the forward trading comps below, which is the intent.</div>
+      </div>
       {/* ---------- PUBLIC COMPS ---------- */}
       <div className="card" style={{padding:0,overflow:"hidden",marginBottom:12}}>
-        <div style={ph}><span>Public comps <span style={sub}>· {allC.filter(on).length} of {allC.length} included</span></span><span style={sub}>{asOf?"CapIQ · as of "+asOf:"not synced yet"}</span></div>
+        <div style={ph}><span>Public comps <span style={sub}>· context only · {allC.filter(on).length} of {allC.length} included</span></span><span style={sub}>{asOf?"CapIQ · as of "+asOf:"not synced yet"}</span></div>
         <div className="scroll" style={{overflowX:"auto"}}>
         <table style={{borderCollapse:"collapse",width:"100%",minWidth:600}}>
           <thead>
@@ -1121,33 +1160,8 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!
           </tbody>
         </table>
         </div>
-        <div style={{padding:"7px 14px",fontSize:10,color:"#bbb",borderTop:"1px solid #f0f0ee"}}>EV/Revenue uses marketplace names only — 1P gross revenue isn’t comparable to marketplace net revenue. Untick a comp to drop it from the median and every bar below.</div>
+        <div style={{padding:"7px 14px",fontSize:10,color:"#bbb",borderTop:"1px solid #f0f0ee"}}>Trading comps are context for the primary basis, not the headline — they sit unticked in the field below. EV/Revenue uses marketplace names only; 1P gross revenue isn’t comparable to marketplace net revenue. Untick a comp to drop it from the median and every bar below.</div>
       </div>
-
-      {/* ---------- PRECEDENT TRANSACTIONS ---------- */}
-      <div className="card" style={{padding:0,overflow:"hidden",marginBottom:12}}>
-        <div style={ph}><span>Precedent transactions <span style={sub}>· {precOn.length} of {precedents.length} included</span></span><span style={sub}>LTM at announcement · applied to 2025A revenue</span></div>
-        <div className="scroll" style={{overflowX:"auto"}}>
-        <table style={{borderCollapse:"collapse",width:"100%",minWidth:560}}>
-          <thead><tr><th style={{...hc,width:30}}></th><th style={hcL}>Target</th><th style={{...hc,textAlign:"left"}}>Investor</th><th style={{...hc,width:88}}>Date</th><th style={{...hc,width:88}}>Stake</th><th style={{...hc,width:78}}>EV/Rev</th><th style={{...hc,width:34}}></th></tr></thead>
-          <tbody>
-          {precedents.map((p,i)=><tr key={i} style={{opacity:p.off?0.4:1}}>
-            <td style={{...cell,textAlign:"center"}}><Chk v={!p.off} onClick={()=>patchPrec(i,{off:!p.off})}/></td>
-            <td style={{...lab,padding:"5px 10px 5px 14px"}}><input value={p.n||""} onChange={e=>patchPrec(i,{n:e.target.value})} style={tIn}/></td>
-            <td style={{padding:"5px 10px",borderBottom:"1px solid #f0f0ee"}}><input value={p.inv||""} onChange={e=>patchPrec(i,{inv:e.target.value})} placeholder="—" style={tIn}/></td>
-            <td style={{padding:"5px 10px",borderBottom:"1px solid #f0f0ee"}}><input value={p.date||""} onChange={e=>patchPrec(i,{date:e.target.value})} placeholder="—" style={{...tIn,textAlign:"right"}}/></td>
-            <td style={{padding:"5px 10px",borderBottom:"1px solid #f0f0ee"}}><input value={p.stake||""} onChange={e=>patchPrec(i,{stake:e.target.value})} placeholder="—" style={{...tIn,textAlign:"right"}}/></td>
-            <td style={{padding:"5px 10px",borderBottom:"1px solid #f0f0ee"}}><input value={p.mult} onChange={e=>patchPrec(i,{mult:parseFloat(e.target.value)||0})} style={{...tIn,textAlign:"right"}}/></td>
-            <td style={{...cell,textAlign:"center",padding:"5px 6px"}}><span onClick={()=>delPrec(i)} title="Remove" style={{cursor:"pointer",color:"#c26a6a",fontSize:12}}>✕</span></td>
-          </tr>)}
-          <tr><td style={{...cell,borderBottom:"none"}}></td><td colSpan={6} style={{...lab,borderBottom:"none",color:"#4f6ef7",cursor:"pointer",fontWeight:400,padding:"7px 10px 7px 14px"}} onClick={addPrec}>+ Add transaction</td></tr>
-          {precMed!=null&&<tr style={{background:"#f7f7f5"}}><td style={{...cell,borderBottom:"none"}}></td><td style={{...lab,borderBottom:"none"}}>Median <span style={sub}>(incl.)</span></td><td style={{...cell,borderBottom:"none"}}></td><td style={{...cell,borderBottom:"none"}}></td><td style={{...cell,borderBottom:"none"}}></td><td style={{...cell,borderBottom:"none",fontWeight:600}}>{fmtx(precMed)}</td><td style={{...cell,borderBottom:"none"}}></td></tr>}
-          </tbody>
-        </table>
-        </div>
-        <div style={{padding:"7px 14px",fontSize:10,color:"#bbb",borderTop:"1px solid #f0f0ee"}}>Transaction multiples are trailing and apply to 2025A revenue ({dmoney(proj.r25)}), so they read low against forward trading multiples — that gap is the growth between 2025 and 2027, not an error.</div>
-      </div>
-
       {/* ---------- FOOTBALL FIELD ---------- */}
       <div className="card" style={{padding:0,overflow:"hidden"}}>
         <div style={ph}><span>Football field <span style={sub}>· implied EV ($m)</span></span><span style={{fontSize:11,color:"#666",display:"flex",alignItems:"center",gap:4,fontWeight:400}}>± <input value={Math.round(band*100)} onChange={e=>setBand(Math.max(0,(parseFloat(e.target.value)||0))/100)} style={{width:34,fontSize:11,padding:"2px 4px",textAlign:"right",border:"1px solid #e6e6e3",borderRadius:0}}/>%</span></div>
@@ -1155,24 +1169,24 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!
           {bars.length===0&&<div style={{padding:16,textAlign:"center",color:"#bbb",fontSize:11.5}}>Sync comps to build the field.</div>}
           {bars.map((b,i)=>{const inb=barOn(b);const lo=(b.lo/ffMax)*100,hi=(b.hi/ffMax)*100,mid=(b.mid/ffMax)*100;return <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:7,opacity:inb?1:0.4}}>
             <Chk v={inb} onClick={()=>toggleFf(b.l)}/>
-            <div style={{width:118,fontSize:11,color:"#444",flexShrink:0}}>{b.l}</div>
+            <div style={{width:150,fontSize:11,color:"#444",flexShrink:0,display:"flex",alignItems:"center",gap:5}}>{b.l}{b.primary&&<span style={pchip}>1°</span>}</div>
             <div style={{flex:1,position:"relative",height:16,background:"#f2f2f0"}}><div style={{position:"absolute",left:lo+"%",width:Math.max(1.5,hi-lo)+"%",top:0,bottom:0,background:b.c,opacity:0.85}}/><div style={{position:"absolute",left:mid+"%",top:-2,bottom:-2,width:2,background:"#141414"}}/></div>
             <div style={{width:104,textAlign:"right",fontSize:10.5,fontVariantNumeric:"tabular-nums",color:"#444",flexShrink:0}}>{dmoney(b.lo)}–{dmoney(b.hi)}</div>
           </div>;})}
-          {bars.length>0&&<div style={{display:"flex",gap:8,marginTop:2}}><div style={{width:14}}/><div style={{width:118}}/><div style={{flex:1,position:"relative",height:12}}>{[0,0.5,1].map(f=><span key={f} style={{position:"absolute",left:(f*100)+"%",fontSize:10,color:"#bbb",transform:f===0?"none":(f===1?"translateX(-100%)":"translateX(-50%)"),fontVariantNumeric:"tabular-nums"}}>{dmoney(ffMax*f)}</span>)}</div><div style={{width:104}}/></div>}
+          {bars.length>0&&<div style={{display:"flex",gap:8,marginTop:2}}><div style={{width:14}}/><div style={{width:150}}/><div style={{flex:1,position:"relative",height:12}}>{[0,0.5,1].map(f=><span key={f} style={{position:"absolute",left:(f*100)+"%",fontSize:10,color:"#bbb",transform:f===0?"none":(f===1?"translateX(-100%)":"translateX(-50%)"),fontVariantNumeric:"tabular-nums"}}>{dmoney(ffMax*f)}</span>)}</div><div style={{width:104}}/></div>}
         </div>
         {incB.length>0&&<div style={{padding:"10px 14px",borderTop:"1px solid #eee",background:"#f7f7f5"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}><span style={{fontSize:10,letterSpacing:"0.06em",textTransform:"uppercase",color:"#8a8a8a",fontWeight:600}}>Implied range (incl.)</span><span style={{fontSize:15,fontWeight:600,fontVariantNumeric:"tabular-nums"}}>{dmoney(recLo)} – {dmoney(recHi)}</span></div>
-          {recMid!=null&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginTop:3}}><span style={{fontSize:10,letterSpacing:"0.06em",textTransform:"uppercase",color:"#8a8a8a",fontWeight:600}}>Pre-money · midpoint of methods</span><span style={{fontSize:13,fontWeight:600,fontVariantNumeric:"tabular-nums"}}>{dmoney(recMid)}</span></div>}
+          {recMid!=null&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginTop:3}}><span style={{fontSize:10,letterSpacing:"0.06em",textTransform:"uppercase",color:"#8a8a8a",fontWeight:600}}>Pre-money · {V.primaryOnly?"Snoonu "+V.txM.toFixed(1)+"x on 2026E revenue":"median of ticked methods"}</span><span style={{fontSize:13,fontWeight:600,fontVariantNumeric:"tabular-nums"}}>{dmoney(recMid)}</span></div>}
           {recMid!=null&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginTop:3,paddingTop:5,borderTop:"1px dashed #e2e2e0"}}><span style={{fontSize:10,letterSpacing:"0.06em",textTransform:"uppercase",color:"#256b45",fontWeight:600}}>Post-money · +{dmoney(RAISE_M)} raise</span><span style={{fontSize:15,fontWeight:600,color:"#256b45",fontVariantNumeric:"tabular-nums"}}>{dmoney(recMid+RAISE_M)}</span></div>}
         </div>}
-        <div style={{padding:"8px 14px",display:"flex",gap:7,borderTop:"1px solid #eee"}}>
+        <div style={{padding:"8px 14px",display:"flex",gap:7,borderTop:"1px solid #eee",flexWrap:"wrap"}}>
+          <button onClick={showPrimaryOnly} style={{fontSize:11,padding:"5px 10px",background:V.primaryOnly?"#256b45":"#e8e8e4",border:"1px solid "+(V.primaryOnly?"#256b45":"#c8c8c4"),color:V.primaryOnly?"#fff":"#1a1a1a",borderRadius:0,cursor:"pointer",fontWeight:600}}>Primary basis · Snoonu on 2026E</button>
           <button onClick={()=>setDeal(deal.id,{ffOff:methods.filter(m=>!m.fy1).map(m=>m.l)})} style={{fontSize:11,padding:"5px 10px",background:"#e8e8e4",border:"1px solid #c8c8c4",color:"#1a1a1a",borderRadius:0,cursor:"pointer"}}>FY+1 only (2027E)</button>
           <button onClick={()=>setDeal(deal.id,{ffOff:[]})} style={{fontSize:11,padding:"5px 10px",cursor:"pointer"}}>Show all</button>
         </div>
-        <div style={{padding:"0 14px 10px",fontSize:10,color:"#bbb"}}>Each bar = implied EV ± {Math.round(band*100)}%; black tick = the implied midpoint. FY+1 = 2027E. Out-year methods are undiscounted, so they read high — value off FY+1 or near-term.</div>
+        <div style={{padding:"0 14px 10px",fontSize:10,color:"#bbb"}}>Each bar = implied EV ± {Math.round(band*100)}%; black tick = the implied midpoint. <b style={{color:"#256b45"}}>1°</b> marks the primary basis. Tick additional bars only to sanity-check the headline — the trading comps are undiscounted out-year multiples and read high.</div>
       </div>
-
       </div>;
     })()}
     </div></div>}
@@ -1435,7 +1449,7 @@ const intPersonIdsForDisplay=useCallback(i=>{
 const contactInts=useCallback(cId=>interactions.filter(i=>intPersonIds(i).includes(cId)).sort((a,b)=>b.date.localeCompare(a.date)||intSortKey(b)-intSortKey(a)),[interactions,intPersonIds]);
 const lastInteraction=useCallback(cId=>{const hits=interactions.filter(i=>intPersonIds(i).includes(cId)).map(i=>i.date).filter(Boolean);return hits.length?hits.sort().reverse()[0]:null;},[interactions,intPersonIds]);
 useEffect(()=>{try{localStorage.setItem("collective_deals",JSON.stringify(dealStore));localStorage.setItem("collective_deal_ids",JSON.stringify(dealIds));localStorage.setItem("collective_deals_ts",new Date().toISOString());}catch(e){}if(!(sbUrl&&sbKey)||!dealsReady.current)return;clearTimeout(dealSaveRef.current);dealSaveRef.current=setTimeout(()=>{const ts=new Date().toISOString();sbFetch(sbUrl,sbKey,"deals","POST",[{id:"__all__",data:JSON.stringify({dealStore,dealIds,savedAt:ts})}]).then(()=>{localStorage.setItem("collective_deals_ts",ts);setSyncStatus("Synced deal changes ✓");}).catch(e=>setSyncStatus("⚠ Deal changes NOT saved to Supabase — check table policies (see settings)"));},800);return()=>clearTimeout(dealSaveRef.current);},[dealStore,dealIds]);
-const dealCandidates=useMemo(()=>{const nameOf=id=>{const p=projects.find(x=>x.id===id);return p?p.name:id;};const m={};interactions.forEach(i=>{const pid=i.projectId;if(!pid)return;const nm=nameOf(pid);if(!m[nm])m[nm]={name:nm,ids:new Set(),ints:0,people:new Set(),last:""};m[nm].ids.add(pid);m[nm].ints++;(intPersonIds(i)||[]).forEach(p=>m[nm].people.add(p));if((i.date||"")>m[nm].last)m[nm].last=i.date||"";});projects.filter(p=>!p.parentId).forEach(p=>{const nm=p.name;if(!m[nm])m[nm]={name:nm,ids:new Set(),ints:0,people:new Set(),last:""};m[nm].ids.add(p.id);});return Object.values(m).map(d=>{const proj=projects.find(p=>d.ids.has(p.id));const icon=(proj&&proj.icon)?proj.icon:(d.name==="BeeOrder"?"\uD83D\uDC1D":"\uD83D\uDCC1");return{id:d.name,ids:[...d.ids],name:d.name,ints:d.ints,people:[...d.people],icon,last:d.last};}).sort((a,b)=>b.ints-a.ints);},[interactions,projects,intPersonIds]);
+const dealCandidates=useMemo(()=>{const nameOf=id=>{const p=projects.find(x=>x.id===id);return p?p.name:id;};const m={};interactions.forEach(i=>{const pid=i.projectId;if(!pid)return;const nm=nameOf(pid);if(!m[nm])m[nm]={name:nm,ids:new Set(),ints:0,people:new Set(),last:""};m[nm].ids.add(pid);m[nm].ints++;(intPersonIds(i)||[]).forEach(p=>m[nm].people.add(p));if((i.date||"")>m[nm].last)m[nm].last=i.date||"";});projects.filter(p=>!p.parentId).forEach(p=>{const nm=p.name;if(!m[nm])m[nm]={name:nm,ids:new Set(),ints:0,people:new Set(),last:""};m[nm].ids.add(p.id);});return Object.values(m).map(d=>{const proj=projects.find(p=>d.ids.has(p.id));const icon=(proj&&proj.icon)?proj.icon:(d.name==="BeeOrder"?"🐝":"📁");return{id:d.name,ids:[...d.ids],name:d.name,ints:d.ints,people:[...d.people],icon,last:d.last};}).sort((a,b)=>b.ints-a.ints);},[interactions,projects,intPersonIds]);
 const deals=useMemo(()=>dealCandidates.filter(d=>dealIds.includes(d.name)||(d.ids||[]).some(x=>dealIds.includes(x))),[dealCandidates,dealIds]);
 const addDeal=id=>setDealIds(x=>x.includes(id)?x:[...x,id]);
 const removeDeal=id=>setDealIds(x=>x.filter(v=>v!==id));
