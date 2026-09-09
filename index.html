@@ -973,23 +973,23 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!
       <div style={{display:"flex",alignItems:"center",gap:12}}><span style={{fontSize:30}}>{deal.icon}</span><div><div style={{fontSize:24,fontWeight:700,color:"#fff",letterSpacing:"-0.02em"}}>{deal.name}</div><div style={{fontSize:12,color:"rgba(255,255,255,0.45)"}}>{dealInts.length} interactions · {people.length} people</div></div></div>
     </div>
     {/* deal timeline — merged stage progression + gantt, aligned to a week axis */}
-    {deal.name==="BeeOrder"?(()=>{
+{deal.name==="BeeOrder"?(()=>{
   const PH=[
-    {n:"Preparation", s:"2026-08-07", e:"2026-08-22", c:"#22c55e", dl:"Aug 7 – 22"},
-    {n:"Marketing",   s:"2026-08-23", e:"2026-10-02", c:"#0ea5e9", dl:"Aug 23 – Oct 2"},
-    {n:"Diligence",   s:"2026-10-05", e:"2026-10-16", c:"#3b82f6", dl:"Oct 5 – 16"}
+    {n:"Preparation", s:"2026-08-07", e:"2026-09-11", c:"#22c55e", dl:"Aug 7 – Sep 11"},
+    {n:"Marketing",   s:"2026-09-14", e:"2026-10-02", c:"#0ea5e9", dl:"Sep 14 – Oct 2"},
+    {n:"Diligence",   s:"2026-10-05", e:"2026-10-23", c:"#3b82f6", dl:"Oct 5 – 23"}
   ];
-  const WK=["Aug 2","Aug 9","Aug 16","Aug 23","Aug 30","Sep 6","Sep 13","Sep 20","Sep 27","Oct 4","Oct 11","Oct 18"];
+  const WK=["Aug 2","Aug 9","Aug 16","Aug 23","Aug 30","Sep 6","Sep 13","Sep 20","Sep 27","Oct 4","Oct 11","Oct 18","Oct 25"];
   const dn=iso=>{const p=iso.split("-").map(Number);return Date.UTC(p[0],p[1]-1,p[2])/864e5;};
-  const T0=dn("2026-08-02"),TOT=84,pos=d=>(d-T0)/TOT*100,STEP=100/WK.length;
+  const T0=dn("2026-08-02"),TOT=91,pos=d=>(d-T0)/TOT*100,STEP=100/WK.length;
   const nd=new Date(),TD=Date.UTC(nd.getFullYear(),nd.getMonth(),nd.getDate())/864e5;
   const tp=pos(TD),showT=tp>=0&&tp<=100;
   const curi=PH.findIndex(p=>TD>=dn(p.s)&&TD<=dn(p.e));
-  const qP=pos(dn("2026-09-28")),bidsP=pos(dn("2026-10-16")+1);
+  const qP=pos(dn("2026-09-28")),bidsP=pos(dn("2026-10-23")+1);
   return <div className="card" style={{padding:0,overflow:"hidden",marginBottom:14}}>
     <div style={{padding:"11px 16px",borderBottom:"1px solid #eee",display:"flex",alignItems:"baseline",justifyContent:"space-between"}}>
       <div style={{fontWeight:700,fontSize:13.5,color:"#1a1a1a"}}>Deal Timeline{curi>=0?<span style={{fontWeight:500,color:"#8a8a8a"}}> · {PH[curi].n} in progress</span>:null}</div>
-      <div style={{fontSize:10.5,color:"#999",fontWeight:600}}>Questions due Mon Sep 28 · Bids due Fri Oct 16</div>
+      <div style={{fontSize:10.5,color:"#999",fontWeight:600}}>Questions due Mon Sep 28 · Bids due Fri Oct 23</div>
     </div>
     <div style={{padding:"16px 16px 32px"}}>
       <div style={{position:"relative",height:13,marginBottom:5}}>
@@ -999,7 +999,7 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!
         {WK.map((_,i)=><div key={i} style={{position:"absolute",left:(i*STEP)+"%",top:0,bottom:0,borderLeft:"1px solid #f2f2f0"}}/>)}
         {PH.map((p,i)=>{const l=pos(dn(p.s)),r=pos(dn(p.e)+1),cur=i===curi;return <div key={i} title={p.n+" · "+p.dl} style={{position:"absolute",left:"calc("+l+"% + 1.5px)",width:"calc("+(r-l)+"% - 3px)",top:0,height:44,background:p.c,display:"flex",flexDirection:"column",justifyContent:"center",padding:"0 9px",overflow:"hidden",boxShadow:cur?"inset 0 0 0 2px #141414":"none"}}><div style={{fontSize:11,fontWeight:700,color:"#fff",lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.n}</div><div style={{fontSize:9,fontWeight:500,color:"rgba(255,255,255,0.88)",whiteSpace:"nowrap"}}>{p.dl}</div></div>;})}
         <div style={{position:"absolute",left:qP+"%",top:-5,bottom:-15,borderLeft:"1.5px dotted #6b7280",zIndex:2}}><span style={{position:"absolute",bottom:-13,left:0,transform:"translateX(-50%)",fontSize:8.5,fontWeight:700,color:"#6b7280",whiteSpace:"nowrap"}}>◆ Questions Sep 28</span></div>
-        <div style={{position:"absolute",left:bidsP+"%",top:-5,bottom:-15,borderLeft:"1.5px solid #141414",zIndex:2}}><span style={{position:"absolute",bottom:-13,left:0,transform:"translateX(-90%)",fontSize:8.5,fontWeight:700,color:"#141414",whiteSpace:"nowrap"}}>◆ Bids Oct 16</span></div>
+        <div style={{position:"absolute",left:bidsP+"%",top:-5,bottom:-15,borderLeft:"1.5px solid #141414",zIndex:2}}><span style={{position:"absolute",bottom:-13,left:0,transform:"translateX(-90%)",fontSize:8.5,fontWeight:700,color:"#141414",whiteSpace:"nowrap"}}>◆ Bids Oct 23</span></div>
         {showT?<div style={{position:"absolute",left:tp+"%",top:-5,bottom:-15,borderLeft:"1.5px dashed #ef4444",zIndex:3}}><span style={{position:"absolute",top:-12,left:0,transform:"translateX(-50%)",fontSize:8.5,fontWeight:700,color:"#ef4444",background:"#fff",padding:"0 3px",whiteSpace:"nowrap"}}>Today</span></div>:null}
       </div>
     </div>
