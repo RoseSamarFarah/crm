@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,6 +17,7 @@
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif!important;}
 body{background:#141414;color:#1a1a1a;font-size:14px;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;}
@@ -830,6 +830,7 @@ function InvestorLog({deal,store,people,inv,setInv,setInvMany,contacts,interacti
   const [openFilter,setOpenFilter]=useState(null);
   const [filterPos,setFilterPos]=useState({x:0,y:0});
   const [fSearch,setFSearch]=useState("");
+  const [incFeedback,setIncFeedback]=useState(true);
   const dids=deal.ids||[deal.id];
   const rmv=removed||[];
   const logIds=[...new Set([...people.map(c=>c.id),...Object.keys(inv)])].filter(id=>!rmv.includes(id));
@@ -867,6 +868,91 @@ function InvestorLog({deal,store,people,inv,setInv,setInvMany,contacts,interacti
   const setMany=(ids,patch)=>{if(setInvMany)setInvMany(ids,patch);else ids.forEach(id=>setInv(id,patch));};
   const doFill=(key,value,ri)=>{const targets=selIds.length?rows.filter(c=>selected[c.id]):rows.slice(ri);setMany(targets.map(c=>c.id),{[key]:value});};
   const fh=(key,value,ri)=><button type="button" className="fh" title="Fill this value down — into ticked rows, or all rows below" onClick={e=>{e.stopPropagation();doFill(key,value,ri);}}>⤓</button>;
+  /* ===== EXPORT: Excel (.xlsx) · CSV · PDF (landscape print view) =====
+     Exports the rows currently shown — column filters and sort are respected. */
+  const EXPORT_COLS=[
+    ["Investor","Investor",10,c=>c.name||""],
+    ["Company","Company",9,c=>c.company||""],
+    ["Type","Type",7,c=>(inv[c.id]||{}).type||""],
+    ["Location","Location",6,c=>{const iv=inv[c.id]||{};return iv.location!==undefined?iv.location:(c.location||"");}],
+    ["Lead","Lead",5,c=>(inv[c.id]||{}).lead||""],
+    ["Priority","Priority",5,c=>(inv[c.id]||{}).priority||""],
+    ["Status","Status",8,c=>pipeLabel((inv[c.id]||{}).status||"pending")],
+    ["Last contact","Last contact",6,c=>lastFor(c.id)?fmtDate(lastFor(c.id)):""],
+    ["Early look","EL",3,c=>(inv[c.id]||{}).early?"Yes":"No"],
+    ["Teaser sent","TS",3,c=>(inv[c.id]||{}).teaser?"Yes":"No"],
+    ["Teaser date","Teaser date",5,c=>(inv[c.id]||{}).teaserDate||""],
+    ["VDR access","VDR",3,c=>(inv[c.id]||{}).vdr?"Yes":"No"],
+    ["VDR date","VDR date",5,c=>(inv[c.id]||{}).vdrDate||""],
+    ["Re-engaged","Re-eng",4,c=>(inv[c.id]||{}).reeng?"Yes":"No"],
+    ["Re-eng date","Re-eng date",5,c=>(inv[c.id]||{}).reengDate||""],
+    ["Feedback","Feedback",16,c=>(inv[c.id]||{}).feedback||""]
+  ];
+  const expCols=()=>incFeedback?EXPORT_COLS:EXPORT_COLS.filter(c=>c[0]!=="Feedback");
+  const expHead=()=>expCols().map(c=>c[0]);
+  const expBody=()=>rows.map(c=>expCols().map(col=>col[3](c)));
+  const expSlug=(deal.name||"Deal").replace(/[^A-Za-z0-9]+/g,"_").replace(/^_|_$/g,"");
+  const expName=ext=>expSlug+"_Investor_Log_"+today()+"."+ext;
+  const expSubtitle=()=>rows.length+" investor"+(rows.length===1?"":"s")+(rows.length!==allRows.length?" of "+allRows.length+" (filtered)":"")+" · "+fmtDate(today());
+  const expDownload=(blob,name)=>{const u=URL.createObjectURL(blob);const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(u);},0);};
+  const exportCsv=()=>{
+    const q=v=>{const s=String(v==null?"":v);return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+    const lines=[expHead().map(q).join(",")].concat(expBody().map(r=>r.map(q).join(",")));
+    expDownload(new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv;charset=utf-8;"}),expName("csv"));
+  };
+  const exportXlsx=()=>{
+    if(!window.XLSX){alert("The Excel library didn't load (no connection?). Use CSV instead — it opens in Excel.");return;}
+    const head=expHead(),body=expBody();
+    const ws=window.XLSX.utils.aoa_to_sheet([head,...body]);
+    ws["!cols"]=expCols().map(c=>({wch:c[0]==="Feedback"?52:Math.max(10,c[0].length+4)}));
+    const lastCol=window.XLSX.utils.encode_col(head.length-1);
+    ws["!autofilter"]={ref:"A1:"+lastCol+(body.length+1)};
+    const wb=window.XLSX.utils.book_new();
+    wb.Workbook={Views:[{RTL:false}]};
+    window.XLSX.utils.book_append_sheet(wb,ws,"Investor Log");
+    window.XLSX.writeFile(wb,expName("xlsx"));
+  };
+  const exportPdf=()=>{
+    const cols=expCols(),head=cols.map(c=>c[1]),body=expBody();
+    const totW=cols.reduce((a,c)=>a+c[2],0);
+    const esc=v=>String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const statCells=STATS.map(s=>'<div class="s"><b>'+esc(s[1])+'</b><span>'+esc(s[0])+'</span></div>').join("");
+    const html='<!doctype html><html><head><meta charset="utf-8"><title>'+esc(deal.name)+' — Investor Log</title><style>'
+      +'@page{size:A4 landscape;margin:11mm}'
+      +'*{box-sizing:border-box}'
+      +'body{margin:0;font:10px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#1a1a1a;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+      +'h1{font-size:15px;margin:0;font-weight:700;letter-spacing:-0.01em}'
+      +'.sub{font-size:9px;color:#8a8a8a;margin:2px 0 9px}'
+      +'.stats{display:flex;border:1px solid #d4d4d0;margin-bottom:10px}'
+      +'.s{flex:1;padding:6px 9px;border-right:1px solid #e6e6e3}'
+      +'.s:last-child{border-right:none}'
+      +'.s b{display:block;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}'
+      +'.s span{display:block;font-size:7px;letter-spacing:0.05em;text-transform:uppercase;color:#8a8a8a;font-weight:600;margin-top:2px}'
+      +'table{border-collapse:collapse;width:100%;table-layout:fixed}'
+      +'thead{display:table-header-group}'
+      +'th{background:#f2f2f0;border:0.5px solid #c8c8c4;padding:4px 5px;font-size:7.5px;letter-spacing:0.03em;text-transform:uppercase;text-align:left;color:#555;font-weight:600}'
+      +'td{border:0.5px solid #dedede;padding:4px 5px;font-size:8.5px;vertical-align:top;word-wrap:break-word;overflow-wrap:anywhere}'
+      +'tr{page-break-inside:avoid}'
+      +'tbody tr:nth-child(even) td{background:#fafaf8}'
+      +'.nm{font-weight:600}'
+      +'.ft{margin-top:9px;font-size:7.5px;color:#aaa}'
+      +'</style></head><body>'
+      +'<h1>'+esc(deal.name)+' — Investor Log</h1>'
+      +'<div class="sub">'+esc(expSubtitle())+'</div>'
+      +'<div class="stats">'+statCells+'</div>'
+      +'<table><colgroup>'+cols.map(c=>'<col style="width:'+(c[2]/totW*100).toFixed(2)+'%">').join("")+'</colgroup>'
+      +'<thead><tr>'+head.map(h=>'<th>'+esc(h)+'</th>').join("")+'</tr></thead><tbody>'
+      +(body.length?body.map(r=>'<tr>'+r.map((v,i)=>'<td'+(i===0?' class="nm"':'')+'>'+esc(v)+'</td>').join("")+'</tr>').join("")
+        :'<tr><td colspan="'+cols.length+'" style="text-align:center;color:#999;padding:16px">No investors match the current filters.</td></tr>')
+      +'</tbody></table>'
+      +'<div class="ft">Confidential — '+esc(deal.name)+' investor outreach. Generated from Collective on '+esc(fmtDate(today()))+'.</div>'
+      +'</body></html>';
+    const w=window.open("","_blank");
+    if(!w){alert("Pop-up blocked — allow pop-ups for this page, then try again.");return;}
+    w.document.open();w.document.write(html);w.document.close();
+    setTimeout(()=>{try{w.focus();w.print();}catch(e){}},350);
+  };
+  const xbtn={fontSize:11.5,padding:"6px 11px",background:"#fff",border:"none",borderLeft:"1px solid #e6e6e3",cursor:"pointer",color:"#1a1a1a",fontWeight:500};
   const fcol=COLS.find(c=>c.k===openFilter);
   const opts=fcol?distinct(fcol.k).filter(v=>!fSearch||v.toLowerCase().includes(fSearch.toLowerCase())):[];
   return <div className="card" style={{padding:0,overflow:"visible"}}>
@@ -875,6 +961,13 @@ function InvestorLog({deal,store,people,inv,setInv,setInvMany,contacts,interacti
       <span style={{fontWeight:600,fontSize:12.5}}>Investor Log <span style={{color:"#999",fontWeight:400}}>· {rows.length}{rows.length!==allRows.length?" of "+allRows.length:""}</span>{Object.keys(colFilters).length>0&&<span onClick={()=>setColFilters({})} style={{marginLeft:10,fontSize:11,color:"#4f6ef7",cursor:"pointer",fontWeight:500}}>clear all filters</span>}{selIds.length>0&&<span style={{marginLeft:10,fontSize:11,color:"#999"}}>{selIds.length} selected</span>}</span>
       <div style={{display:"flex",alignItems:"center",gap:8}}>
       {selIds.length>0&&<button onClick={removeSelected} title="Delete selected rows" style={{fontSize:11.5,fontWeight:600,padding:"7px 12px",background:"#fff",color:"#a12a2a",border:"1px solid #e3b4b4",cursor:"pointer"}}>Delete {selIds.length} row{selIds.length>1?"s":""}</button>}
+      <div style={{display:"flex",alignItems:"center",border:"1px solid #d4d4d0",background:"#fff"}}>
+        <span style={{fontSize:9.5,letterSpacing:"0.04em",textTransform:"uppercase",color:"#8a8a8a",fontWeight:600,padding:"0 9px"}}>Export</span>
+        <button onClick={exportXlsx} title="Download as Excel (.xlsx) — exports the rows currently shown" style={xbtn}>Excel</button>
+        <button onClick={exportCsv} title="Download as CSV" style={xbtn}>CSV</button>
+        <button onClick={exportPdf} title="Open a landscape print view — then choose Save as PDF" style={xbtn}>PDF</button>
+        <label title="Untick to leave the Feedback column out — useful when sharing outside the deal team" style={{...xbtn,display:"flex",alignItems:"center",gap:5,color:incFeedback?"#1a1a1a":"#9a9a9a",fontWeight:400}}><input type="checkbox" checked={incFeedback} onChange={e=>setIncFeedback(e.target.checked)} style={{width:"auto",cursor:"pointer"}}/>Feedback</label>
+      </div>
       {!showAdd&&<button onClick={()=>setShowAdd(true)} title="Add investor" style={{width:30,height:30,padding:0,fontSize:20,lineHeight:1,background:"#141414",color:"#fff",border:"none",cursor:"pointer"}}>+</button>}
       {showAdd&&<div style={{position:"relative",display:"flex",alignItems:"center",gap:6}}>
         <input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Name…" style={{fontSize:12.5,padding:"6px 10px",width:240}}/>
@@ -920,7 +1013,7 @@ function InvestorLog({deal,store,people,inv,setInv,setInvMany,contacts,interacti
         </tbody>
       </table>
     </div>
-    <div style={{padding:"8px 14px",fontSize:10.5,color:"#999"}}>Sorted by priority (High → Medium → Low), then by status (Diligence → In discussion → Outreach sent → On hold → Deprioritized) — click any column ▼ to override. Hover a cell and click <b>⤓</b> to fill its value down (into ticked rows, or all rows below) — e.g. type your name as Lead once and fill it down. Add with +, remove with ✕. Every change saves per deal.</div>
+    <div style={{padding:"8px 14px",fontSize:10.5,color:"#999"}}>Sorted by priority (High → Medium → Low), then by status (Diligence → In discussion → Outreach sent → On hold → Deprioritized) — click any column ▼ to override. Hover a cell and click <b>⤓</b> to fill its value down (into ticked rows, or all rows below) — e.g. type your name as Lead once and fill it down. Add with +, remove with ✕. Every change saves per deal. <b>Export</b> sends whatever is currently shown — filter first, then export; untick <b>Feedback</b> to leave your private notes out of a shared copy.</div>
     {openFilter&&fcol&&<React.Fragment>
       <div onClick={()=>setOpenFilter(null)} style={{position:"fixed",inset:0,zIndex:200}}/>
       <div style={{position:"fixed",left:filterPos.x,top:filterPos.y,zIndex:201,background:"#fff",border:"1px solid #d4d4d0",boxShadow:"0 10px 30px rgba(0,0,0,0.18)",width:214,fontSize:12}}>
