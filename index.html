@@ -2,18 +2,21 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no"/>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <title>Collective</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231a3a2a'/%3E%3Ctext x='16' y='22.5' text-anchor='middle' font-family='Inter,system-ui,sans-serif' font-size='22' font-weight='600' fill='white'%3EC%3C/text%3E%3C/svg%3E"/>
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%231a3a2a'/%3E%3Ctext x='90' y='125' text-anchor='middle' font-family='Inter,system-ui,sans-serif' font-size='120' font-weight='600' fill='white'%3EC%3C/text%3E%3C/svg%3E"/>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e0e0e'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='Georgia,serif' font-size='22' fill='white'%3EC%3C/text%3E%3C/svg%3E"/>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%230e0e0e'/%3E%3Ctext x='90' y='128' text-anchor='middle' font-family='Georgia,serif' font-size='124' fill='white'%3EC%3C/text%3E%3C/svg%3E"/>
+<link rel="manifest" href='data:application/manifest+json,{"name":"Collective","short_name":"Collective","start_url":".","display":"standalone","background_color":"%230e0e0e","theme_color":"%230e0e0e"}'/>
+<meta name="theme-color" content="#0e0e0e"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Collective"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&display=swap" rel="stylesheet"/>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -38,36 +41,95 @@ button:hover{background:#e8e8e8;}
 .sbar{font-size:11px;padding:3px 20px;background:#0f0f0f;color:#8a8a8a;}
 @keyframes fadeUpIn{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
 .anim-letter{display:inline-block;opacity:0;animation:fadeUpIn 0.6s ease-out forwards;}
-/* ===== MOBILE STYLES ===== */
+/* ===== CAPTURE (shared by mobile and desktop) ===== */
+.cap{position:fixed;inset:0;z-index:600;background:#0e0e0e;color:#f2f2ef;display:flex;flex-direction:column;}
+.cap *{color:inherit;}
+.cap .serif,.mob-app .serif{font-family:'Newsreader',Georgia,serif!important;font-weight:400;letter-spacing:-0.01em;}
+.cap .lbl,.mob-app .lbl{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#8d8d88;font-weight:500;}
+.cap .acc,.mob-app .acc{color:#5b9cf2;}
+.cap-head{padding:calc(env(safe-area-inset-top,0px) + 14px) 20px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.cap-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 20px calc(env(safe-area-inset-bottom,0px) + 24px);}
+.cap-opt{display:flex;align-items:center;gap:18px;padding:22px 0;border-top:1px solid #222;background:none;border-left:none;border-right:none;border-bottom:none;width:100%;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.cap-opt:last-child{border-bottom:1px solid #222;}
+.cap-opt:active{opacity:0.6;}
+.cap-opt .t{font-size:24px;line-height:1.1;}
+.cap-opt .s{font-size:13px;color:#8d8d88;margin-top:4px;}
+.cap-opt svg{flex-shrink:0;}
+.cap textarea,.cap input{background:#161616;border:1px solid #262626;color:#f2f2ef;font-size:16px;padding:12px 14px;border-radius:0;}
+.cap textarea:focus,.cap input:focus{border-color:#5b9cf2;}
+.cap select{background:#161616;border:1px solid #262626;color:#f2f2ef;font-size:14px;padding:8px 10px;border-radius:0;-webkit-appearance:none;appearance:none;}
+.cap-btn{background:#f2f2ef;color:#0e0e0e!important;border:none;padding:14px 20px;font-size:15px;font-weight:600;width:100%;border-radius:0;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.cap-btn:disabled{opacity:0.35;}
+.cap-btn.ghost{background:none;color:#f2f2ef!important;border:1px solid #333;}
+.cap-draft{border-top:1px solid #222;padding:16px 0;}
+.cap-draft.off{opacity:0.35;}
+.cap-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border:1px solid #333;background:none;color:#f2f2ef;border-radius:0;cursor:pointer;}
+.cap-chip.new{border-color:#5b9cf2;color:#5b9cf2;}
+@keyframes capPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.12);opacity:0.75}}
+.cap-rec{width:84px;height:84px;border-radius:50%;background:#e0453a;border:none;margin:0 auto;display:block;animation:capPulse 1.6s ease-in-out infinite;cursor:pointer;}
+@keyframes capSpin{to{transform:rotate(360deg)}}
+.cap-spin{width:28px;height:28px;border:2px solid #333;border-top-color:#5b9cf2;border-radius:50%;animation:capSpin 0.9s linear infinite;margin:0 auto;}
+/* ===== MOBILE ===== */
 .mob-app{display:none;}
 @media(max-width:700px){
 .desk-app{display:none!important;}
-.mob-app{display:flex;flex-direction:column;height:100dvh;height:-webkit-fill-available;background:#f5f5f3;overflow:hidden;}
-.mob-app .mob-header-bar{background:#141414;padding:env(safe-area-inset-top,12px) 16px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.mob-app .mob-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 8px;}
-.mob-app .mob-tab-bar{display:flex;background:#fff;border-top:0.5px solid #e0e0de;padding:6px 0 env(safe-area-inset-bottom,8px);flex-shrink:0;}
-.mob-app .mob-tab-bar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;padding:6px 0 2px;font-size:10px;color:#999;font-weight:500;border-radius:0;}
-.mob-app .mob-tab-bar button.active{color:#141414;}
-.mob-app .mob-tab-bar button .tab-icon{font-size:20px;line-height:1;}
-.mob-row{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#fff;border-bottom:0.5px solid #f0f0ee;cursor:pointer;-webkit-tap-highlight-color:rgba(0,0,0,0.04);}
-.mob-row:active{background:#f8f8f6;}
-.mob-section-header{font-size:11px;font-weight:600;color:#999;letter-spacing:0.5px;padding:14px 16px 6px;text-transform:uppercase;}
-.mob-detail{background:#fff;min-height:100%;}
-.mob-detail-header{padding:16px;display:flex;align-items:center;gap:14;border-bottom:0.5px solid #eee;}
-.mob-search{margin:8px 12px;background:#fff;border:0.5px solid #e0e0de;border-radius:0;padding:9px 14px;font-size:15px;}
-.mob-fab{position:fixed;bottom:calc(60px + env(safe-area-inset-bottom,8px) + 12px);right:16px;width:52px;height:52px;border-radius:50%;background:#4f6ef7;color:#fff;border:none;font-size:24px;font-weight:300;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(79,110,247,0.4);z-index:50;-webkit-tap-highlight-color:transparent;}
-.mob-fab:active{transform:scale(0.92);}
-.mob-back-btn{background:none;border:none;color:#4f6ef7;font-size:15px;padding:0;font-weight:500;display:flex;align-items:center;gap:4px;}
-.mob-int-note{font-size:13px;color:#555;line-height:1.5;margin-top:2px;}
-.mob-badge{font-size:10px;border-radius:20px;padding:2px 8px;font-weight:500;display:inline-block;}
-@keyframes mobSlideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
-@keyframes mobSlideOut{from{transform:translateX(0)}to{transform:translateX(100%)}}
-.mob-detail-slide{animation:mobSlideIn 0.25s ease-out;}
+body{background:#0e0e0e;}
+.mob-app{display:flex;flex-direction:column;height:100dvh;height:-webkit-fill-available;background:#0e0e0e;color:#f2f2ef;overflow:hidden;}
+.mob-app input,.mob-app textarea,.mob-app select{background:#161616;border:1px solid #262626;color:#f2f2ef;border-radius:0;font-size:16px;}
+.mob-app input:focus,.mob-app textarea:focus,.mob-app select:focus{border-color:#5b9cf2;}
+.mob-app input::placeholder,.mob-app textarea::placeholder{color:#5c5c58;}
+.mob-app select{-webkit-appearance:none;appearance:none;}
+.mob-app button{background:none;border:none;color:#f2f2ef;border-radius:0;-webkit-tap-highlight-color:transparent;}
+.mob-app button:hover{background:none;}
+.mob-top{padding:calc(env(safe-area-inset-top,0px) + 14px) 20px 6px;flex-shrink:0;}
+.mob-title{font-size:34px;line-height:1.05;}
+.mob-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 12px;overscroll-behavior:contain;}
+.mob-tabs{display:flex;align-items:flex-end;justify-content:space-around;border-top:1px solid #1e1e1e;padding:8px 6px calc(env(safe-area-inset-bottom,0px) + 8px);flex-shrink:0;background:#0e0e0e;}
+.mob-tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:4px 0 0;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#5c5c58;font-weight:500;}
+.mob-tabs button.on{color:#f2f2ef;}
+.mob-tabs button svg{stroke:currentColor;}
+.mob-tabs .mob-cap{flex:1.1;}
+.mob-tabs .mob-cap span.ring{width:48px;height:48px;border-radius:50%;background:#f2f2ef;display:flex;align-items:center;justify-content:center;margin-top:-22px;box-shadow:0 0 0 6px #0e0e0e;}
+.mob-tabs .mob-cap span.ring svg{stroke:#0e0e0e;}
+.mob-row{display:flex;align-items:center;gap:14px;padding:14px 20px;border-top:1px solid #1a1a1a;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.mob-row:active{background:#141414;}
+.mob-row .nm{font-size:17px;line-height:1.2;}
+.mob-row .sub{font-size:12px;color:#8d8d88;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mob-row .when{font-size:11px;color:#5c5c58;flex-shrink:0;font-variant-numeric:tabular-nums;}
+.mob-sec{padding:26px 20px 8px;display:flex;align-items:baseline;justify-content:space-between;}
+.mob-sec .more{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#5b9cf2;}
+.mob-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0;}
+.mob-search{margin:10px 20px 4px;padding:12px 14px;font-size:16px;}
+.mob-note{font-size:14px;color:#b9b9b4;line-height:1.5;}
+.mob-badge{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#8d8d88;}
+.mob-detail-head{padding:calc(env(safe-area-inset-top,0px) + 10px) 20px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.mob-back{font-size:14px;color:#5b9cf2;padding:6px 0;display:flex;align-items:center;gap:4px;}
+.mob-hero{padding:18px 20px 22px;}
+.mob-hero .name{font-size:36px;line-height:1.05;}
+.mob-hero .meta{font-size:14px;color:#8d8d88;margin-top:8px;line-height:1.55;}
+.mob-hero .groups{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px;}
+.mob-hero .groups span{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#8d8d88;border:1px solid #262626;padding:4px 8px;}
+.mob-int{padding:16px 20px;border-top:1px solid #1a1a1a;}
+.mob-int .top{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;}
+.mob-int .top .d{font-size:12px;color:#8d8d88;font-variant-numeric:tabular-nums;}
+.mob-chk{width:22px;height:22px;border:1px solid #3a3a3a;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.mob-chk.done{background:#f2f2ef;border-color:#f2f2ef;}
+.mob-primary{background:#f2f2ef;color:#0e0e0e!important;padding:14px 20px;font-size:15px;font-weight:600;width:100%;}
+.mob-primary:disabled{opacity:0.35;}
+.mob-field{padding:0 20px;margin-bottom:14px;}
+.mob-field .lbl{margin-bottom:8px;display:block;}
+@keyframes mobIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
+.mob-slide{animation:mobIn 0.22s ease-out;}
+.mob-toast{position:fixed;left:20px;right:20px;bottom:calc(env(safe-area-inset-bottom,0px) + 84px);background:#f2f2ef;color:#0e0e0e;padding:12px 16px;font-size:13px;z-index:700;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.mob-toast button{color:#0e0e0e;font-weight:600;font-size:13px;padding:0;}
 }
 </style>
 </head>
 <body>
 <div id="root"></div>
+<script>
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("./sw.js").catch(()=>{});});}
+</script>
 <script type="text/babel">
 const {useState,useMemo,useRef,useCallback,useEffect}=React;
 const initials=n=>(n||"").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
@@ -323,306 +385,345 @@ return(
 );
 }
 /* ========================================================
-   MOBILE APP COMPONENT
+   ICONS (thin line, no emoji) + CAPTURE SHEET
    ======================================================== */
-function MobileApp({contacts,interactions,groups,projects,tasks,setTasks,intPersonIds,intPersonIdsForDisplay,contactGroups,contactName,lastInteraction,allGroupNames,groupMemberCount,sortedGroups,
-  setContacts,setInteractions,sbUrl,sbKey,sbFetch,createContact,deleteInteraction,saveEditInt,handleQuickAdd,addInteraction:addIntProp,syncToSupabase,syncing,syncStatus,
-  showSettings,setShowSettings,setSbUrlInput,setSbKeyInput,sbUrlInput,sbKeyInput,connectSupabase,loadingDB,imported,authToken,loginSupabase,authEmail,setAuthEmail,authPass,setAuthPass,authLoading,authError,
-  handleImportFiles,logout}){
-const [tab,setTab]=useState("contacts");
+const Ico=({d,size=22,sw=1.5,style})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" style={style}>{d.map((p,i)=><path key={i} d={p}/>)}</svg>;
+const ICONS={
+  today:["M4 5h16v15H4z","M4 10h16","M8 3v4","M16 3v4"],
+  people:["M16 20v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2","M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8","M20 20v-2a4 4 0 0 0-3-3.9","M15 3.1a4 4 0 0 1 0 7.8"],
+  log:["M4 6h16","M4 12h16","M4 18h10"],
+  tasks:["M9 11l3 3L22 4","M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"],
+  capture:["M12 5v14","M5 12h14"],
+  camera:["M4 8h3l2-3h6l2 3h3v11H4z","M12 17a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"],
+  mic:["M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3","M19 11a7 7 0 0 1-14 0","M12 18v3","M8 21h8"],
+  text:["M4 6h16","M4 11h16","M4 16h10"],
+  image:["M4 5h16v14H4z","M4 15l5-5 4 4 3-3 4 4","M16 9h.01"],
+  back:["M15 6l-6 6 6 6"],
+  check:["M5 12l5 5L20 7"],
+  close:["M6 6l12 12","M18 6L6 18"],
+  gear:["M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6","M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"],
+  sync:["M21 12a9 9 0 0 1-15.5 6.2L3 16","M3 12a9 9 0 0 1 15.5-6.2L21 8","M3 21v-5h5","M21 3v5h-5"],
+  chevron:["M9 6l6 6-6 6"]
+};
+// Shrinks a photo so the upload stays small and fast on cellular
+const shrinkImage=(file,max=1600)=>new Promise((res,rej)=>{const url=URL.createObjectURL(file);const img=new Image();img.onload=()=>{const s=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement("canvas");c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext("2d").drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL("image/jpeg",0.85));};img.onerror=rej;img.src=url;});
+const blobToB64=blob=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(blob);});
+function CaptureSheet({onClose,contacts,projects,runCapture,onSave}){
+  const [step,setStep]=useState("pick"); // pick | text | record | working | review | saving | done | error
+  const [err,setErr]=useState("");
+  const [text,setText]=useState("");
+  const [transcript,setTranscript]=useState("");
+  const [drafts,setDrafts]=useState([]);
+  const [showTranscript,setShowTranscript]=useState(false);
+  const [pickFor,setPickFor]=useState(null); // index of draft whose contact is being changed
+  const [pickQ,setPickQ]=useState("");
+  const [rec,setRec]=useState(null);
+  const [secs,setSecs]=useState(0);
+  const [saved,setSaved]=useState(0);
+  const camRef=useRef();const libRef=useRef();const chunks=useRef([]);
+  useEffect(()=>{if(step!=="record")return;const t=setInterval(()=>setSecs(s=>s+1),1000);return()=>clearInterval(t);},[step]);
+  const fail=m=>{setErr(m||"Something went wrong");setStep("error");};
+  const process=async(kind,payload)=>{
+    setStep("working");
+    try{
+      const r=await runCapture(kind,payload);
+      if(r.error)throw new Error(r.error);
+      setTranscript(r.transcript||"");
+      setDrafts((r.interactions||[]).map(d=>({...d,on:true})));
+      setStep("review");
+    }catch(e){fail(e.message);}
+  };
+  const onPhoto=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;try{const data=await shrinkImage(f);process("image",{mime:"image/jpeg",data});}catch(x){fail("Could not read that photo");}};
+  const startRec=async()=>{
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      const mime=["audio/mp4","audio/webm;codecs=opus","audio/webm","audio/ogg"].find(m=>window.MediaRecorder&&MediaRecorder.isTypeSupported(m))||"";
+      const mr=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
+      chunks.current=[];
+      mr.ondataavailable=ev=>{if(ev.data.size)chunks.current.push(ev.data);};
+      mr.onstop=async()=>{stream.getTracks().forEach(t=>t.stop());const blob=new Blob(chunks.current,{type:mr.mimeType||mime||"audio/mp4"});if(blob.size<2000){fail("That recording was empty");return;}const data=await blobToB64(blob);process("audio",{mime:blob.type,data});};
+      mr.start(250);setRec(mr);setSecs(0);setStep("record");
+    }catch(e){fail("Microphone access was refused. Allow it in Settings for Collective, then try again");}
+  };
+  const stopRec=()=>{if(rec&&rec.state!=="inactive")rec.stop();setRec(null);};
+  const patch=(i,p)=>setDrafts(ds=>ds.map((d,ix)=>ix===i?{...d,...p}:d));
+  const onCount=drafts.filter(d=>d.on&&(d.contactId||d.contactName)).length;
+  const save=async()=>{setStep("saving");try{const n=await onSave(drafts.filter(d=>d.on&&(d.contactId||d.contactName)));setSaved(n);setStep("done");}catch(e){fail(e.message);}};
+  const fmtS=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+  const pickList=pickFor!==null?contacts.filter(c=>!pickQ||c.name.toLowerCase().includes(pickQ.toLowerCase())).slice(0,40):[];
+  const Head=({title,back})=><div className="cap-head"><button onClick={back||onClose} style={{background:"none",border:"none",padding:"6px 0",display:"flex",alignItems:"center",gap:4,color:"#5b9cf2",fontSize:14}}>{back?<React.Fragment><Ico d={ICONS.back} size={18}/> Back</React.Fragment>:"Cancel"}</button><span className="lbl">{title}</span><div style={{width:60}}/></div>;
+  return <div className="cap">
+    <input ref={camRef} type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={onPhoto}/>
+    <input ref={libRef} type="file" accept="image/*" style={{display:"none"}} onChange={onPhoto}/>
+    {step==="pick"&&<React.Fragment>
+      <Head title="Capture"/>
+      <div className="cap-body">
+        <div className="serif" style={{fontSize:40,lineHeight:1.05,margin:"18px 0 28px"}}>What do you<br/>have for me?</div>
+        <button className="cap-opt" onClick={()=>camRef.current?.click()}><Ico d={ICONS.camera} size={26}/><div><div className="t serif">Photograph your notes</div><div className="s">A page of handwriting becomes interactions</div></div></button>
+        <button className="cap-opt" onClick={()=>libRef.current?.click()}><Ico d={ICONS.image} size={26}/><div><div className="t serif">Choose a photo</div><div className="s">From your camera roll or a screenshot</div></div></button>
+        <button className="cap-opt" onClick={startRec}><Ico d={ICONS.mic} size={26}/><div><div className="t serif">Leave a voicenote</div><div className="s">Talk through who you met and what was said</div></div></button>
+        <button className="cap-opt" onClick={()=>setStep("text")}><Ico d={ICONS.text} size={26}/><div><div className="t serif">Type or paste</div><div className="s">WhatsApp threads, emails, quick thoughts</div></div></button>
+      </div>
+    </React.Fragment>}
+    {step==="text"&&<React.Fragment>
+      <Head title="Notes" back={()=>setStep("pick")}/>
+      <div className="cap-body" style={{display:"flex",flexDirection:"column",gap:14}}>
+        <textarea autoFocus rows={12} value={text} onChange={e=>setText(e.target.value)} placeholder="Met Hasan for coffee yesterday. He is interested in the round if the board aligns on $15M…" style={{flex:1,resize:"none",lineHeight:1.5}}/>
+        <button className="cap-btn" disabled={!text.trim()} onClick={()=>process("text",{text})}>Read these notes</button>
+      </div>
+    </React.Fragment>}
+    {step==="record"&&<React.Fragment>
+      <Head title="Recording" back={()=>{if(rec){rec.ondataavailable=null;rec.onstop=()=>{};rec.stream&&rec.stream.getTracks().forEach(t=>t.stop());try{rec.stop();}catch(e){}}setRec(null);setStep("pick");}}/>
+      <div className="cap-body" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:28}}>
+        <div className="serif" style={{fontSize:56,fontVariantNumeric:"tabular-nums",lineHeight:1}}>{fmtS(secs)}</div>
+        <div style={{fontSize:14,color:"#8d8d88",textAlign:"center",maxWidth:280,lineHeight:1.5}}>Say who, when, and what was discussed. Mention follow-ups and I will keep them.</div>
+        <button className="cap-rec" onClick={stopRec} aria-label="Stop"/>
+        <div className="lbl">Tap to finish</div>
+      </div>
+    </React.Fragment>}
+    {(step==="working"||step==="saving")&&<React.Fragment>
+      <Head title={step==="saving"?"Saving":"Reading"}/>
+      <div className="cap-body" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:22}}>
+        <div className="cap-spin"/>
+        <div className="serif" style={{fontSize:26,textAlign:"center"}}>{step==="saving"?"Writing to Collective":"Turning this into interactions"}</div>
+      </div>
+    </React.Fragment>}
+    {step==="error"&&<React.Fragment>
+      <Head title="Capture"/>
+      <div className="cap-body" style={{display:"flex",flexDirection:"column",gap:18,justifyContent:"center"}}>
+        <div className="serif" style={{fontSize:30,lineHeight:1.15}}>That didn't work</div>
+        <div style={{fontSize:14,color:"#8d8d88",lineHeight:1.55}}>{err}</div>
+        <button className="cap-btn ghost" onClick={()=>{setErr("");setStep("pick");}}>Try again</button>
+      </div>
+    </React.Fragment>}
+    {step==="done"&&<React.Fragment>
+      <Head title="Saved"/>
+      <div className="cap-body" style={{display:"flex",flexDirection:"column",gap:18,justifyContent:"center"}}>
+        <Ico d={ICONS.check} size={44} sw={1.2} style={{color:"#5b9cf2"}}/>
+        <div className="serif" style={{fontSize:34,lineHeight:1.1}}>{saved} interaction{saved===1?"":"s"} logged</div>
+        <button className="cap-btn" onClick={onClose}>Done</button>
+        <button className="cap-btn ghost" onClick={()=>{setDrafts([]);setTranscript("");setText("");setStep("pick");}}>Capture another</button>
+      </div>
+    </React.Fragment>}
+    {step==="review"&&pickFor===null&&<React.Fragment>
+      <Head title="Review" back={()=>setStep("pick")}/>
+      <div className="cap-body">
+        <div className="serif" style={{fontSize:30,lineHeight:1.1,margin:"6px 0 4px"}}>{drafts.length===0?"Nothing to log":drafts.length===1?"One interaction":drafts.length+" interactions"}</div>
+        <div style={{fontSize:13,color:"#8d8d88",marginBottom:18}}>Edit anything, untick what you don't want, then save.{transcript&&<span onClick={()=>setShowTranscript(s=>!s)} className="acc" style={{marginLeft:8,cursor:"pointer"}}>{showTranscript?"Hide":"Show"} transcript</span>}</div>
+        {showTranscript&&<div style={{fontSize:13,color:"#b9b9b4",lineHeight:1.55,whiteSpace:"pre-wrap",borderLeft:"2px solid #262626",paddingLeft:12,marginBottom:18}}>{transcript}</div>}
+        {drafts.map((d,i)=><div key={i} className={"cap-draft"+(d.on?"":" off")}>
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
+            <div onClick={()=>patch(i,{on:!d.on})} className="mob-chk" style={{width:22,height:22,border:"1px solid #3a3a3a",display:"flex",alignItems:"center",justifyContent:"center",background:d.on?"#f2f2ef":"none",cursor:"pointer"}}>{d.on&&<Ico d={ICONS.check} size={14} sw={2.2} style={{color:"#0e0e0e"}}/>}</div>
+            <button className={"cap-chip"+(d.contactId?"":" new")} onClick={()=>{setPickFor(i);setPickQ("");}}>{d.contactId?d.contactName:"New · "+(d.contactName||"unnamed")}<Ico d={ICONS.chevron} size={12}/></button>
+            {d.confidence==="medium"&&d.contactId&&<span className="lbl" style={{color:"#c8a450"}}>Check</span>}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+            <select value={d.type} onChange={e=>patch(i,{type:e.target.value})}><option>Note</option><option>Call</option><option>In Person</option><option>Email</option></select>
+            <input type="date" value={d.date} onChange={e=>patch(i,{date:e.target.value})} style={{fontSize:14,padding:"8px 10px"}}/>
+          </div>
+          {projects.length>0&&<select value={d.projectId||""} onChange={e=>patch(i,{projectId:e.target.value})} style={{marginBottom:8}}><option value="">No project</option>{projects.filter(p=>!p.parentId).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select>}
+          <textarea rows={4} value={d.note} onChange={e=>patch(i,{note:e.target.value})} style={{fontSize:14,lineHeight:1.5,resize:"vertical"}}/>
+        </div>)}
+        <div style={{height:16}}/>
+        <button className="cap-btn" disabled={onCount===0} onClick={save}>Save {onCount>0?onCount:""} to Collective</button>
+      </div>
+    </React.Fragment>}
+    {step==="review"&&pickFor!==null&&<React.Fragment>
+      <Head title="Who was this?" back={()=>setPickFor(null)}/>
+      <div className="cap-body">
+        <input autoFocus value={pickQ} onChange={e=>setPickQ(e.target.value)} placeholder="Search contacts…" style={{marginBottom:8}}/>
+        <div onClick={()=>{patch(pickFor,{contactId:null,contactName:pickQ.trim()||drafts[pickFor].contactName,confidence:"low"});setPickFor(null);}} className="cap-opt" style={{padding:"14px 0"}}><Ico d={ICONS.capture} size={20} style={{color:"#5b9cf2"}}/><div><div style={{fontSize:16}} className="acc">Create “{pickQ.trim()||drafts[pickFor].contactName||"new contact"}”</div></div></div>
+        {pickList.map(c=><div key={c.id} className="cap-opt" style={{padding:"14px 0"}} onClick={()=>{patch(pickFor,{contactId:c.id,contactName:c.name,confidence:"high"});setPickFor(null);}}><div className="mob-av" style={{width:34,height:34,borderRadius:"50%",background:avatarColor(c.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600}}>{initials(c.name)}</div><div><div style={{fontSize:16}}>{c.name}</div>{c.company&&<div className="s">{c.company}</div>}</div></div>)}
+      </div>
+    </React.Fragment>}
+  </div>;
+}
+/* ========================================================
+   MOBILE APP
+   ======================================================== */
+function MobileApp({contacts,interactions,groups,projects,tasks,setTasks,intPersonIds,intPersonIdsForDisplay,contactGroups,contactName,lastInteraction,
+  createContact,handleQuickAdd,syncToSupabase,syncing,syncStatus,openSettings,reminders,dismissReminder,runCapture,saveCaptured,claudeUpdates,markUpdatesSeen}){
+const [tab,setTab]=useState("today");
 const [search,setSearch]=useState("");
-const [selContact,setSelContact]=useState(null);
-const [selGroup,setSelGroup]=useState(null);
-const [selInt,setSelInt]=useState(null);
-const [showAdd,setShowAdd]=useState(null); // "contact" | "interaction" | null
-const [cf,setCf]=useState({name:"",email:"",phone:"",company:""});
-const [inf,setInf]=useState({contactId:"",type:"",date:today(),note:""});
-const [infSearch,setInfSearch]=useState("");
 const [intSearch,setIntSearch]=useState("");
-const filteredContacts=useMemo(()=>{
-  const q=search.toLowerCase();
-  return contacts.filter(c=>!q||c.name.toLowerCase().includes(q)||(c.email||"").toLowerCase().includes(q)||(c.company||"").toLowerCase().includes(q));
-},[contacts,search]);
-const sortedInts=useMemo(()=>{
-  let list=[...interactions].sort(intCompare);
-  if(intSearch){const q=intSearch.toLowerCase();list=list.filter(i=>{const ids=intPersonIds(i);const matchP=ids.some(id=>{const c=contacts.find(c=>c.id===id);return c&&c.name.toLowerCase().includes(q);});return matchP||(i.note||"").toLowerCase().includes(q);});}
-  return list;
-},[interactions,intSearch,intPersonIds,contacts]);
+const [selContact,setSelContact]=useState(null);
+const [capture,setCapture]=useState(false);
+const [quick,setQuick]=useState(null); // {contactId} when logging from a person
+const [qf,setQf]=useState({type:"Note",date:today(),note:""});
+const [newTask,setNewTask]=useState("");
+const [addPerson,setAddPerson]=useState(false);
+const [pf,setPf]=useState({name:"",company:"",email:"",phone:""});
+const scrollRef=useRef();
+useEffect(()=>{if(scrollRef.current)scrollRef.current.scrollTop=0;},[tab,selContact]);
+const hour=new Date().getHours();
+const greet=hour<12?"Good morning":hour<17?"Good afternoon":"Good evening";
+const dateLabel=new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
+const filteredContacts=useMemo(()=>{const q=search.toLowerCase();return contacts.filter(c=>!q||c.name.toLowerCase().includes(q)||(c.email||"").toLowerCase().includes(q)||(c.company||"").toLowerCase().includes(q));},[contacts,search]);
+const sortedInts=useMemo(()=>{let list=[...interactions].sort(intCompare);if(intSearch){const q=intSearch.toLowerCase();list=list.filter(i=>{const ids=intPersonIds(i);return ids.some(id=>{const c=contacts.find(c=>c.id===id);return c&&c.name.toLowerCase().includes(q);})||(i.note||"").toLowerCase().includes(q);});}return list.slice(0,300);},[interactions,intSearch,intPersonIds,contacts]);
 const contactInts=useCallback(cId=>interactions.filter(i=>intPersonIds(i).includes(cId)).sort(intCompare),[interactions,intPersonIds]);
 const openTasks=useMemo(()=>tasks.filter(t=>t.status!=="done").sort((a,b)=>{if(a.dueDate&&b.dueDate)return a.dueDate.localeCompare(b.dueDate);if(a.dueDate)return-1;if(b.dueDate)return 1;return 0;}),[tasks]);
 const doneTasks=useMemo(()=>tasks.filter(t=>t.status==="done").sort((a,b)=>(b.completedAt||"").localeCompare(a.completedAt||"")),[tasks]);
 const toggleTask=id=>setTasks(ts=>ts.map(t=>t.id===id?{...t,status:t.status==="done"?"todo":"done",completedAt:t.status==="done"?null:today()}:t));
-const [newTaskTitle,setNewTaskTitle]=useState("");
-const addTask=()=>{if(!newTaskTitle.trim())return;setTasks(ts=>[...ts,{id:"task_"+Date.now(),title:newTaskTitle.trim(),projectId:"",contactId:"",dueDate:"",priority:"",notes:"",status:"todo",order:0,createdAt:today()}]);setNewTaskTitle("");};
-const groupContacts=useCallback(gName=>contacts.filter(c=>contactGroups(c).includes(gName)),[contacts,contactGroups]);
-const addContact=()=>{if(!cf.name.trim())return;createContact(cf);setCf({name:"",email:"",phone:"",company:""});setShowAdd(null);};
-const addInt=()=>{if(!inf.contactId||!inf.date)return;handleQuickAdd({contactId:inf.contactId,type:inf.type,date:inf.date,note:inf.note,projectId:""});setInf({contactId:"",type:"",date:today(),note:""});setInfSearch("");setShowAdd(null);};
-const TabIcon=({icon,label,active,onClick})=>(
-  <button className={active?"active":""} onClick={onClick}>
-    <span className="tab-icon">{icon}</span>{label}
-  </button>
-);
-// ---- DETAIL VIEWS ----
+const addTask=()=>{if(!newTask.trim())return;setTasks(ts=>[...ts,{id:"task_"+Date.now(),title:newTask.trim(),projectId:"",contactId:"",dueDate:"",priority:"",notes:"",status:"todo",order:0,createdAt:today()}]);setNewTask("");};
+const dueReminders=useMemo(()=>[...reminders].filter(r=>r.date<=today()).sort((a,b)=>a.date.localeCompare(b.date)),[reminders]);
+const upcoming=useMemo(()=>[...reminders].filter(r=>r.date>today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,3),[reminders]);
+const td=today();
+const dueToday=openTasks.filter(t=>t.dueDate&&t.dueDate<=td);
+const unseen=(claudeUpdates||[]).filter(u=>!u.seen);
+const projName=id=>{const p=projects.find(p=>p.id===id);return p?p.name:id;};
+const Av=({name,size=38})=><div className="mob-av" style={{width:size,height:size,background:avatarColor(name),fontSize:size*0.32}}>{initials(name)}</div>;
+const IntRow=({i,hideName,onOpen})=>{const ids=intPersonIdsForDisplay(i);const names=ids.map(id=>contactName(id)).join(", ")||"Unknown";return <div className="mob-int" onClick={onOpen}>
+  <div className="top">{!hideName&&<span style={{fontSize:16,flex:1}}>{names}</span>}{hideName&&ids.length>1&&<span style={{fontSize:13,color:"#8d8d88",flex:1}}>with {ids.filter(id=>id!==selContact?.id).map(id=>contactName(id)).join(", ")}</span>}{hideName&&ids.length<=1&&<span style={{flex:1}}/>}<span className="d">{fmtDate(i.date)}</span></div>
+  <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:i.note?6:0}}>{i.type&&i.type!=="Manual"&&<span className="mob-badge">{i.type}</span>}{i.projectId&&<span className="mob-badge acc">{projName(i.projectId)}</span>}</div>
+  {i.note&&<div className="mob-note" style={hideName?{}:{display:"-webkit-box",WebkitLineClamp:3,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{(i.note||"").replace(/\*+/g,"")}</div>}
+</div>;};
+const Tabs=()=><div className="mob-tabs">
+  <button className={tab==="today"?"on":""} onClick={()=>{setSelContact(null);setTab("today");}}><Ico d={ICONS.today} size={22}/>Today</button>
+  <button className={tab==="people"?"on":""} onClick={()=>{setSelContact(null);setTab("people");}}><Ico d={ICONS.people} size={22}/>People</button>
+  <button className="mob-cap" onClick={()=>setCapture(true)}><span className="ring"><Ico d={ICONS.capture} size={24} sw={2}/></span>Capture</button>
+  <button className={tab==="log"?"on":""} onClick={()=>{setSelContact(null);setTab("log");}}><Ico d={ICONS.log} size={22}/>Log</button>
+  <button className={tab==="tasks"?"on":""} onClick={()=>{setSelContact(null);setTab("tasks");}}><Ico d={ICONS.tasks} size={22}/>Tasks</button>
+</div>;
+const openPerson=c=>{if(c){setSelContact(c);}};
+const CapEl=capture?<CaptureSheet onClose={()=>setCapture(false)} contacts={contacts} projects={projects} runCapture={runCapture} onSave={saveCaptured}/>:null;
+// ---------- quick log from a person ----------
+if(quick){
+  const c=contacts.find(x=>x.id===quick.contactId);
+  return <div className="mob-app">
+    <div className="mob-detail-head"><button className="mob-back" onClick={()=>setQuick(null)}>Cancel</button><span className="lbl">Log</span><button className="mob-back" disabled={!qf.date} onClick={()=>{handleQuickAdd({contactId:quick.contactId,type:qf.type,date:qf.date,note:qf.note,projectId:qf.projectId||""});setQuick(null);setQf({type:"Note",date:today(),note:""});}} style={{fontWeight:600}}>Save</button></div>
+    <div className="mob-scroll" ref={scrollRef}>
+      <div className="mob-hero" style={{paddingBottom:10}}><div className="serif name" style={{fontSize:30}}>{c?c.name:""}</div></div>
+      <div className="mob-field"><span className="lbl">Type</span><div style={{display:"flex",gap:0,border:"1px solid #262626"}}>{["Note","Call","In Person","Email"].map(t=><button key={t} onClick={()=>setQf(f=>({...f,type:t}))} style={{flex:1,padding:"10px 0",fontSize:13,background:qf.type===t?"#f2f2ef":"none",color:qf.type===t?"#0e0e0e":"#8d8d88"}}>{t}</button>)}</div></div>
+      <div className="mob-field"><span className="lbl">Date</span><input type="date" value={qf.date} onChange={e=>setQf(f=>({...f,date:e.target.value}))}/></div>
+      {projects.filter(p=>!p.parentId).length>0&&<div className="mob-field"><span className="lbl">Project</span><select value={qf.projectId||""} onChange={e=>setQf(f=>({...f,projectId:e.target.value}))}><option value="">None</option>{projects.filter(p=>!p.parentId).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></div>}
+      <div className="mob-field"><span className="lbl">Notes</span><textarea autoFocus rows={8} value={qf.note} onChange={e=>setQf(f=>({...f,note:e.target.value}))} placeholder="What was said, what happens next…" style={{lineHeight:1.5,resize:"none"}}/></div>
+    </div>
+  </div>;
+}
+// ---------- add person ----------
+if(addPerson){
+  return <div className="mob-app">
+    <div className="mob-detail-head"><button className="mob-back" onClick={()=>setAddPerson(false)}>Cancel</button><span className="lbl">New person</span><button className="mob-back" disabled={!pf.name.trim()} onClick={()=>{const nc=createContact(pf);setPf({name:"",company:"",email:"",phone:""});setAddPerson(false);setSelContact(nc);}} style={{fontWeight:600,opacity:pf.name.trim()?1:0.35}}>Save</button></div>
+    <div className="mob-scroll" ref={scrollRef}><div style={{height:18}}/>
+      {[["name","Name"],["company","Company"],["email","Email"],["phone","Phone"]].map(([k,l])=><div key={k} className="mob-field"><span className="lbl">{l}</span><input autoFocus={k==="name"} value={pf[k]} onChange={e=>setPf(f=>({...f,[k]:e.target.value}))} type={k==="email"?"email":k==="phone"?"tel":"text"}/></div>)}
+    </div>
+  </div>;
+}
+// ---------- person detail ----------
 if(selContact){
-  const cg=contactGroups(selContact);
-  const ints=contactInts(selContact.id);
-  return(
-    <div className="mob-app">
-      <div className="mob-header-bar">
-        <button className="mob-back-btn" onClick={()=>setSelContact(null)}>‹ Back</button>
-        <span style={{color:"#fff",fontSize:13,fontWeight:500}}>{selContact.name}</span>
-        <div style={{width:50}}/>
-      </div>
-      <div className="mob-scroll">
-        <div style={{background:"#fff",padding:"20px 16px",textAlign:"center",borderBottom:"0.5px solid #eee"}}>
-          <div style={{width:56,height:56,borderRadius:"50%",background:avatarColor(selContact.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:600,color:"#fff",margin:"0 auto 10px"}}>{initials(selContact.name)}</div>
-          <div style={{fontSize:18,fontWeight:600}}>{selContact.name}</div>
-          {selContact.company&&<div style={{fontSize:13,color:"#666",marginTop:2}}>{selContact.company}{selContact.role?" · "+selContact.role:""}</div>}
-          {selContact.email&&<div style={{fontSize:13,color:"#999",marginTop:2}}>{selContact.email}</div>}
-          {selContact.phone&&<div style={{fontSize:13,color:"#999"}}>{selContact.phone}</div>}
-          {selContact.location&&<div style={{fontSize:12,color:"#bbb",marginTop:2}}>{selContact.location}</div>}
-          <div style={{display:"flex",gap:4,justifyContent:"center",flexWrap:"wrap",marginTop:10}}>
-            {cg.map(g=><span key={g} className="tag">{g}</span>)}
-          </div>
+  const c=contacts.find(x=>x.id===selContact.id)||selContact;
+  const ints=contactInts(c.id);const cg=contactGroups(c);
+  return <div className="mob-app">
+    {CapEl}
+    <div className="mob-detail-head"><button className="mob-back" onClick={()=>setSelContact(null)}><Ico d={ICONS.back} size={18}/> Back</button><span className="lbl">Person</span><button className="mob-back" onClick={()=>{setQf({type:"Note",date:today(),note:""});setQuick({contactId:c.id});}} style={{fontWeight:600}}>Log</button></div>
+    <div className="mob-scroll mob-slide" ref={scrollRef}>
+      <div className="mob-hero">
+        <div className="serif name">{c.name}</div>
+        <div className="meta">{[c.company&&(c.company+(c.role?" · "+c.role:"")),c.location].filter(Boolean).map((l,i)=><div key={i}>{l}</div>)}
+          {c.email&&<div><a href={"mailto:"+c.email} style={{color:"#5b9cf2",textDecoration:"none"}}>{c.email}</a></div>}
+          {c.phone&&<div><a href={"tel:"+c.phone.replace(/\s/g,"")} style={{color:"#5b9cf2",textDecoration:"none"}}>{c.phone}</a></div>}
+          {ints.length>0&&<div style={{marginTop:6}}>Last contact {daysAgo(ints[0].date).toLowerCase()}</div>}
         </div>
-        {selContact.notes&&(
-          <div style={{background:"#fff",padding:"12px 16px",borderBottom:"0.5px solid #eee"}}>
-            <div style={{fontSize:11,fontWeight:600,color:"#999",marginBottom:4,textTransform:"uppercase",letterSpacing:0.5}}>Notes</div>
-            <RichNote text={selContact.notes} style={{color:"#333"}}/>
-          </div>
-        )}
-        <div className="mob-section-header">Interactions ({ints.length})</div>
-        {ints.length===0&&<div style={{padding:"20px 16px",color:"#bbb",fontSize:13}}>No interactions yet.</div>}
-        {ints.slice(0,50).map(i=>{const col=intColor(i.type);const otherIds=intPersonIdsForDisplay(i).filter(pid=>pid!==selContact.id);return(
-          <div key={i.id} style={{background:"#fff",padding:"12px 16px",borderBottom:"0.5px solid #f0f0ee"}}>
-            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-              <span style={{fontSize:12,color:"#999"}}>{fmtDate(i.date)}</span>
-              {i.type&&i.type!=="Manual"&&<span className="mob-badge" style={{background:col.bg,color:col.text}}>{i.type}</span>}
-            </div>
-            {otherIds.length>0&&<div style={{fontSize:11,color:"#999",marginBottom:2}}>with {otherIds.map(id=>contactName(id)).join(", ")}</div>}
-            {i.note&&<div className="mob-int-note">{(i.note||"").replace(/\*+/g,"")}</div>}
-          </div>
-        );})}
+        {cg.length>0&&<div className="groups">{cg.map(g=><span key={g}>{g}</span>)}</div>}
       </div>
-      <div className="mob-tab-bar">
-        <TabIcon icon="👤" label="Contacts" onClick={()=>{setSelContact(null);setTab("contacts");}}/>
-        <TabIcon icon="💬" label="Log" onClick={()=>{setSelContact(null);setTab("interactions");}}/>
-        <TabIcon icon="👥" label="Groups" onClick={()=>{setSelContact(null);setTab("groups");}}/>
-        <TabIcon icon="☑️" label="Tasks" onClick={()=>{setSelContact(null);setTab("tasks");}}/>
-      </div>
+      {c.notes&&<div style={{padding:"0 20px 20px"}}><div className="lbl" style={{marginBottom:8}}>Notes</div><div className="mob-note" style={{whiteSpace:"pre-wrap"}}>{(c.notes||"").replace(/\*+/g,"")}</div></div>}
+      <div className="mob-sec"><span className="lbl">Interactions · {ints.length}</span></div>
+      {ints.length===0&&<div style={{padding:"10px 20px 30px",color:"#5c5c58",fontSize:14}}>Nothing logged yet.</div>}
+      {ints.slice(0,80).map(i=><IntRow key={i.id} i={i} hideName/>)}
     </div>
-  );
+    <Tabs/>
+  </div>;
 }
-if(selGroup){
-  const members=groupContacts(selGroup.name);
-  return(
-    <div className="mob-app">
-      <div className="mob-header-bar">
-        <button className="mob-back-btn" onClick={()=>setSelGroup(null)}>‹ Back</button>
-        <span style={{color:"#fff",fontSize:13,fontWeight:500}}>{selGroup.icon||DEFAULT_GROUP_ICONS[selGroup.name]||"🏷️"} {selGroup.name}</span>
-        <div style={{width:50}}/>
-      </div>
-      <div className="mob-scroll">
-        <div className="mob-section-header">{members.length} contacts</div>
-        {members.map(c=>{const li=lastInteraction(c.id);return(
-          <div key={c.id} className="mob-row" onClick={()=>{setSelGroup(null);setSelContact(c);}}>
-            <div style={{width:36,height:36,borderRadius:"50%",background:avatarColor(c.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(c.name)}</div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontWeight:500,fontSize:14}}>{c.name}</div>
-              {c.company&&<div style={{fontSize:12,color:"#999"}}>{c.company}</div>}
-            </div>
-            {li&&<span style={{fontSize:11,color:"#bbb"}}>{daysAgo(li)}</span>}
-            <span style={{color:"#ccc",fontSize:16}}>›</span>
-          </div>
-        );})}
-      </div>
-      <div className="mob-tab-bar">
-        <TabIcon icon="👤" label="Contacts" onClick={()=>{setSelGroup(null);setTab("contacts");}}/>
-        <TabIcon icon="💬" label="Log" onClick={()=>{setSelGroup(null);setTab("interactions");}}/>
-        <TabIcon icon="👥" label="Groups" active onClick={()=>setSelGroup(null)}/>
-        <TabIcon icon="☑️" label="Tasks" onClick={()=>{setSelGroup(null);setTab("tasks");}}/>
+// ---------- main ----------
+return <div className="mob-app">
+  {CapEl}
+  <div className="mob-top">
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+      <span className="lbl">{tab==="today"?dateLabel:tab==="people"?contacts.length+" people":tab==="log"?interactions.length+" interactions":openTasks.length+" open"}</span>
+      <div style={{display:"flex",gap:14,alignItems:"center"}}>
+        {tab==="people"&&<button onClick={()=>setAddPerson(true)} style={{padding:4,color:"#5b9cf2"}}><Ico d={ICONS.capture} size={22}/></button>}
+        <button onClick={syncToSupabase} disabled={syncing} style={{padding:4,color:syncing?"#5b9cf2":"#5c5c58"}}><Ico d={ICONS.sync} size={20} style={syncing?{animation:"capSpin 1s linear infinite"}:{}}/></button>
+        <button onClick={openSettings} style={{padding:4,color:"#5c5c58"}}><Ico d={ICONS.gear} size={20}/></button>
       </div>
     </div>
-  );
-}
-// ---- ADD MODALS ----
-if(showAdd==="contact"){
-  return(
-    <div className="mob-app">
-      <div className="mob-header-bar">
-        <button className="mob-back-btn" onClick={()=>setShowAdd(null)}>Cancel</button>
-        <span style={{color:"#fff",fontSize:14,fontWeight:600}}>New Contact</span>
-        <button className="mob-back-btn" onClick={addContact} style={{color:cf.name.trim()?"#7dd3a8":"rgba(255,255,255,0.3)",fontWeight:600}}>Save</button>
-      </div>
-      <div className="mob-scroll" style={{background:"#fff"}}>
-        <div style={{padding:16,display:"flex",flexDirection:"column",gap:10}}>
-          <input placeholder="Name *" value={cf.name} onChange={e=>setCf(f=>({...f,name:e.target.value}))} autoFocus style={{fontSize:16,padding:"12px 14px"}}/>
-          <input placeholder="Email" value={cf.email} onChange={e=>setCf(f=>({...f,email:e.target.value}))} style={{fontSize:16,padding:"12px 14px"}}/>
-          <input placeholder="Phone" value={cf.phone} onChange={e=>setCf(f=>({...f,phone:e.target.value}))} style={{fontSize:16,padding:"12px 14px"}}/>
-          <input placeholder="Company" value={cf.company} onChange={e=>setCf(f=>({...f,company:e.target.value}))} style={{fontSize:16,padding:"12px 14px"}}/>
-        </div>
-      </div>
-    </div>
-  );
-}
-if(showAdd==="interaction"){
-  const filteredAdd=contacts.filter(c=>!infSearch||c.name.toLowerCase().includes(infSearch.toLowerCase())).slice(0,20);
-  const selC=contacts.find(c=>c.id===inf.contactId);
-  return(
-    <div className="mob-app">
-      <div className="mob-header-bar">
-        <button className="mob-back-btn" onClick={()=>setShowAdd(null)}>Cancel</button>
-        <span style={{color:"#fff",fontSize:14,fontWeight:600}}>Log Interaction</span>
-        <button className="mob-back-btn" onClick={addInt} style={{color:(inf.contactId&&inf.date)?"#7dd3a8":"rgba(255,255,255,0.3)",fontWeight:600}}>Save</button>
-      </div>
-      <div className="mob-scroll" style={{background:"#fff"}}>
-        <div style={{padding:16,display:"flex",flexDirection:"column",gap:10}}>
-          <div style={{fontSize:12,color:"#666",fontWeight:500}}>Contact</div>
-          {selC?<div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 0"}}>
-            <div style={{width:28,height:28,borderRadius:"50%",background:avatarColor(selC.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:600,color:"#fff"}}>{initials(selC.name)}</div>
-            <span style={{fontSize:14,fontWeight:500}}>{selC.name}</span>
-            <button onClick={()=>{setInf(f=>({...f,contactId:""}));setInfSearch("");}} style={{fontSize:11,color:"#c00",background:"none",border:"none",marginLeft:"auto"}}>✕</button>
-          </div>:(
-            <React.Fragment>
-              <input placeholder="Search contact…" value={infSearch} onChange={e=>setInfSearch(e.target.value)} style={{fontSize:15,padding:"10px 14px"}}/>
-              {infSearch&&<div style={{border:"0.5px solid #eee",borderRadius:0,maxHeight:160,overflowY:"auto"}}>
-                {filteredAdd.map(c=>(
-                  <div key={c.id} onClick={()=>{setInf(f=>({...f,contactId:c.id}));setInfSearch("");}} style={{padding:"10px 14px",fontSize:14,borderBottom:"0.5px solid #f5f5f5",cursor:"pointer"}}>{c.name}</div>
-                ))}
-              </div>}
-            </React.Fragment>
-          )}
-          <div style={{fontSize:12,color:"#666",fontWeight:500,marginTop:4}}>Type</div>
-          <select value={inf.type} onChange={e=>setInf(f=>({...f,type:e.target.value}))} style={{fontSize:15,padding:"10px 14px"}}>
-            <option value="">Select type…</option><option>Email</option><option>Note</option><option>In Person</option><option>Call</option>
-          </select>
-          <div style={{fontSize:12,color:"#666",fontWeight:500}}>Date</div>
-          <input type="date" value={inf.date} onChange={e=>setInf(f=>({...f,date:e.target.value}))} style={{fontSize:15,padding:"10px 14px"}}/>
-          <div style={{fontSize:12,color:"#666",fontWeight:500}}>Notes</div>
-          <textarea placeholder="Notes…" value={inf.note} onChange={e=>setInf(f=>({...f,note:e.target.value}))} rows={4} style={{fontSize:15,padding:"10px 14px",resize:"vertical"}}/>
-        </div>
-      </div>
-    </div>
-  );
-}
-// ---- MAIN TABS ----
-return(
-  <div className="mob-app">
-    <div className="mob-header-bar">
-      <span style={{fontSize:18,fontWeight:700,color:"#fff",letterSpacing:-0.5}}>Collective</span>
-      <div style={{display:"flex",gap:8,alignItems:"center"}}>
-        {sbUrl&&<button onClick={syncToSupabase} disabled={syncing} style={{fontSize:11,padding:"5px 10px",background:"rgba(255,255,255,0.12)",border:"none",color:"rgba(255,255,255,0.7)",borderRadius:0}}>{syncing?"…":"Sync"}</button>}
-        <button onClick={()=>{setShowSettings(true);setSbUrlInput(sbUrl);setSbKeyInput(sbKey);}} style={{background:"none",border:"none",color:"rgba(255,255,255,0.5)",fontSize:16,padding:4}}>⚙️</button>
-      </div>
-    </div>
-    {syncStatus&&syncStatus.includes("Synced")&&<div style={{fontSize:10,padding:"3px 16px",background:"#0f0f0f",color:"#8a8a8a"}}>{syncStatus}</div>}
-    <div className="mob-scroll">
-      {/* CONTACTS TAB */}
-      {tab==="contacts"&&(
-        <div>
-          <input className="mob-search" placeholder="Search contacts…" value={search} onChange={e=>setSearch(e.target.value)}/>
-          <div style={{fontSize:11,color:"#999",padding:"0 16px 6px"}}>{filteredContacts.length} contacts</div>
-          {filteredContacts.map(c=>{const li=lastInteraction(c.id);const cg=contactGroups(c);return(
-            <div key={c.id} className="mob-row" onClick={()=>setSelContact(c)}>
-              <div style={{width:38,height:38,borderRadius:"50%",background:avatarColor(c.name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:600,color:"#fff",flexShrink:0}}>{initials(c.name)}</div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontWeight:500,fontSize:15,lineHeight:1.3}}>{c.name}</div>
-                <div style={{fontSize:12,color:"#999",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.company||c.email||""}</div>
-              </div>
-              {li&&<span style={{fontSize:11,color:"#bbb",flexShrink:0}}>{daysAgo(li)}</span>}
-              <span style={{color:"#d0d0ce",fontSize:18}}>›</span>
-            </div>
-          );})}
-        </div>
-      )}
-      {/* INTERACTIONS TAB */}
-      {tab==="interactions"&&(
-        <div>
-          <input className="mob-search" placeholder="Search interactions…" value={intSearch} onChange={e=>setIntSearch(e.target.value)}/>
-          <div style={{fontSize:11,color:"#999",padding:"0 16px 6px"}}>{sortedInts.length} interactions</div>
-          {sortedInts.map(i=>{const col=intColor(i.type);const ids=intPersonIdsForDisplay(i);const names=ids.map(id=>contactName(id)).join(", ")||"Unknown";return(
-            <div key={i.id} className="mob-row" style={{alignItems:"flex-start",gap:10}}>
-              <div style={{width:36,height:36,borderRadius:"50%",background:avatarColor(names),display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#fff",flexShrink:0,marginTop:2}}>{initials(names)}</div>
-              <div style={{flex:1,minWidth:0}} onClick={()=>{const c=contacts.find(c=>c.id===ids[0]);if(c)setSelContact(c);}}>
-                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:1}}>
-                  <span style={{fontWeight:500,fontSize:14,flex:1}}>{names}</span>
-                  <span style={{fontSize:11,color:"#bbb",flexShrink:0}}>{daysAgo(i.date)}</span>
-                </div>
-                <div style={{display:"flex",gap:4,alignItems:"center",marginBottom:2}}>
-                  {i.type&&i.type!=="Manual"&&<span className="mob-badge" style={{background:col.bg,color:col.text}}>{i.type}</span>}
-                  <span style={{fontSize:11,color:"#bbb"}}>{fmtDate(i.date)}</span>
-                </div>
-                {i.note&&<div style={{fontSize:13,color:"#666",lineHeight:1.4,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{(i.note||"").replace(/\*+/g,"")}</div>}
-              </div>
-            </div>
-          );})}
-        </div>
-      )}
-      {/* GROUPS TAB */}
-      {tab==="groups"&&(
-        <div>
-          <div className="mob-section-header">{groups.length} groups</div>
-          {sortedGroups.map(g=>{const cnt=groupMemberCount(g.name);return(
-            <div key={g.id} className="mob-row" onClick={()=>setSelGroup(g)}>
-              <span style={{fontSize:22,width:32,textAlign:"center"}}>{g.icon||DEFAULT_GROUP_ICONS[g.name]||"🏷️"}</span>
-              <span style={{flex:1,fontSize:15,fontWeight:500}}>{g.name}</span>
-              <span style={{fontSize:13,color:"#999",marginRight:4}}>{cnt}</span>
-              <span style={{color:"#d0d0ce",fontSize:18}}>›</span>
-            </div>
-          );})}
-        </div>
-      )}
-      {/* TASKS TAB */}
-      {tab==="tasks"&&(
-        <div>
-          <div style={{padding:"10px 12px 6px"}}>
-            <div style={{display:"flex",gap:8,alignItems:"center"}}>
-              <input className="mob-search" placeholder="Add a task…" value={newTaskTitle} onChange={e=>setNewTaskTitle(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")addTask();}} style={{margin:0,flex:1}}/>
-              {newTaskTitle.trim()&&<button onClick={addTask} style={{background:"#4f6ef7",border:"none",color:"#fff",padding:"9px 16px",borderRadius:0,fontSize:14,fontWeight:500,flexShrink:0}}>Add</button>}
-            </div>
-          </div>
-          <div className="mob-section-header">Open ({openTasks.length})</div>
-          {openTasks.map(t=>{const proj=projects.find(p=>p.id===t.projectId);return(
-            <div key={t.id} className="mob-row">
-              <div onClick={()=>toggleTask(t.id)} style={{width:22,height:22,borderRadius:0,border:"1.5px solid #d1d5db",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}/>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:14,fontWeight:500}}>{t.title}</div>
-                <div style={{display:"flex",gap:6,marginTop:2}}>
-                  {t.dueDate&&<span style={{fontSize:11,color:"#999"}}>{fmtDate(t.dueDate)}</span>}
-                  {proj&&<span style={{fontSize:10,color:"#92400e",background:"#fef3c7",borderRadius:0,padding:"1px 6px"}}>{proj.icon} {proj.name}</span>}
-                </div>
-              </div>
-            </div>
-          );})}
-          {doneTasks.length>0&&(
-            <React.Fragment>
-              <div className="mob-section-header">Completed ({doneTasks.length})</div>
-              {doneTasks.slice(0,20).map(t=>(
-                <div key={t.id} className="mob-row" style={{opacity:0.5}}>
-                  <div onClick={()=>toggleTask(t.id)} style={{width:22,height:22,borderRadius:0,background:"#1D9E75",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4L3.5 6.5L9 1" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </div>
-                  <span style={{fontSize:14,color:"#999",flex:1}}>{t.title}</span>
-                </div>
-              ))}
-            </React.Fragment>
-          )}
-        </div>
-      )}
-    </div>
-    {/* FAB */}
-    {(tab==="contacts"||tab==="interactions")&&(
-      <button className="mob-fab" onClick={()=>setShowAdd(tab==="contacts"?"contact":"interaction")}>+</button>
-    )}
-    {/* BOTTOM TAB BAR */}
-    <div className="mob-tab-bar">
-      <TabIcon icon="👤" label="Contacts" active={tab==="contacts"} onClick={()=>setTab("contacts")}/>
-      <TabIcon icon="💬" label="Log" active={tab==="interactions"} onClick={()=>setTab("interactions")}/>
-      <TabIcon icon="👥" label="Groups" active={tab==="groups"} onClick={()=>setTab("groups")}/>
-      <TabIcon icon="☑️" label="Tasks" active={tab==="tasks"} onClick={()=>setTab("tasks")}/>
-    </div>
+    <div className="serif mob-title" style={{marginTop:6}}>{tab==="today"?greet+", Rose":tab==="people"?"People":tab==="log"?"Log":"Tasks"}</div>
   </div>
-);
+  <div className="mob-scroll" ref={scrollRef}>
+    {tab==="today"&&<div>
+      {unseen.length>0&&<div style={{margin:"14px 20px 0",padding:"14px 16px",border:"1px solid #5b9cf2"}}>
+        <div className="lbl acc" style={{marginBottom:6}}>Claude updated Collective</div>
+        {unseen.slice(0,4).map(u=><div key={u.id} style={{fontSize:14,lineHeight:1.5}}>{u.summary}</div>)}
+        {unseen.length>4&&<div style={{fontSize:13,color:"#8d8d88"}}>and {unseen.length-4} more</div>}
+        <button onClick={markUpdatesSeen} className="acc" style={{padding:"8px 0 0",fontSize:13}}>Got it</button>
+      </div>}
+      <div style={{padding:"22px 20px 6px"}}>
+        <button onClick={()=>setCapture(true)} style={{width:"100%",textAlign:"left",padding:"22px 20px",background:"#161616",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+          <div><div className="serif" style={{fontSize:24,lineHeight:1.1}}>Capture</div><div style={{fontSize:13,color:"#8d8d88",marginTop:4}}>Photo of notes, voicenote, or paste</div></div>
+          <span style={{width:44,height:44,borderRadius:"50%",background:"#f2f2ef",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ico d={ICONS.capture} size={22} sw={2} style={{color:"#0e0e0e"}}/></span>
+        </button>
+      </div>
+      {(dueReminders.length>0||dueToday.length>0)&&<React.Fragment>
+        <div className="mob-sec"><span className="lbl">Due</span></div>
+        {dueReminders.map(r=><div key={r.id} className="mob-row" onClick={()=>openPerson(contacts.find(x=>x.id===r.contactId))}>
+          <div style={{width:6,height:6,borderRadius:"50%",background:r.date<td?"#e0453a":"#5b9cf2",flexShrink:0}}/>
+          <div style={{flex:1,minWidth:0}}><div className="nm">{r.contactName}</div><div className="sub">{r.note||"Follow up"}</div></div>
+          <span className="when">{fmtDate(r.date)}</span>
+          <button onClick={e=>{e.stopPropagation();dismissReminder(r.id);}} style={{padding:6,color:"#5c5c58"}}><Ico d={ICONS.close} size={16}/></button>
+        </div>)}
+        {dueToday.map(t=><div key={t.id} className="mob-row" onClick={()=>toggleTask(t.id)}>
+          <div className="mob-chk"/>
+          <div style={{flex:1,minWidth:0}}><div className="nm" style={{fontSize:16}}>{t.title}</div>{t.projectId&&<div className="sub">{projName(t.projectId)}</div>}</div>
+          <span className="when" style={{color:t.dueDate<td?"#e0453a":"#5c5c58"}}>{t.dueDate<td?"Overdue":"Today"}</span>
+        </div>)}
+      </React.Fragment>}
+      {upcoming.length>0&&<React.Fragment>
+        <div className="mob-sec"><span className="lbl">Coming up</span></div>
+        {upcoming.map(r=><div key={r.id} className="mob-row" onClick={()=>openPerson(contacts.find(x=>x.id===r.contactId))}>
+          <div style={{flex:1,minWidth:0}}><div className="nm">{r.contactName}</div><div className="sub">{r.note||"Follow up"}</div></div>
+          <span className="when">{fmtDate(r.date)}</span>
+        </div>)}
+      </React.Fragment>}
+      <div className="mob-sec"><span className="lbl">Recent</span><span className="more" onClick={()=>setTab("log")}>All</span></div>
+      {sortedInts.slice(0,6).map(i=><IntRow key={i.id} i={i} onOpen={()=>openPerson(contacts.find(c=>c.id===intPersonIdsForDisplay(i)[0]))}/>)}
+      {syncStatus&&<div style={{padding:"18px 20px",fontSize:11,color:"#5c5c58"}}>{syncStatus}</div>}
+    </div>}
+    {tab==="people"&&<div>
+      <input className="mob-search" placeholder="Search" value={search} onChange={e=>setSearch(e.target.value)} style={{margin:"10px 20px 8px",width:"calc(100% - 40px)"}}/>
+      {filteredContacts.map(c=>{const li=lastInteraction(c.id);return <div key={c.id} className="mob-row" onClick={()=>openPerson(c)}>
+        <Av name={c.name}/>
+        <div style={{flex:1,minWidth:0}}><div className="nm">{c.name}</div><div className="sub">{c.company||c.email||contactGroups(c).slice(0,2).join(" · ")}</div></div>
+        {li&&<span className="when">{daysAgo(li)}</span>}
+      </div>;})}
+      {filteredContacts.length===0&&<div style={{padding:"30px 20px",color:"#5c5c58"}}>No one matches.<span className="acc" style={{marginLeft:8}} onClick={()=>{setPf({name:search,company:"",email:"",phone:""});setAddPerson(true);}}>Add “{search}”</span></div>}
+    </div>}
+    {tab==="log"&&<div>
+      <input className="mob-search" placeholder="Search" value={intSearch} onChange={e=>setIntSearch(e.target.value)} style={{margin:"10px 20px 8px",width:"calc(100% - 40px)"}}/>
+      {sortedInts.map(i=><IntRow key={i.id} i={i} onOpen={()=>openPerson(contacts.find(c=>c.id===intPersonIdsForDisplay(i)[0]))}/>)}
+    </div>}
+    {tab==="tasks"&&<div>
+      <div style={{display:"flex",gap:8,padding:"10px 20px 4px"}}>
+        <input placeholder="Add a task" value={newTask} onChange={e=>setNewTask(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")addTask();}} style={{flex:1,padding:"12px 14px"}}/>
+        {newTask.trim()&&<button onClick={addTask} style={{background:"#f2f2ef",color:"#0e0e0e",padding:"0 18px",fontWeight:600}}>Add</button>}
+      </div>
+      <div className="mob-sec"><span className="lbl">Open · {openTasks.length}</span></div>
+      {openTasks.map(t=><div key={t.id} className="mob-row">
+        <div className="mob-chk" onClick={()=>toggleTask(t.id)}/>
+        <div style={{flex:1,minWidth:0}}><div className="nm" style={{fontSize:16}}>{t.title}</div>{(t.projectId||t.dueDate)&&<div className="sub">{[t.projectId&&projName(t.projectId),t.dueDate&&fmtDate(t.dueDate)].filter(Boolean).join(" · ")}</div>}</div>
+        {t.dueDate&&t.dueDate<td&&<span className="when" style={{color:"#e0453a"}}>Overdue</span>}
+      </div>)}
+      {openTasks.length===0&&<div style={{padding:"10px 20px 30px",color:"#5c5c58"}}>All clear.</div>}
+      {doneTasks.length>0&&<React.Fragment>
+        <div className="mob-sec"><span className="lbl">Done</span></div>
+        {doneTasks.slice(0,20).map(t=><div key={t.id} className="mob-row" style={{opacity:0.45}}>
+          <div className="mob-chk done" onClick={()=>toggleTask(t.id)}><Ico d={ICONS.check} size={14} sw={2.2} style={{color:"#0e0e0e"}}/></div>
+          <span style={{flex:1,fontSize:16,textDecoration:"line-through"}}>{t.title}</span>
+        </div>)}
+      </React.Fragment>}
+    </div>}
+    <div style={{height:24}}/>
+  </div>
+  <Tabs/>
+</div>;
 }
 /* ========================================================
    DESKTOP APP (original, unchanged except wrapped in desk-app)
@@ -1033,7 +1134,12 @@ function InvestorLog({deal,store,people,inv,setInv,setInvMany,contacts,interacti
     </React.Fragment>}
   </div>;
 }
-function DealsView({deals,dealCandidates,dealIds,addDeal,removeDeal,dealId,setDealId,interactions,contacts,projects,tasks,setTasks,intPersonIds,contactName,openContact,dealStore,setDeal,addContact,syncedComps}){
+// Investor Log rows ⇄ the per-contact object the InvestorLog sheet has always used.
+// Rows live in the deal_investors table (one per investor) so Claude can write them directly.
+const IV_FIELDS={type:"type",location:"location",lead:"lead",priority:"priority",status:"status",early:"early",teaser:"teaser",teaserDate:"teaser_date",vdr:"vdr",vdrDate:"vdr_date",reeng:"reeng",reengDate:"reeng_date",feedback:"feedback"};
+const rowToIv=r=>{const iv={};Object.entries(IV_FIELDS).forEach(([k,col])=>{const v=r[col];if(k==="location"){if(v!==null&&v!==undefined)iv.location=v;return;}if(v===null||v===undefined)return;iv[k]=v;});return iv;};
+const ivToRow=(dealId,cid,iv)=>{const row={id:dealId+"::"+cid,deal_id:dealId,contact_id:cid};Object.entries(IV_FIELDS).forEach(([k,col])=>{if(k==="location"){row.location=(iv.location===undefined||iv.location===null)?null:String(iv.location);return;}const v=iv[k];if(["early","teaser","vdr","reeng"].includes(k))row[col]=!!v;else row[col]=v===undefined||v===null?(k==="status"?"pending":""):String(v);});row.removed=!!iv.removed;return row;};
+function DealsView({deals,dealCandidates,dealIds,addDeal,removeDeal,dealId,setDealId,interactions,contacts,projects,tasks,setTasks,intPersonIds,contactName,openContact,dealStore,setDeal,addContact,syncedComps,invRows,writeInvestors}){
   const [openSheet,setOpenSheet]=useState(null);
   const [workTitle,setWorkTitle]=useState("");
   if(!dealId){
@@ -1065,12 +1171,14 @@ function DealsView({deals,dealCandidates,dealIds,addDeal,removeDeal,dealId,setDe
   const dealInts=interactions.filter(i=>(deal.ids||[deal.id]).includes(i.projectId)).slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""));
   const peopleIds=[...new Set(dealInts.flatMap(i=>intPersonIds(i)))];
   const people=peopleIds.map(id=>contacts.find(c=>c.id===id)).filter(Boolean);
-  const inv=store.investors||{};
-  const removed=store.removed||[];
-  const setInv=(cid,patch)=>setDeal(deal.id,{investors:{...inv,[cid]:{...(inv[cid]||{}),...patch}}});
-  const setInvMany=(cids,patch)=>setDeal(deal.id,{investors:{...inv,...Object.fromEntries(cids.map(id=>[id,{...(inv[id]||{}),...patch}]))}});
-  const removeInvestor=cids=>{const arr=Array.isArray(cids)?cids:[cids];const nx=Object.fromEntries(Object.entries(inv).filter(([k])=>!arr.includes(k)));setDeal(deal.id,{investors:nx,removed:[...new Set([...removed,...arr])]});};
-  const addInvestor=cid=>setDeal(deal.id,{investors:{...inv,[cid]:{...(inv[cid]||{})}},removed:removed.filter(x=>x!==cid)});
+  /* Investor Log now reads from deal_investors rows (one per investor) instead of the deals JSON blob */
+  const dealRows=(invRows||[]).filter(r=>r.deal_id===deal.id);
+  const inv={};dealRows.forEach(r=>{if(r.removed)return;inv[r.contact_id]=rowToIv(r);});
+  const removed=dealRows.filter(r=>r.removed).map(r=>r.contact_id);
+  const setInv=(cid,patch)=>writeInvestors(deal.id,[[cid,patch]]);
+  const setInvMany=(cids,patch)=>writeInvestors(deal.id,cids.map(id=>[id,patch]));
+  const removeInvestor=cids=>{const arr=Array.isArray(cids)?cids:[cids];writeInvestors(deal.id,arr.map(id=>[id,{removed:true}]));};
+  const addInvestor=cid=>writeInvestors(deal.id,[[cid,{removed:false}]]);
   const dealTasks=tasks.filter(t=>(deal.ids||[deal.id]).includes(t.projectId));
   const toggleTask=id=>setTasks(ts=>ts.map(t=>t.id===id?{...t,status:t.status==="done"?"todo":"done",completedAt:t.status==="done"?null:new Date().toISOString().slice(0,10)}:t));
 const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!removed.includes(id))).size;const openTasksN=dealTasks.filter(t=>t.status!=="done").length;const _V=computeVal(store,syncedComps);const preMoney=_V.preMoney,postMoney=_V.postMoney;
@@ -1352,6 +1460,10 @@ const [dealStore,setDealStore]=useState(()=>{try{return JSON.parse(localStorage.
 const [syncedComps,setSyncedComps]=useState(()=>{try{return JSON.parse(localStorage.getItem("collective_synced_comps")||"null");}catch{return null;}});
 const [dealIds,setDealIds]=useState(()=>{try{const v=JSON.parse(localStorage.getItem("collective_deal_ids"));return Array.isArray(v)?v:["BeeOrder"];}catch{return["BeeOrder"];}});
 const dealSaveRef=useRef();const dealsReady=useRef(false);
+/* Investor Log rows (deal_investors table) and Claude's activity log */
+const [invRows,setInvRows]=useState([]);
+const [claudeUpdates,setClaudeUpdates]=useState([]);
+const [showCapture,setShowCapture]=useState(false);
 const [editingContact,setEditingContact]=useState(null);
 const [search,setSearch]=useState("");
 const [filterGroup,setFilterGroup]=useState("All");
@@ -1479,6 +1591,46 @@ const data=await resp.json();
 if(data.error)throw new Error(data.error.message);
 return(data.content||[]).map(b=>b.text||"").join("");
 };
+/* ---- Investor Log rows + Claude activity: load, migrate once, refresh when the tab comes back ---- */
+const loadInvestorRows=async(url,key,storeForMigration)=>{
+try{
+const rows=await sbFetch(url,key,"deal_investors?select=*&limit=5000");
+if(Array.isArray(rows)&&rows.length>0){setInvRows(rows);return;}
+if(!storeForMigration){setInvRows([]);return;}
+/* first run: lift the Investor Log out of the deals JSON blob into rows, once */
+const seed=[];Object.entries(storeForMigration||{}).forEach(([did,st])=>{const invs=(st&&st.investors)||{};const rem=(st&&st.removed)||[];Object.entries(invs).forEach(([cid,iv])=>{seed.push({...ivToRow(did,cid,iv),removed:rem.includes(cid),updated_by:"migration"});});rem.forEach(cid=>{if(!invs[cid])seed.push({...ivToRow(did,cid,{}),removed:true,updated_by:"migration"});});});
+if(seed.length){for(let i=0;i<seed.length;i+=50)await sbFetch(url,key,"deal_investors","POST",seed.slice(i,i+50));setInvRows(seed);setSyncStatus("Investor Log moved to its own table ✓ "+seed.length+" rows");}
+else setInvRows([]);
+}catch(e){setSyncStatus("Investor Log table missing — run supabase/migrations/001_deal_investors.sql");}
+};
+const loadClaudeUpdates=async(url,key)=>{try{const u=await sbFetch(url,key,"claude_updates?select=*&seen=eq.false&order=created_at.desc&limit=50");if(Array.isArray(u))setClaudeUpdates(u);}catch(e){}};
+const markUpdatesSeen=()=>{const ids=claudeUpdates.filter(u=>!u.seen).map(u=>u.id);setClaudeUpdates([]);if(sbUrl&&sbKey&&ids.length)sbFetch(sbUrl,sbKey,"claude_updates?id=in.("+ids.join(",")+")","PATCH",{seen:true}).catch(()=>{});};
+useEffect(()=>{if(!(sbUrl&&sbKey&&authToken))return;const onVis=()=>{if(document.visibilityState==="visible"){loadInvestorRows(sbUrl,sbKey,null);loadClaudeUpdates(sbUrl,sbKey);}};document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[sbUrl,sbKey,authToken]);
+const writeInvestors=(dealId,pairs)=>{
+setInvRows(rows=>{const next=[...rows];const out=[];pairs.forEach(([cid,patch])=>{const id=dealId+"::"+cid;const idx=next.findIndex(r=>r.id===id);const cur=idx>=0?next[idx]:ivToRow(dealId,cid,{});const iv={...rowToIv(cur),removed:cur.removed,...patch};const row={...cur,...ivToRow(dealId,cid,iv),removed:!!iv.removed,updated_by:"app",updated_at:new Date().toISOString()};if(idx>=0)next[idx]=row;else next.push(row);out.push(row);});if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"deal_investors","POST",out).catch(()=>setSyncStatus("⚠ Investor Log change NOT saved — run the deal_investors migration"));return next;});
+};
+/* ---- Capture: photo / voicenote / text → drafts (Edge Function) → saved interactions ---- */
+const runCapture=async(kind,payload)=>{
+if(!sbUrl||!sbKey)throw new Error("Connect Supabase first");
+const token=localStorage.getItem("sb_auth_token")||sbKey;
+const body={kind,...payload,today:today(),contacts:contacts.map(c=>({id:c.id,name:c.name,company:c.company||""})),projects:projects.filter(p=>!p.parentId).map(p=>({id:p.id,name:p.name}))};
+const r=await fetch(sbUrl+"/functions/v1/capture",{method:"POST",headers:{"Content-Type":"application/json","apikey":sbKey,"Authorization":"Bearer "+token},body:JSON.stringify(body)});
+let d=null;try{d=await r.json();}catch(e){}
+if(!r.ok)throw new Error((d&&d.error)||("The capture function returned "+r.status+". Is it deployed?"));
+return d||{};
+};
+const saveCaptured=async(drafts)=>{
+let n=0;const newInts=[];
+for(const d of drafts){
+let cid=d.contactId;
+if(!cid){const nc=createContact({name:d.contactName,company:d.company||""});cid=nc.id;await new Promise(r=>setTimeout(r,2));}
+const ni={id:"i_"+Date.now()+"_"+n,personIds:[cid],type:d.type||"Note",date:d.date||today(),note:d.note||"",projectId:d.projectId||"",source:"capture"};
+newInts.push(ni);n++;
+if(sbUrl&&sbKey){const base={id:ni.id,person_id:cid,person_ids:cid,type:ni.type,date:ni.date,note:ni.note,project_id:ni.projectId};sbFetch(sbUrl,sbKey,"interactions","POST",[{...base,source:ni.source}]).catch(()=>{sbFetch(sbUrl,sbKey,"interactions","POST",[base]).catch(()=>{});});}
+}
+setInteractions(is=>[...newInts,...is]);
+return n;
+};
 const loadFromSupabase=async(url,key)=>{
 setLoadingDB(true);setSyncStatus("Loading…");
 try{
@@ -1501,7 +1653,10 @@ if(t&&t.length>0)setTasks(t.map(r=>({id:r.id,title:r.title,projectId:r.project_i
 if(te&&te.length>0)setTimeEntries(te.map(r=>({id:r.id,taskId:r.task_id||"",projectId:r.project_id||"",description:r.description||"",startTime:r.start_time,endTime:r.end_time,duration:r.duration||0,date:r.date||""})));
 }catch(e2){}
 try{const cc=await sbFetch(url,key,"comps?select=*&limit=5");const crow=(cc||[]).find(r=>r.id==="__latest__");if(crow&&crow.data){setSyncedComps(JSON.parse(crow.data));localStorage.setItem("collective_synced_comps",crow.data);}}catch(e){}
-try{const dd=await sbFetch(url,key,"deals?select=*&limit=2000");const row=(dd||[]).find(r=>r.id==="__all__");if(row){const parsed=JSON.parse(row.data||"{}");const localTs=localStorage.getItem("collective_deals_ts")||"";const remoteTs=parsed.savedAt||"";const localNewer=localTs&&(!remoteTs||localTs>remoteTs);if(localNewer){/* keep unsynced local edits; push them up */const ts=new Date().toISOString();localStorage.setItem("collective_deals_ts",ts);sbFetch(url,key,"deals","POST",[{id:"__all__",data:JSON.stringify({dealStore,dealIds,savedAt:ts})}]).then(()=>setSyncStatus("Restored unsynced local deal edits ✓")).catch(()=>{});}else{if(parsed.dealStore)setDealStore(parsed.dealStore);if(Array.isArray(parsed.dealIds)&&parsed.dealIds.length)setDealIds(parsed.dealIds);if(remoteTs)localStorage.setItem("collective_deals_ts",remoteTs);}}else{await sbFetch(url,key,"deals","POST",[{id:"__all__",data:JSON.stringify({dealStore,dealIds})}]);}dealsReady.current=true;}catch(ed){dealsReady.current=false;}
+let storeForMigration=dealStore;
+try{const dd=await sbFetch(url,key,"deals?select=*&limit=2000");const row=(dd||[]).find(r=>r.id==="__all__");if(row){const parsed=JSON.parse(row.data||"{}");const localTs=localStorage.getItem("collective_deals_ts")||"";const remoteTs=parsed.savedAt||"";const localNewer=localTs&&(!remoteTs||localTs>remoteTs);if(localNewer){/* keep unsynced local edits; push them up */const ts=new Date().toISOString();localStorage.setItem("collective_deals_ts",ts);sbFetch(url,key,"deals","POST",[{id:"__all__",data:JSON.stringify({dealStore,dealIds,savedAt:ts})}]).then(()=>setSyncStatus("Restored unsynced local deal edits ✓")).catch(()=>{});}else{if(parsed.dealStore){setDealStore(parsed.dealStore);storeForMigration=parsed.dealStore;}if(Array.isArray(parsed.dealIds)&&parsed.dealIds.length)setDealIds(parsed.dealIds);if(remoteTs)localStorage.setItem("collective_deals_ts",remoteTs);}}else{await sbFetch(url,key,"deals","POST",[{id:"__all__",data:JSON.stringify({dealStore,dealIds})}]);}dealsReady.current=true;}catch(ed){dealsReady.current=false;}
+await loadInvestorRows(url,key,storeForMigration);
+loadClaudeUpdates(url,key);
 setSyncStatus("Loaded "+c.length+" contacts · "+i.length+" interactions · "+g.length+" groups ✓");
 }catch(e){setSyncStatus("Load failed: "+e.message);}
 setLoadingDB(false);
@@ -1646,72 +1801,60 @@ if(intFilterProject){list=list.filter(i=>i.projectId===intFilterProject);}
 if(intFilter){const q=intFilter.toLowerCase();list=list.filter(i=>{const ids=intPersonIds(i);const matchPerson=ids.some(id=>{const c=contacts.find(c=>c.id===id);return c&&(c.name.toLowerCase().includes(q)||(c.company||"").toLowerCase().includes(q));});return matchPerson||(i.note||"").toLowerCase().includes(q);});}
 return list;
 },[interactions,intFilter,intFilterProject,intPersonIds,contacts]);
+const dismissReminder=id=>setReminders(rs=>rs.filter(r=>r.id!==id));
 // ---- Mobile settings/auth screens ----
+const MobShell=({children})=><div className="mob-app" style={{justifyContent:"center",padding:"0 28px"}}><div style={{width:"100%",maxWidth:400}}>{children}</div></div>;
 if(isMobile&&showSettings)return(
-<div className="mob-app" style={{background:"#141414",justifyContent:"center",alignItems:"center",padding:24}}>
-<div style={{background:"#fff",borderRadius:0,padding:20,width:"100%",maxWidth:400}}>
-<div style={{fontSize:16,fontWeight:600,marginBottom:16}}>Settings</div>
-<div style={{fontSize:12,color:"#666",marginBottom:4}}>Supabase URL</div>
-<input type="password" placeholder="https://xxxx.supabase.co" value={sbUrlInput} onChange={e=>setSbUrlInput(e.target.value)} style={{marginBottom:10}}/>
-<div style={{fontSize:12,color:"#666",marginBottom:4}}>Anon key</div>
-<input type="password" placeholder="eyJhbGci…" value={sbKeyInput} onChange={e=>setSbKeyInput(e.target.value)} style={{marginBottom:10}}/>
-<div style={{fontSize:12,color:"#666",marginBottom:4}}>Anthropic API key</div>
-<input type="password" placeholder="sk-ant-…" value={anthropicKeyInput} onChange={e=>setAnthropicKeyInput(e.target.value)} style={{marginBottom:16}}/>
-<div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-<button onClick={connectSupabase} disabled={loadingDB||!sbUrlInput||!sbKeyInput} style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"8px 18px",borderRadius:0,flex:1}}>{loadingDB?"Connecting…":"Connect"}</button>
-<button onClick={()=>setShowSettings(false)} style={{flex:1}}>Cancel</button>
-</div>
-<button onClick={logout} style={{marginTop:12,background:"none",border:"0.5px solid #ddd",color:"#c00",fontSize:12,padding:"7px 14px",borderRadius:0,width:"100%"}}>Log out</button>
-{syncStatus&&<p style={{fontSize:11,marginTop:10,color:syncStatus.includes("failed")?"#c00":"#1D9E75"}}>{syncStatus}</p>}
-</div>
-</div>
+<MobShell>
+<div className="serif" style={{fontSize:34,marginBottom:4}}>Settings</div>
+<div className="lbl" style={{marginBottom:26}}>Saved on this device only</div>
+<div className="lbl" style={{marginBottom:8}}>Supabase URL</div>
+<input type="password" placeholder="https://xxxx.supabase.co" value={sbUrlInput} onChange={e=>setSbUrlInput(e.target.value)} style={{marginBottom:14}}/>
+<div className="lbl" style={{marginBottom:8}}>Anon key</div>
+<input type="password" placeholder="eyJhbGci…" value={sbKeyInput} onChange={e=>setSbKeyInput(e.target.value)} style={{marginBottom:14}}/>
+<div className="lbl" style={{marginBottom:8}}>Anthropic API key <span style={{textTransform:"none",letterSpacing:0}}>· only for the desktop summaries</span></div>
+<input type="password" placeholder="sk-ant-…" value={anthropicKeyInput} onChange={e=>setAnthropicKeyInput(e.target.value)} style={{marginBottom:24}}/>
+<button className="mob-primary" onClick={connectSupabase} disabled={loadingDB||!sbUrlInput||!sbKeyInput}>{loadingDB?"Connecting…":"Connect"}</button>
+<button onClick={()=>setShowSettings(false)} style={{width:"100%",padding:"14px 0",color:"#8d8d88",fontSize:14}}>Cancel</button>
+<button onClick={logout} style={{width:"100%",padding:"14px 0",color:"#e0453a",fontSize:13,marginTop:10}}>Log out</button>
+{syncStatus&&<p style={{fontSize:12,marginTop:10,color:syncStatus.includes("failed")?"#e0453a":"#8d8d88",textAlign:"center"}}>{syncStatus}</p>}
+</MobShell>
 );
 if(isMobile&&sbUrl&&sbKey&&!authToken)return(
-<div className="mob-app" style={{background:"#141414",justifyContent:"center",alignItems:"center",padding:24}}>
-<div style={{background:"#fff",borderRadius:0,padding:24,width:"100%",maxWidth:360,textAlign:"center"}}>
-<div style={{fontSize:22,fontWeight:700,marginBottom:6}}>Collective</div>
-<p style={{fontSize:13,color:"#666",marginBottom:20}}>Sign in to access your data.</p>
-<input type="email" placeholder="Email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} style={{marginBottom:8,textAlign:"left"}}/>
-<input type="password" placeholder="Password" value={authPass} onChange={e=>setAuthPass(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")loginSupabase();}} style={{marginBottom:14,textAlign:"left"}}/>
-<button onClick={loginSupabase} disabled={authLoading||!authEmail||!authPass} style={{background:"#4f6ef7",border:"none",color:"#fff",fontWeight:500,padding:"10px",borderRadius:0,fontSize:15,width:"100%"}}>{authLoading?"Signing in…":"Sign in"}</button>
-{authError&&<p style={{fontSize:12,color:"#c00",marginTop:10}}>{authError}</p>}
-</div>
-</div>
+<MobShell>
+<div className="serif" style={{fontSize:44,lineHeight:1,marginBottom:6}}>Collective</div>
+<div className="lbl" style={{marginBottom:34}}>Sign in</div>
+<input type="email" placeholder="Email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} style={{marginBottom:10}}/>
+<input type="password" placeholder="Password" value={authPass} onChange={e=>setAuthPass(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")loginSupabase();}} style={{marginBottom:18}}/>
+<button className="mob-primary" onClick={loginSupabase} disabled={authLoading||!authEmail||!authPass}>{authLoading?"Signing in…":"Sign in"}</button>
+{authError&&<p style={{fontSize:12,color:"#e0453a",marginTop:12}}>{authError}</p>}
+</MobShell>
 );
 if(isMobile&&!imported)return(
-<div className="mob-app" style={{background:"#141414",justifyContent:"center",alignItems:"center",padding:24}}>
-<div style={{background:"#fff",borderRadius:0,padding:24,width:"100%",maxWidth:380,textAlign:"center"}}>
-<div style={{fontSize:22,fontWeight:700,marginBottom:6}}>Collective</div>
-<p style={{fontSize:13,color:"#666",marginBottom:20}}>Import CSVs or connect Supabase.</p>
-<div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
-<label style={{padding:"10px 20px",borderRadius:0,background:"#4f6ef7",cursor:"pointer",fontSize:14,color:"#fff",fontWeight:500}}>Import CSVs<input type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/></label>
-<button onClick={()=>{setSbUrlInput(sbUrl);setSbKeyInput(sbKey);setShowSettings(true);}}>Connect DB</button>
-</div>
-{loadingDB&&<p style={{fontSize:12,color:"#666",marginTop:12}}>Loading…</p>}
-{syncStatus&&<p style={{fontSize:12,color:"#1D9E75",marginTop:12}}>{syncStatus}</p>}
-</div>
-</div>
+<MobShell>
+<div className="serif" style={{fontSize:44,lineHeight:1,marginBottom:6}}>Collective</div>
+<div className="lbl" style={{marginBottom:34}}>{loadingDB?"Loading…":"Connect your database to begin"}</div>
+<button className="mob-primary" onClick={()=>{setSbUrlInput(sbUrl);setSbKeyInput(sbKey);setShowSettings(true);}}>Connect Supabase</button>
+<label style={{display:"block",textAlign:"center",padding:"16px 0",color:"#8d8d88",fontSize:14}}>Import CSVs instead<input type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/></label>
+{syncStatus&&<p style={{fontSize:12,color:"#8d8d88",marginTop:12,textAlign:"center"}}>{syncStatus}</p>}
+</MobShell>
 );
 if(isMobile&&imported)return(
 <MobileApp
   contacts={contacts} interactions={interactions} groups={groups} projects={projects} tasks={tasks} setTasks={setTasks}
   intPersonIds={intPersonIds} intPersonIdsForDisplay={intPersonIdsForDisplay} contactGroups={contactGroups} contactName={contactName} lastInteraction={lastInteraction}
-  allGroupNames={allGroupNames} groupMemberCount={groupMemberCount} sortedGroups={sortedGroups}
-  setContacts={setContacts} setInteractions={setInteractions} sbUrl={sbUrl} sbKey={sbKey} sbFetch={sbFetch}
-  createContact={createContact} deleteInteraction={deleteInteraction} saveEditInt={saveEditInt} handleQuickAdd={handleQuickAdd}
+  createContact={createContact} handleQuickAdd={handleQuickAdd}
   syncToSupabase={syncToSupabase} syncing={syncing} syncStatus={syncStatus}
-  showSettings={showSettings} setShowSettings={setShowSettings} setSbUrlInput={setSbUrlInput} setSbKeyInput={setSbKeyInput}
-  sbUrlInput={sbUrlInput} sbKeyInput={sbKeyInput} connectSupabase={connectSupabase} loadingDB={loadingDB}
-  imported={imported} authToken={authToken} loginSupabase={loginSupabase} authEmail={authEmail} setAuthEmail={setAuthEmail}
-  authPass={authPass} setAuthPass={setAuthPass} authLoading={authLoading} authError={authError}
-  handleImportFiles={handleImportFiles} logout={logout}
+  openSettings={()=>{setShowSettings(true);setSbUrlInput(sbUrl);setSbKeyInput(sbKey);}}
+  reminders={reminders} dismissReminder={dismissReminder}
+  runCapture={runCapture} saveCaptured={saveCaptured}
+  claudeUpdates={claudeUpdates} markUpdatesSeen={markUpdatesSeen}
 />
 );
 /* ===== DESKTOP RENDER (original, wrapped in desk-app) ===== */
 const addContact=()=>{if(!cf.name.trim())return;const nc=createContact({...cf,groups:cf.groups});setCf({name:"",company:"",role:"",location:"",email:"",phone:"",groups:[],notes:""});setShowAddContact(false);};
 const saveEditContact=()=>{if(!editingContact)return;setContacts(cs=>cs.map(c=>c.id===editingContact.id?{...editingContact}:c));setSelected({...editingContact});if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+editingContact.id,"PATCH",{name:editingContact.name,email:editingContact.email||"",phone:editingContact.phone||"",company:editingContact.company||"",role:editingContact.role||"",location:editingContact.location||"",notes:editingContact.notes||"",group_ids:(editingContact.groupIds||[]).join(",")}).catch(()=>{});setEditingContact(null);};
 const addInteraction=()=>{if(!inf.date||inf.contactIds.length===0)return;const ni={id:"i_"+Date.now(),personIds:inf.contactIds,type:inf.type||"Manual",date:inf.date,note:inf.note,projectId:inf.projectId||""};setInteractions(is=>[ni,...is]);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions","POST",[{id:ni.id,person_id:inf.contactIds[0],person_ids:inf.contactIds.join(","),type:ni.type,date:inf.date,note:inf.note,project_id:inf.projectId||""}]).catch(()=>{});setInf({contactIds:[],date:"",note:"",type:"",projectId:""});setShowAddInteraction(false);};
-const dismissReminder=id=>setReminders(rs=>rs.filter(r=>r.id!==id));
 const upcomingReminders=useMemo(()=>reminders.filter(r=>r.date>=today()).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5),[reminders]);
 const overdueReminders=useMemo(()=>reminders.filter(r=>r.date<today()).sort((a,b)=>b.date.localeCompare(a.date)),[reminders]);
 const overlapping=filterGroup!=="All"&&filterGroup2!=="All"&&filterGroup!==filterGroup2;
@@ -1781,6 +1924,7 @@ if(!imported)return(
 /* The full desktop UI is identical to original - just wrapped in desk-app div */
 return(
 <div className="desk-app" style={{minHeight:"100vh",display:"flex",flexDirection:"column",background:"#141414"}}>
+{showCapture&&<CaptureSheet onClose={()=>setShowCapture(false)} contacts={contacts} projects={projects} runCapture={runCapture} onSave={saveCaptured}/>}
 <div style={{padding:"10px 20px 6px"}}>
 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
 <span style={{fontSize:26,fontWeight:700,color:"#fff",letterSpacing:"-0.5px",cursor:"pointer"}} onClick={()=>goTab("dashboard")}>Collective</span>
@@ -1788,6 +1932,7 @@ return(
 {["dashboard","deals","projects","contacts","interactions","groups","calendar"].map(t=>(
 <button key={t} style={nb(tab===t&&!selected)} onClick={()=>goTab(t)}>{t==="projects"?"To Do":t.charAt(0).toUpperCase()+t.slice(1)}</button>
 ))}
+<button onClick={()=>setShowCapture(true)} style={ab("#5b9cf2")} title="Photo of notes, voicenote, or pasted text → interactions">Capture</button>
 <button onClick={()=>setShowAddContact(true)} style={ab("rgba(255,255,255,0.9)")}>+ Contact</button>
 <button onClick={()=>setShowAddInteraction(true)} style={ab("rgba(255,255,255,0.9)")}>+ Interaction</button>
 <label style={{padding:"5px 10px",borderRadius:0,background:"rgba(255,255,255,0.08)",cursor:"pointer",fontSize:13,color:"rgba(255,255,255,0.5)"}} title="Scan business card">📇<input ref={cardRef} type="file" accept="image/*" style={{display:"none"}} onChange={handleCardScan}/></label>
@@ -1806,6 +1951,8 @@ return(
 </div>
 {syncStatus&&syncStatus.includes("Synced")&&<div className="sbar">{syncStatus}</div>}
 {syncStatus&&syncStatus.includes("failed")&&<div className="sbar" style={{color:"#ff6b6b"}}>{syncStatus}</div>}
+{syncStatus&&syncStatus.includes("Investor Log")&&<div className="sbar" style={{color:syncStatus.includes("missing")||syncStatus.includes("NOT")?"#ff6b6b":"#8a8a8a"}}>{syncStatus}</div>}
+{claudeUpdates.length>0&&<div className="sbar" style={{color:"#5b9cf2",display:"flex",alignItems:"center",gap:14}}><span style={{fontWeight:600}}>Claude updated Collective</span><span style={{color:"#bbb",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{claudeUpdates.slice(0,3).map(u=>u.summary).join(" · ")}{claudeUpdates.length>3?" · and "+(claudeUpdates.length-3)+" more":""}</span><button onClick={markUpdatesSeen} style={{background:"none",border:"none",color:"#5b9cf2",fontSize:11,padding:0,cursor:"pointer"}}>Got it</button></div>}
 <div style={{flex:1,padding:"10px 16px",maxWidth:["projects","deals"].includes(tab)?1400:1000,width:"100%",margin:"0 auto"}}>
 {(tab!=="dashboard"||selected)&&(<button onClick={goBack} style={{marginBottom:12,padding:"4px 14px",borderRadius:0,background:"rgba(255,255,255,0.1)",border:"none",color:"rgba(255,255,255,0.8)",fontSize:13,cursor:"pointer"}}>← Back</button>)}
 {/* DASHBOARD */}
@@ -2047,7 +2194,7 @@ return(
 </div>
 )}
 {/* CALENDAR — FIX 3: legend + FIX 4: click-to-navigate */}
-{tab==="deals"&&!selected&&(<DealsView deals={deals} dealCandidates={dealCandidates} dealIds={dealIds} addDeal={addDeal} removeDeal={removeDeal} dealId={dealId} setDealId={setDealId} interactions={interactions} contacts={contacts} projects={projects} tasks={tasks} setTasks={setTasks} intPersonIds={intPersonIds} contactName={contactName} openContact={c=>{setSelected(c);setTab("contacts");}} addContact={cf=>createContact(cf)} dealStore={dealStore} setDeal={(id,patch)=>setDealStore(s=>({...s,[id]:{...(s[id]||{}),...patch}}))} syncedComps={syncedComps}/>)}
+{tab==="deals"&&!selected&&(<DealsView deals={deals} dealCandidates={dealCandidates} dealIds={dealIds} addDeal={addDeal} removeDeal={removeDeal} dealId={dealId} setDealId={setDealId} interactions={interactions} contacts={contacts} projects={projects} tasks={tasks} setTasks={setTasks} intPersonIds={intPersonIds} contactName={contactName} openContact={c=>{setSelected(c);setTab("contacts");}} addContact={cf=>createContact(cf)} dealStore={dealStore} setDeal={(id,patch)=>setDealStore(s=>({...s,[id]:{...(s[id]||{}),...patch}}))} syncedComps={syncedComps} invRows={invRows} writeInvestors={writeInvestors}/>)}
 {tab==="calendar"&&(
 <div>
 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:10}}>
