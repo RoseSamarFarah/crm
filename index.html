@@ -79,8 +79,10 @@ body{background:#0e0e0e;}
 .mob-app input:focus,.mob-app textarea:focus,.mob-app select:focus{border-color:#5b9cf2;}
 .mob-app input::placeholder,.mob-app textarea::placeholder{color:#5c5c58;}
 .mob-app select{-webkit-appearance:none;appearance:none;}
-.mob-app button{background:none;border:none;color:#f2f2ef;border-radius:0;-webkit-tap-highlight-color:transparent;}
-.mob-app button:hover{background:none;}
+:where(.mob-app) button{background:none;border:none;color:#f2f2ef;border-radius:0;-webkit-tap-highlight-color:transparent;}
+:where(.mob-app) button:hover{background:none;}
+.mob-app .mob-primary,.mob-app .mob-primary:hover,.mob-app .cap-btn,.mob-app .cap-btn:hover{background:#f2f2ef;}
+.mob-app .cap-btn.ghost,.mob-app .cap-btn.ghost:hover{background:none;}
 .mob-top{padding:calc(env(safe-area-inset-top,0px) + 14px) 20px 6px;flex-shrink:0;}
 .mob-title{font-size:34px;line-height:1.05;}
 .mob-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 12px;overscroll-behavior:contain;}
@@ -1441,6 +1443,7 @@ const logCount=new Set([...people.map(c=>c.id),...Object.keys(inv)].filter(id=>!
   </div>;
 }
 /* ===================== END DEAL PLATFORM ===================== */
+const MobShell=({children})=><div className="mob-app" style={{justifyContent:"center",padding:"0 28px"}}><div style={{width:"100%",maxWidth:400}}>{children}</div></div>;
 function App(){
 const [contacts,setContacts]=useState([]);
 const [interactions,setInteractions]=useState([]);
@@ -1803,7 +1806,6 @@ return list;
 },[interactions,intFilter,intFilterProject,intPersonIds,contacts]);
 const dismissReminder=id=>setReminders(rs=>rs.filter(r=>r.id!==id));
 // ---- Mobile settings/auth screens ----
-const MobShell=({children})=><div className="mob-app" style={{justifyContent:"center",padding:"0 28px"}}><div style={{width:"100%",maxWidth:400}}>{children}</div></div>;
 if(isMobile&&showSettings)return(
 <MobShell>
 <div className="serif" style={{fontSize:34,marginBottom:4}}>Settings</div>
