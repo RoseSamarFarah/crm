@@ -173,6 +173,22 @@ const intCompare=(a,b)=>{
   if(bOrder!==null)return 1;
   return intSortKey(b)-intSortKey(a);
 };
+// Strips email signature and footer junk from a note. Only acts when junk markers are present.
+const cleanNote=t=>{
+  if(!t)return t||"";
+  let s=String(t),hit=false;
+  const cut=re=>{const m=re.exec(s);if(m&&m.index>20){s=s.slice(0,m.index);hit=true;}};
+  cut(/\[cid:[^\]]*\]/i);
+  cut(/-{2,}\s*Original Message\s*-{2,}/i);
+  cut(/\bFrom:\s[\s\S]{0,200}?\bSent:\s/i);
+  cut(/\bOn\s[\s\S]{5,120}?\bwrote:/i);
+  cut(/\bSent from my (iPhone|iPad|phone)\b/i);
+  cut(/\bGet Outlook for\b/i);
+  if(!hit)return t;
+  s=s.replace(/<https?:\/\/[^>\s]*>/gi,"");
+  let prev;do{prev=s;s=s.replace(/[\s,|‐-―​-‍﻿-]*(?:\b[A-Z][A-Z&.'-]+\b|\+?\d[\d ().-]{6,}\d)?[\s,|‐-―​-‍﻿-]*$/,"");}while(s!==prev&&s.length>20);
+  return s.trim();
+};
 // --- Updated renderMd: recognizes more bullet types and indented bullets ---
 const renderMd=text=>{if(!text)return"";const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");return text.split("\n").map(line=>{const el=esc(line);const bul=/^(\s*)([-•*·▪▫◦‣⁃○●►–—])\s+(.*)/.exec(el);const num=/^(\s*)(\d+)[.\)]\s+(.*)/.exec(el);const fmt=s=>{let r=s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');r=r.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g,'<em>$1</em>');return r;};if(bul){const ind=Math.min((bul[1]||"").length,12)*4+4;return'<div style="display:flex;gap:6px;padding:1px 0;margin-left:'+ind+'px"><span style="color:#999">•</span><span>'+fmt(bul[3])+'</span></div>';}if(num){const ind=Math.min((num[1]||"").length,12)*4+4;return'<div style="display:flex;gap:6px;padding:1px 0;margin-left:'+ind+'px"><span style="color:#999;min-width:16px;text-align:right">'+num[2]+'.</span><span>'+fmt(num[3])+'</span></div>';}return'<div>'+fmt(el||"&nbsp;")+'</div>';}).join("");};
 const RichNote=({text,style={}})=>React.createElement("div",{dangerouslySetInnerHTML:{__html:renderMd(text)},style:{fontSize:13,color:"#444",lineHeight:1.6,...style}});
@@ -450,6 +466,7 @@ function CaptureSheet({onClose,contacts,projects,runCapture,onSave}){
   const stopRec=()=>{if(rec&&rec.state!=="inactive")rec.stop();setRec(null);};
   const patch=(i,p)=>setDrafts(ds=>ds.map((d,ix)=>ix===i?{...d,...p}:d));
   const onCount=drafts.filter(d=>d.on&&(d.contactId||d.contactName)).length;
+  const missingPerson=drafts.filter(d=>d.on&&!(d.contactId||d.contactName)).length;
   const save=async()=>{setStep("saving");try{const n=await onSave(drafts.filter(d=>d.on&&(d.contactId||d.contactName)));setSaved(n);setStep("done");}catch(e){fail(e.message);}};
   const fmtS=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
   const pickList=pickFor!==null?contacts.filter(c=>!pickQ||c.name.toLowerCase().includes(pickQ.toLowerCase())).slice(0,40):[];
@@ -516,7 +533,7 @@ function CaptureSheet({onClose,contacts,projects,runCapture,onSave}){
         {drafts.map((d,i)=><div key={i} className={"cap-draft"+(d.on?"":" off")}>
           <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
             <div onClick={()=>patch(i,{on:!d.on})} className="mob-chk" style={{width:22,height:22,border:"1px solid #3a3a3a",display:"flex",alignItems:"center",justifyContent:"center",background:d.on?"#f2f2ef":"none",cursor:"pointer"}}>{d.on&&<Ico d={ICONS.check} size={14} sw={2.2} style={{color:"#0e0e0e"}}/>}</div>
-            <button className={"cap-chip"+(d.contactId?"":" new")} onClick={()=>{setPickFor(i);setPickQ("");}}>{d.contactId?d.contactName:"New · "+(d.contactName||"unnamed")}<Ico d={ICONS.chevron} size={12}/></button>
+            <button className={"cap-chip"+(d.contactId?"":" new")} onClick={()=>{setPickFor(i);setPickQ("");}}>{d.contactId?d.contactName:(d.contactName?"New · "+d.contactName:"Choose a person")}<Ico d={ICONS.chevron} size={12}/></button>
             {d.confidence==="medium"&&d.contactId&&<span className="lbl" style={{color:"#c8a450"}}>Check</span>}
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
@@ -527,7 +544,7 @@ function CaptureSheet({onClose,contacts,projects,runCapture,onSave}){
           <textarea rows={4} value={d.note} onChange={e=>patch(i,{note:e.target.value})} style={{fontSize:14,lineHeight:1.5,resize:"vertical"}}/>
         </div>)}
         <div style={{height:16}}/>
-        <button className="cap-btn" disabled={onCount===0} onClick={save}>Save {onCount>0?onCount:""} to Collective</button>
+        <button className="cap-btn" disabled={onCount===0||missingPerson>0} onClick={save}>{missingPerson>0?"Choose a person to save":"Save "+(onCount>0?onCount+" ":"")+"to Collective"}</button>
       </div>
     </React.Fragment>}
     {step==="review"&&pickFor!==null&&<React.Fragment>
@@ -544,7 +561,15 @@ function CaptureSheet({onClose,contacts,projects,runCapture,onSave}){
    MOBILE APP
    ======================================================== */
 function MobileApp({contacts,interactions,groups,projects,tasks,setTasks,intPersonIds,intPersonIdsForDisplay,contactGroups,contactName,lastInteraction,
-  createContact,handleQuickAdd,syncToSupabase,syncing,syncStatus,openSettings,reminders,dismissReminder,runCapture,saveCaptured,claudeUpdates,markUpdatesSeen}){
+  createContact,handleQuickAdd,syncToSupabase,syncing,syncStatus,openSettings,reminders,dismissReminder,runCapture,saveCaptured,claudeUpdates,markUpdatesSeen,saveEditInt,deleteInteraction,workLog,addWorkLog}){
+const [editInt,setEditInt]=useState(null);
+const [editQ,setEditQ]=useState("");
+const [editErr,setEditErr]=useState("");
+const [editBusy,setEditBusy]=useState(false);
+const [confirmDel,setConfirmDel]=useState(false);
+const [wlWork,setWlWork]=useState("");
+const [wlClient,setWlClient]=useState("");
+const openInt=i=>{setEditInt({...i,personIds:intPersonIds(i)});setEditQ("");setEditErr("");setConfirmDel(false);};
 const [tab,setTab]=useState("today");
 const [search,setSearch]=useState("");
 const [intSearch,setIntSearch]=useState("");
@@ -573,6 +598,7 @@ const td=today();
 const dueToday=openTasks.filter(t=>t.dueDate&&t.dueDate<=td);
 const unseen=(claudeUpdates||[]).filter(u=>!u.seen);
 const projName=id=>{const p=projects.find(p=>p.id===id);return p?p.name:id;};
+const wlClients=useMemo(()=>[...new Set((workLog||[]).map(w=>w.client).filter(Boolean))],[workLog]);
 const Av=({name,size=38})=><div className="mob-av" style={{width:size,height:size,background:avatarColor(name),fontSize:size*0.32}}>{initials(name)}</div>;
 const IntRow=({i,hideName,onOpen})=>{const ids=intPersonIdsForDisplay(i);const names=ids.map(id=>contactName(id)).join(", ")||"Unknown";return <div className="mob-int" onClick={onOpen}>
   <div className="top">{!hideName&&<span style={{fontSize:16,flex:1}}>{names}</span>}{hideName&&ids.length>1&&<span style={{fontSize:13,color:"#8d8d88",flex:1}}>with {ids.filter(id=>id!==selContact?.id).map(id=>contactName(id)).join(", ")}</span>}{hideName&&ids.length<=1&&<span style={{flex:1}}/>}<span className="d">{fmtDate(i.date)}</span></div>
@@ -589,6 +615,30 @@ const Tabs=()=><div className="mob-tabs">
 const openPerson=c=>{if(c){setSelContact(c);}};
 const CapEl=capture?<CaptureSheet onClose={()=>setCapture(false)} contacts={contacts} projects={projects} runCapture={runCapture} onSave={saveCaptured}/>:null;
 // ---------- quick log from a person ----------
+// ---------- edit an interaction ----------
+if(editInt){
+  const d=editInt;const ids=d.personIds||[];
+  const matches=editQ.trim()?contacts.filter(c=>!ids.includes(c.id)&&c.name.toLowerCase().includes(editQ.trim().toLowerCase())).slice(0,6):[];
+  const topProj=projects.filter(p=>!p.parentId);
+  const projOpts=d.projectId&&!topProj.some(p=>p.id===d.projectId)?[{id:d.projectId,name:projName(d.projectId)},...topProj]:topProj;
+  const saveE=async()=>{if(!ids.length||editBusy)return;setEditBusy(true);setEditErr("");const ok=await saveEditInt({...d,personIds:ids});setEditBusy(false);if(ok===false){setEditErr("This did not save. Check your connection and try again");return;}setEditInt(null);};
+  return <div className="mob-app">
+    <div className="mob-detail-head"><button className="mob-back" onClick={()=>setEditInt(null)}>Cancel</button><span className="lbl">Edit</span><button className="mob-back" onClick={saveE} style={{fontWeight:600,opacity:ids.length&&!editBusy?1:0.35}}>{editBusy?"Saving":"Save"}</button></div>
+    <div className="mob-scroll" ref={scrollRef}><div style={{height:18}}/>
+      <div className="mob-field"><span className="lbl">People</span>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>{ids.map(id=><button key={id} onClick={()=>setEditInt(x=>({...x,personIds:(x.personIds||[]).filter(y=>y!==id)}))} style={{border:"1px solid #333",padding:"7px 10px",fontSize:13,display:"inline-flex",gap:6,alignItems:"center"}}>{contactName(id)}<Ico d={ICONS.close} size={12}/></button>)}{ids.length===0&&<span style={{fontSize:13,color:"#e0453a"}}>Add at least one person</span>}</div>
+        <input placeholder="Add a person" value={editQ} onChange={e=>setEditQ(e.target.value)}/>
+        {matches.map(c=><div key={c.id} onClick={()=>{setEditInt(x=>({...x,personIds:[...(x.personIds||[]),c.id]}));setEditQ("");}} style={{padding:"12px 14px",borderBottom:"1px solid #1a1a1a",fontSize:15}}>{c.name}{c.company&&<span style={{color:"#8d8d88",fontSize:12}}> · {c.company}</span>}</div>)}
+      </div>
+      <div className="mob-field"><span className="lbl">Type</span><div style={{display:"flex",gap:0,border:"1px solid #262626"}}>{["Note","Call","In Person","Email"].map(t=><button key={t} onClick={()=>setEditInt(x=>({...x,type:t}))} style={{flex:1,padding:"10px 0",fontSize:13,background:d.type===t?"#f2f2ef":"none",color:d.type===t?"#0e0e0e":"#8d8d88"}}>{t}</button>)}</div></div>
+      <div className="mob-field"><span className="lbl">Date</span><input type="date" value={d.date||""} onChange={e=>setEditInt(x=>({...x,date:e.target.value}))}/></div>
+      {projOpts.length>0&&<div className="mob-field"><span className="lbl">Project</span><select value={d.projectId||""} onChange={e=>setEditInt(x=>({...x,projectId:e.target.value}))}><option value="">None</option>{projOpts.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></div>}
+      <div className="mob-field"><span className="lbl">Notes</span><textarea rows={12} value={d.note||""} onChange={e=>setEditInt(x=>({...x,note:e.target.value}))} style={{lineHeight:1.5,resize:"none"}}/></div>
+      {editErr&&<div className="mob-field" style={{color:"#e0453a",fontSize:13}}>{editErr}</div>}
+      <div className="mob-field"><button onClick={()=>{if(!confirmDel){setConfirmDel(true);return;}deleteInteraction(d);setEditInt(null);}} style={{color:"#e0453a",fontSize:14,padding:"10px 0"}}>{confirmDel?"Tap again to delete":"Delete interaction"}</button></div>
+    </div>
+  </div>;
+}
 if(quick){
   const c=contacts.find(x=>x.id===quick.contactId);
   return <div className="mob-app">
@@ -631,7 +681,7 @@ if(selContact){
       {c.notes&&<div style={{padding:"0 20px 20px"}}><div className="lbl" style={{marginBottom:8}}>Notes</div><div className="mob-note" style={{whiteSpace:"pre-wrap"}}>{(c.notes||"").replace(/\*+/g,"")}</div></div>}
       <div className="mob-sec"><span className="lbl">Interactions · {ints.length}</span></div>
       {ints.length===0&&<div style={{padding:"10px 20px 30px",color:"#5c5c58",fontSize:14}}>Nothing logged yet.</div>}
-      {ints.slice(0,80).map(i=><IntRow key={i.id} i={i} hideName/>)}
+      {ints.slice(0,80).map(i=><IntRow key={i.id} i={i} hideName onOpen={()=>openInt(i)}/>)}
     </div>
     <Tabs/>
   </div>;
@@ -685,8 +735,19 @@ return <div className="mob-app">
           <span className="when">{fmtDate(r.date)}</span>
         </div>)}
       </React.Fragment>}
+      <div className="mob-sec"><span className="lbl">Work Log</span></div>
+      <div style={{display:"flex",gap:8,padding:"0 20px 8px"}}>
+        <input placeholder="What did you work on?" value={wlWork} onChange={e=>setWlWork(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&wlWork.trim()){addWorkLog({date:today(),client:wlClient||wlClients[0]||"",area:"",work:wlWork.trim()});setWlWork("");}}} style={{flex:1,padding:"12px 14px",fontSize:15}}/>
+        {wlClients.length>0&&<select value={wlClient||wlClients[0]} onChange={e=>setWlClient(e.target.value)} style={{width:"auto",maxWidth:120,fontSize:13,padding:"0 10px"}}>{wlClients.map(c=><option key={c}>{c}</option>)}</select>}
+        {wlWork.trim()&&<button onClick={()=>{addWorkLog({date:today(),client:wlClient||wlClients[0]||"",area:"",work:wlWork.trim()});setWlWork("");}} style={{background:"#f2f2ef",color:"#0e0e0e",padding:"0 16px",fontWeight:600}}>Add</button>}
+      </div>
+      {(workLog||[]).slice(0,8).map(w=><div key={w.id} className="mob-row" style={{cursor:"default",alignItems:"flex-start"}}>
+        <div style={{flex:1,minWidth:0}}><div style={{fontSize:15,lineHeight:1.35}}>{w.work}</div><div className="sub">{[w.client,w.area].filter(Boolean).join(" · ")}</div></div>
+        <span className="when">{w.date===td?"Today":fmtDate(w.date).replace(/ \d{4}$/,"")}</span>
+      </div>)}
+      {(workLog||[]).length===0&&<div style={{padding:"4px 20px 10px",color:"#5c5c58",fontSize:14}}>Nothing logged yet.</div>}
       <div className="mob-sec"><span className="lbl">Recent</span><span className="more" onClick={()=>setTab("log")}>All</span></div>
-      {sortedInts.slice(0,6).map(i=><IntRow key={i.id} i={i} onOpen={()=>openPerson(contacts.find(c=>c.id===intPersonIdsForDisplay(i)[0]))}/>)}
+      {sortedInts.slice(0,6).map(i=><IntRow key={i.id} i={i} onOpen={()=>openInt(i)}/>)}
       {syncStatus&&<div style={{padding:"18px 20px",fontSize:11,color:"#5c5c58"}}>{syncStatus}</div>}
     </div>}
     {tab==="people"&&<div>
@@ -700,7 +761,7 @@ return <div className="mob-app">
     </div>}
     {tab==="log"&&<div>
       <input className="mob-search" placeholder="Search" value={intSearch} onChange={e=>setIntSearch(e.target.value)} style={{margin:"10px 20px 8px",width:"calc(100% - 40px)"}}/>
-      {sortedInts.map(i=><IntRow key={i.id} i={i} onOpen={()=>openPerson(contacts.find(c=>c.id===intPersonIdsForDisplay(i)[0]))}/>)}
+      {sortedInts.map(i=><IntRow key={i.id} i={i} onOpen={()=>openInt(i)}/>)}
     </div>}
     {tab==="tasks"&&<div>
       <div style={{display:"flex",gap:8,padding:"10px 20px 4px"}}>
@@ -1467,6 +1528,8 @@ const dealSaveRef=useRef();const dealsReady=useRef(false);
 const [invRows,setInvRows]=useState([]);
 const [claudeUpdates,setClaudeUpdates]=useState([]);
 const [showCapture,setShowCapture]=useState(false);
+const [workLog,setWorkLog]=useState([]);
+const [wl,setWl]=useState({date:today(),client:"",area:"",work:""});
 const [editingContact,setEditingContact]=useState(null);
 const [search,setSearch]=useState("");
 const [filterGroup,setFilterGroup]=useState("All");
@@ -1541,6 +1604,7 @@ return()=>clearInterval(iv);
 },[timer.running,timer.startTime]);
 useEffect(()=>{
 if(sbUrl&&sbKey&&authToken){
+hydrateFromCache();
 refreshToken().then(ok=>{
 loadFromSupabase(sbUrl,sbKey);
 });
@@ -1560,6 +1624,15 @@ const r=await fetch(url+"/rest/v1/"+path,opts);
 if(!r.ok&&r.status!==416){const e=await r.text();throw new Error(e);}
 return method==="GET"?r.json():null;
 },[]);
+// Supabase returns at most 1,000 rows per request, so read in pages until a short page comes back.
+const sbFetchAll=async(url,key,path)=>{
+const token=localStorage.getItem("sb_auth_token")||key;let out=[];
+for(let off=0;off<100000;off+=1000){
+const r=await fetch(url+"/rest/v1/"+path+(path.includes("?")?"&":"?")+"limit=1000&offset="+off,{headers:{"apikey":key,"Authorization":"Bearer "+token}});
+if(!r.ok)throw new Error(await r.text());
+const rows=await r.json();out=out.concat(rows);if(rows.length<1000)break;}
+return out;
+};
 const loginSupabase=async()=>{
 if(!sbUrl||!sbKey||!authEmail||!authPass)return;
 setAuthLoading(true);setAuthError("");
@@ -1608,7 +1681,7 @@ else setInvRows([]);
 };
 const loadClaudeUpdates=async(url,key)=>{try{const u=await sbFetch(url,key,"claude_updates?select=*&seen=eq.false&order=created_at.desc&limit=50");if(Array.isArray(u))setClaudeUpdates(u);}catch(e){}};
 const markUpdatesSeen=()=>{const ids=claudeUpdates.filter(u=>!u.seen).map(u=>u.id);setClaudeUpdates([]);if(sbUrl&&sbKey&&ids.length)sbFetch(sbUrl,sbKey,"claude_updates?id=in.("+ids.join(",")+")","PATCH",{seen:true}).catch(()=>{});};
-useEffect(()=>{if(!(sbUrl&&sbKey&&authToken))return;const onVis=()=>{if(document.visibilityState==="visible"){loadInvestorRows(sbUrl,sbKey,null);loadClaudeUpdates(sbUrl,sbKey);}};document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[sbUrl,sbKey,authToken]);
+useEffect(()=>{if(!(sbUrl&&sbKey&&authToken))return;const onVis=()=>{if(document.visibilityState==="visible"){loadInvestorRows(sbUrl,sbKey,null);loadClaudeUpdates(sbUrl,sbKey);loadWorkLog(sbUrl,sbKey);}};document.addEventListener("visibilitychange",onVis);return()=>document.removeEventListener("visibilitychange",onVis);},[sbUrl,sbKey,authToken]);
 const writeInvestors=(dealId,pairs)=>{
 setInvRows(rows=>{const next=[...rows];const out=[];pairs.forEach(([cid,patch])=>{const id=dealId+"::"+cid;const idx=next.findIndex(r=>r.id===id);const cur=idx>=0?next[idx]:ivToRow(dealId,cid,{});const iv={...rowToIv(cur),removed:cur.removed,...patch};const row={...cur,...ivToRow(dealId,cid,iv),removed:!!iv.removed,updated_by:"app",updated_at:new Date().toISOString()};if(idx>=0)next[idx]=row;else next.push(row);out.push(row);});if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"deal_investors","POST",out).catch(()=>setSyncStatus("⚠ Investor Log change NOT saved — run the deal_investors migration"));return next;});
 };
@@ -1634,21 +1707,28 @@ if(sbUrl&&sbKey){const base={id:ni.id,person_id:cid,person_ids:cid,type:ni.type,
 setInteractions(is=>[...newInts,...is]);
 return n;
 };
+const mapContacts=c=>c.map(r=>({...r,groupIds:(r.group_ids||"").split(",").filter(Boolean)}));
+const mapInts=i=>i.map(r=>{let atts=[];try{if(r.attachments)atts=JSON.parse(r.attachments);}catch(e){}const so=(r.sort_order!==undefined&&r.sort_order!==null&&r.sort_order!=="")?Number(r.sort_order):undefined;return{...r,personIds:(r.person_ids||r.person_id||"").split(",").filter(Boolean),type:normalizeType(r.type),note:cleanNote(r.note||r.notes||""),projectId:r.project_id||"",attachments:atts,sortOrder:(typeof so==="number"&&!isNaN(so))?so:undefined};});
+/* Phone only: keep the last loaded copy on the device so the app opens at once, then refresh from Supabase behind it */
+const hydrateFromCache=()=>{if(!isMobile)return;try{const raw=localStorage.getItem("collective_cache");if(!raw)return;const k=JSON.parse(raw);if(!k||!Array.isArray(k.c)||!Array.isArray(k.i))return;setContacts(mapContacts(k.c));setInteractions(mapInts(k.i));setGroups(k.g||[]);if(Array.isArray(k.w))setWorkLog(k.w);setImported(true);}catch(e){}};
+const writeCache=(c,i,g,w)=>{if(!isMobile)return;try{localStorage.setItem("collective_cache",JSON.stringify({c,i:i.map(r=>({...r,attachments:""})),g,w,ts:Date.now()}));}catch(e){try{localStorage.removeItem("collective_cache");}catch(e2){}}};
+const loadWorkLog=async(url,key)=>{try{const w=await sbFetchAll(url,key,"work_log?select=*&order=date.desc,created_at.desc");setWorkLog(w);return w;}catch(e){return null;}};
+const addWorkLog=row=>{const r={id:"w_"+Date.now(),date:row.date||today(),client:row.client||"",area:row.area||"",work:row.work,created_by:"app"};setWorkLog(ws=>[r,...ws].sort((a,b)=>(b.date||"").localeCompare(a.date||"")));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"work_log","POST",[r]).catch(()=>setSyncStatus("Work log entry failed to save"));};
 const loadFromSupabase=async(url,key)=>{
 setLoadingDB(true);setSyncStatus("Loading…");
 try{
 const [c,i,g]=await Promise.all([
-sbFetch(url,key,"contacts?select=*&order=name&limit=2000"),
-sbFetch(url,key,"interactions?select=*&order=date.desc&limit=9999"),
+sbFetchAll(url,key,"contacts?select=*&order=name,id"),
+sbFetchAll(url,key,"interactions?select=*&order=date.desc,id.desc"),
 sbFetch(url,key,"groups?select=*&order=name&limit=200")
 ]);
-setContacts(c.map(r=>({...r,groupIds:(r.group_ids||"").split(",").filter(Boolean)})));
-setInteractions(i.map(r=>{let atts=[];try{if(r.attachments)atts=JSON.parse(r.attachments);}catch(e){}const so=(r.sort_order!==undefined&&r.sort_order!==null&&r.sort_order!=="")?Number(r.sort_order):undefined;return{...r,personIds:(r.person_ids||r.person_id||"").split(",").filter(Boolean),type:normalizeType(r.type),note:r.note||r.notes||"",projectId:r.project_id||"",attachments:atts,sortOrder:(typeof so==="number"&&!isNaN(so))?so:undefined};}));
+setContacts(mapContacts(c));
+setInteractions(mapInts(i));
 setGroups(g);setImported(true);
 try{
 const [p,t,te]=await Promise.all([
 sbFetch(url,key,"projects?select=*&order=name&limit=500"),
-sbFetch(url,key,"tasks?select=*&order=created_at.desc&limit=5000"),
+sbFetchAll(url,key,"tasks?select=*&order=created_at.desc,id"),
 sbFetch(url,key,"time_entries?select=*&order=date.desc&limit=5000")
 ]);
 if(p&&p.length>0)setProjects(p.map(r=>({id:r.id,name:r.name,icon:r.icon||"",parentId:r.parent_id||null,createdAt:r.created_at||""})));
@@ -1660,8 +1740,12 @@ let storeForMigration=dealStore;
 try{const dd=await sbFetch(url,key,"deals?select=*&limit=2000");const row=(dd||[]).find(r=>r.id==="__all__");if(row){const parsed=JSON.parse(row.data||"{}");const localTs=localStorage.getItem("collective_deals_ts")||"";const remoteTs=parsed.savedAt||"";const localNewer=localTs&&(!remoteTs||localTs>remoteTs);if(localNewer){/* keep unsynced local edits; push them up */const ts=new Date().toISOString();localStorage.setItem("collective_deals_ts",ts);sbFetch(url,key,"deals","POST",[{id:"__all__",data:JSON.stringify({dealStore,dealIds,savedAt:ts})}]).then(()=>setSyncStatus("Restored unsynced local deal edits ✓")).catch(()=>{});}else{if(parsed.dealStore){setDealStore(parsed.dealStore);storeForMigration=parsed.dealStore;}if(Array.isArray(parsed.dealIds)&&parsed.dealIds.length)setDealIds(parsed.dealIds);if(remoteTs)localStorage.setItem("collective_deals_ts",remoteTs);}}else{await sbFetch(url,key,"deals","POST",[{id:"__all__",data:JSON.stringify({dealStore,dealIds})}]);}dealsReady.current=true;}catch(ed){dealsReady.current=false;}
 await loadInvestorRows(url,key,storeForMigration);
 loadClaudeUpdates(url,key);
+const wRows=await loadWorkLog(url,key);
+writeCache(c,i,g,wRows||[]);
 setSyncStatus("Loaded "+c.length+" contacts · "+i.length+" interactions · "+g.length+" groups ✓");
-}catch(e){setSyncStatus("Load failed: "+e.message);}
+}catch(e){setSyncStatus("Load failed: "+e.message);
+/* an expired login sends you to the sign-in screen, not the setup screen */
+if(/JWT|401|expired|invalid.*token/i.test(e.message||"")){localStorage.removeItem("sb_auth_token");setAuthToken("");}}
 setLoadingDB(false);
 };
 const connectSupabase=async()=>{
@@ -1767,7 +1851,7 @@ return nc;
 };
 const deleteContact=c=>{if(!window.confirm("Delete "+c.name+"?"))return;setContacts(cs=>cs.filter(x=>x.id!==c.id));setSelected(null);if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"contacts?id=eq."+c.id,"DELETE").catch(()=>{});};
 const deleteInteraction=i=>{setInteractions(is=>is.filter(x=>x.id!==i.id));if(sbUrl&&sbKey)sbFetch(sbUrl,sbKey,"interactions?id=eq."+i.id,"DELETE").catch(()=>{});};
-const saveEditInt=draft=>{const pIds=draft.personIds||[draft.personId||draft.person_id].filter(Boolean);const updated={...draft,personIds:pIds};setInteractions(is=>is.map(i=>i.id===draft.id?updated:i));if(sbUrl&&sbKey){const patch={person_id:pIds[0]||"",person_ids:pIds.join(","),type:draft.type||"",date:draft.date||"",note:draft.note||"",project_id:draft.projectId||""};if(draft.attachments)patch.attachments=JSON.stringify(draft.attachments);sbFetch(sbUrl,sbKey,"interactions?id=eq."+draft.id,"PATCH",patch).catch(()=>{});}};
+const saveEditInt=draft=>{const pIds=draft.personIds||[draft.personId||draft.person_id].filter(Boolean);const updated={...draft,personIds:pIds};setInteractions(is=>is.map(i=>i.id===draft.id?updated:i));if(sbUrl&&sbKey){const patch={person_id:pIds[0]||"",person_ids:pIds.join(","),type:draft.type||"",date:draft.date||"",note:draft.note||"",project_id:draft.projectId||""};if(draft.attachments)patch.attachments=JSON.stringify(draft.attachments);return sbFetch(sbUrl,sbKey,"interactions?id=eq."+draft.id,"PATCH",patch).then(()=>true).catch(e=>{setSyncStatus("Interaction edit failed to save: "+(e.message||"").slice(0,80));return false;});}return Promise.resolve(true);};
 // Move an interaction up or down within its date group; assigns sortOrder values so it's stable.
 const moveInt=(intId,dir)=>{
   setInteractions(is=>{
@@ -1814,8 +1898,7 @@ if(isMobile&&showSettings)return(
 <input type="password" placeholder="https://xxxx.supabase.co" value={sbUrlInput} onChange={e=>setSbUrlInput(e.target.value)} style={{marginBottom:14}}/>
 <div className="lbl" style={{marginBottom:8}}>Anon key</div>
 <input type="password" placeholder="eyJhbGci…" value={sbKeyInput} onChange={e=>setSbKeyInput(e.target.value)} style={{marginBottom:14}}/>
-<div className="lbl" style={{marginBottom:8}}>Anthropic API key <span style={{textTransform:"none",letterSpacing:0}}>· only for the desktop summaries</span></div>
-<input type="password" placeholder="sk-ant-…" value={anthropicKeyInput} onChange={e=>setAnthropicKeyInput(e.target.value)} style={{marginBottom:24}}/>
+<div style={{height:10}}/>
 <button className="mob-primary" onClick={connectSupabase} disabled={loadingDB||!sbUrlInput||!sbKeyInput}>{loadingDB?"Connecting…":"Connect"}</button>
 <button onClick={()=>setShowSettings(false)} style={{width:"100%",padding:"14px 0",color:"#8d8d88",fontSize:14}}>Cancel</button>
 <button onClick={logout} style={{width:"100%",padding:"14px 0",color:"#e0453a",fontSize:13,marginTop:10}}>Log out</button>
@@ -1832,10 +1915,22 @@ if(isMobile&&sbUrl&&sbKey&&!authToken)return(
 {authError&&<p style={{fontSize:12,color:"#e0453a",marginTop:12}}>{authError}</p>}
 </MobShell>
 );
+if(isMobile&&!imported&&sbUrl&&sbKey&&authToken){const failed=!loadingDB&&/^Load failed/.test(syncStatus||"");return(
+<MobShell>
+<div className="serif" style={{fontSize:44,lineHeight:1,marginBottom:6}}>Collective</div>
+<div className="lbl" style={{marginBottom:34}}>{failed?"Could not load":"Opening"}</div>
+{!failed&&<div className="cap-spin" style={{margin:0}}/>}
+{failed&&<React.Fragment>
+<p style={{fontSize:13,color:"#8d8d88",lineHeight:1.5,marginBottom:20}}>Your details are saved. This is usually a weak signal, or Supabase has paused the project after a quiet spell.</p>
+<button className="mob-primary" onClick={()=>loadFromSupabase(sbUrl,sbKey)}>Try again</button>
+<button onClick={()=>{setSbUrlInput(sbUrl);setSbKeyInput(sbKey);setShowSettings(true);}} style={{width:"100%",padding:"14px 0",color:"#8d8d88",fontSize:14}}>Settings</button>
+</React.Fragment>}
+</MobShell>
+);}
 if(isMobile&&!imported)return(
 <MobShell>
 <div className="serif" style={{fontSize:44,lineHeight:1,marginBottom:6}}>Collective</div>
-<div className="lbl" style={{marginBottom:34}}>{loadingDB?"Loading…":"Connect your database to begin"}</div>
+<div className="lbl" style={{marginBottom:34}}>Connect your database to begin</div>
 <button className="mob-primary" onClick={()=>{setSbUrlInput(sbUrl);setSbKeyInput(sbKey);setShowSettings(true);}}>Connect Supabase</button>
 <label style={{display:"block",textAlign:"center",padding:"16px 0",color:"#8d8d88",fontSize:14}}>Import CSVs instead<input type="file" accept=".csv" multiple style={{display:"none"}} onChange={handleImportFiles}/></label>
 {syncStatus&&<p style={{fontSize:12,color:"#8d8d88",marginTop:12,textAlign:"center"}}>{syncStatus}</p>}
@@ -1851,6 +1946,7 @@ if(isMobile&&imported)return(
   reminders={reminders} dismissReminder={dismissReminder}
   runCapture={runCapture} saveCaptured={saveCaptured}
   claudeUpdates={claudeUpdates} markUpdatesSeen={markUpdatesSeen}
+  saveEditInt={saveEditInt} deleteInteraction={deleteInteraction} workLog={workLog} addWorkLog={addWorkLog}
 />
 );
 /* ===== DESKTOP RENDER (original, wrapped in desk-app) ===== */
@@ -2031,6 +2127,28 @@ return(
 );})}
 </div>
 </div>
+</div>
+<div className="card" style={{padding:"16px 20px",marginBottom:14}}>
+<div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:10}}>
+<span style={{fontWeight:600,fontSize:14}}>Work Log</span>
+<span style={{fontSize:11,color:"#999"}}>{workLog.length} entries</span>
+</div>
+<div style={{display:"grid",gridTemplateColumns:"130px 150px 130px minmax(0,1fr) auto",gap:6,marginBottom:10}}>
+<input type="date" value={wl.date} onChange={e=>setWl(f=>({...f,date:e.target.value}))} style={{fontSize:12,padding:"6px 8px"}}/>
+<input list="wl_clients" placeholder="Client" value={wl.client} onChange={e=>setWl(f=>({...f,client:e.target.value}))} style={{fontSize:12,padding:"6px 8px"}}/>
+<input list="wl_areas" placeholder="Area" value={wl.area} onChange={e=>setWl(f=>({...f,area:e.target.value}))} style={{fontSize:12,padding:"6px 8px"}}/>
+<input placeholder="What did you work on?" value={wl.work} onChange={e=>setWl(f=>({...f,work:e.target.value}))} onKeyDown={e=>{if(e.key==="Enter"&&wl.work.trim()){addWorkLog({...wl,work:wl.work.trim()});setWl(f=>({...f,work:""}));}}} style={{fontSize:12,padding:"6px 8px"}}/>
+<button onClick={()=>{if(!wl.work.trim())return;addWorkLog({...wl,work:wl.work.trim()});setWl(f=>({...f,work:""}));}} style={{background:"#141414",border:"none",color:"#fff",padding:"6px 16px",fontSize:12,cursor:"pointer"}}>Add</button>
+<datalist id="wl_clients">{[...new Set(workLog.map(w=>w.client).filter(Boolean))].map(c=><option key={c} value={c}/>)}</datalist>
+<datalist id="wl_areas">{[...new Set(workLog.map(w=>w.area).filter(Boolean))].map(c=><option key={c} value={c}/>)}</datalist>
+</div>
+<table style={{borderCollapse:"collapse",width:"100%"}}>
+<thead><tr>{["Date","Client","Area","Work"].map(h=><th key={h} style={{textAlign:"left",fontSize:9.5,letterSpacing:"0.04em",textTransform:"uppercase",color:"#8a8a8a",fontWeight:600,padding:"6px 8px",borderBottom:"1px solid #e2e2e0",background:"#f7f7f5"}}>{h}</th>)}</tr></thead>
+<tbody>
+{workLog.slice(0,25).map(w=><tr key={w.id}><td style={{fontSize:12,padding:"6px 8px",borderBottom:"1px solid #f0f0ee",whiteSpace:"nowrap",color:"#777"}}>{fmtDate(w.date)}</td><td style={{fontSize:12,padding:"6px 8px",borderBottom:"1px solid #f0f0ee",whiteSpace:"nowrap",fontWeight:500}}>{w.client}</td><td style={{fontSize:12,padding:"6px 8px",borderBottom:"1px solid #f0f0ee",whiteSpace:"nowrap",color:"#777"}}>{w.area}</td><td style={{fontSize:12,padding:"6px 8px",borderBottom:"1px solid #f0f0ee"}}>{w.work}</td></tr>)}
+{workLog.length===0&&<tr><td colSpan={4} style={{fontSize:12,color:"#999",padding:"14px 8px"}}>Nothing logged yet.</td></tr>}
+</tbody>
+</table>
 </div>
 {dashPopup&&(
 <div className="overlay" onClick={()=>setDashPopup(null)}>
